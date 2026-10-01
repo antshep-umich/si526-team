@@ -1,0 +1,19 @@
+// Data model: TECH_SPEC section 5. Better Auth's tables (user, session, ...) arrive in Spike 2.
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../server/generated/prisma"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Household {
+  id         String   @id @default(uuid()) @db.Uuid
+  name       String
+  inviteCode String   @unique
+  createdAt  DateTime @default(now())
+}
