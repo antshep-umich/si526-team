@@ -7,6 +7,9 @@
     "node": "24.x"
   },
   "scripts": {
+    "dev": "concurrently -k -n web,api -c cyan,magenta \"vite\" \"tsx watch --env-file=.env server/dev.ts\"",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
     "postinstall": "prisma generate",
     "test": "vitest run",
     "typecheck": "tsc -b"
@@ -14,17 +17,24 @@
   "dependencies": {
     "@prisma/adapter-pg": "7.10.0",
     "@prisma/client": "7.10.0",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/node": "^24.19.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "@types/supertest": "^7.2.1",
+    "@vitejs/plugin-react": "^6.1.1",
+    "concurrently": "^10.0.5",
     "dotenv": "^18.0.5",
     "prisma": "7.10.0",
     "supertest": "^7.3.0",
     "tsx": "^4.23.15",
     "typescript": "~6.0.2",
+    "vite": "^8.3.2",
     "vitest": "^5.0.3"
   }
 }
