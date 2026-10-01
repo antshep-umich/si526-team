@@ -97,10 +97,22 @@ Vercel project (one deployment)
 └── package.json          # one package.json for client and server
 ```
 
+**Conventions confirmed in Spike 1:**
+
+- Relative imports in `api/`, `server/` and `shared/` end in `.js` (for example `../server/app.js`). TypeScript maps them to the `.ts` files, and Vercel compiles each `.ts` file to `.js`. React code in `src/` uses Vite's style (`./App.tsx`).
+- Types shared by the frontend and the API live in `shared/api.ts` for now; Zod schemas join them once the team confirms Zod.
+- The Prisma client is generated into `server/generated/prisma/` (git-ignored) by `postinstall` and again by the `build:vercel` script.
+- Prisma packages are pinned to exactly `7.10.0`. npm's `latest` tag for `prisma` points to an 8.0 release candidate, so don't upgrade without pinning.
+- The Vercel build script is named `build:vercel`, not `vercel-build`. Vercel's Node runtime runs a script called `vercel-build` on its own while building the `api/` function, so with that name the migrations and frontend build ran twice.
+
 `vercel.json`:
 
 ```json
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "buildCommand": "npm run build:vercel",
+  "outputDirectory": "dist",
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
@@ -108,7 +120,7 @@ Vercel project (one deployment)
 }
 ```
 
-The first rewrite sends all API paths to the Express function. The second lets React Router handle all other paths. **Spike 1 confirms this setup.**
+The first rewrite sends all API paths to the Express function. The second lets React Router handle all other paths. `framework` and `outputDirectory` are set here because the Vercel project's dashboard preset is "Other". `build:vercel` runs `prisma generate && prisma migrate deploy && npm run build`. Spike 1 confirmed this setup (PR #4).
 
 ### Local development
 
@@ -276,7 +288,7 @@ Email is not needed for the MVP. When a later cycle needs it (reminders, passwor
 
 ## 10. Feasibility spikes (to finish before cycle 1 build work)
 
-- [ ] **Spike 1: deploy skeleton.** A Vite + React + TypeScript page and an Express `/api/health` route that reads one row from Neon through Prisma, deployed to Vercel. Confirms the rewrites, TypeScript function bundling (including imports from `shared/`), pooled connection and that migrations run during the build.
+- [x] **Spike 1: deploy skeleton.** A Vite + React + TypeScript page and an Express `/api/health` route that reads one row from Neon through Prisma, deployed to Vercel. Confirms the rewrites, TypeScript function bundling (including imports from `shared/`), pooled connection and that migrations run during the build. Done 2026-10-01 in PR #4. One fix was needed: the build script was renamed from `vercel-build` to `build:vercel` because Vercel's Node runtime runs `vercel-build` by itself, which made the build run twice.
 - [ ] **Spike 2: auth round trip.** Better Auth sign-up, sign-in and session check working locally and on a preview URL.
 - [ ] **Spike 3: team deploy check.** A teammate (not the Vercel owner) pushes a branch and confirms a preview deployment builds.
 
@@ -305,17 +317,16 @@ Last checked: 2026-10-01.
 | Preview database branches | Done, verified | PR #1 created `preview/setup/tech-spec` |
 | Preview branch cleanup | Done, verified | PR #2's workflow deleted its preview branch on merge |
 | GitHub Actions secrets | Done | `NEON_PROJECT_ID` and `NEON_API_KEY` (both stored as repository secrets) |
-| Local `.env` connected to the `dev` branch | Done, verified | On Anthony's main machine only |
-| Spike 1: deploy skeleton | Not started | See [section 10](#10-feasibility-spikes-to-finish-before-cycle-1-build-work) |
+| Local `.env` connected to the `dev` branch | Done, verified | On both of Anthony's machines |
+| Spike 1: deploy skeleton | Done, verified | PR #4: preview served the page, `/api/health` read Neon through Prisma, and the build applied the first migration |
 | Spike 2: auth round trip | Not started | |
 | Spike 3: team deploy check | Not started | Needs `eggbao` or `BingganRen` to push a branch. This is the biggest remaining unknown |
 
 ### Next steps
 
 1. Run Spike 3. It needs no code: a teammate pushes any branch and opens a pull request, and we check that Vercel builds the preview.
-2. Run Spike 1. This is the first code: package setup, Vite + React + TypeScript, Express, Prisma.
-3. Run Spike 2 once Spike 1 deploys.
-4. Get the team to confirm or change the *Proposed* rows in [section 2](#2-decisions), and answer [section 11](#11-open-questions).
+2. Run Spike 2 once Spike 1 deploys.
+3. Get the team to confirm or change the *Proposed* rows in [section 2](#2-decisions), and answer [section 11](#11-open-questions).
 
 ---
 
@@ -348,4 +359,4 @@ The repo contains no secrets, so `.env` has to be copied over separately.
    ```
 4. **Create `.env`.** Copy `.env.example` to `.env` and fill in the `dev` branch connection strings. They're in the Neon console (Vercel → Storage → jaals-db → **Open in Neon** → Branches → `dev` → Connect), or Anthony can send them. Never commit `.env`.
 5. **Vercel CLI (repo owner only, optional):** run `vercel login` as `antshep-umich`, then `vercel link` and choose the `si-526` team and the `si526-team` project.
-6. **Once Spike 1 adds code:** run `npm install`, then `npm run dev`.
+6. **Install and run:** `npm install` (this also generates the Prisma client), then `npm run dev`. Open http://localhost:5173; the page should read "API: ok · Database: ok". Run `npm test` for the unit tests.
