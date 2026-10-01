@@ -221,7 +221,7 @@ Responses are JSON. Errors use the format `{ "error": { "code": "...", "message"
 | Environment | Database |
 |---|---|
 | Production (`main` branch) | Neon `main` branch |
-| Preview deployments (pull requests) | Neon `dev` branch |
+| Preview deployments (pull requests) | Its own Neon branch (`preview/<git-branch>`), copied from main and deleted after merge |
 | Local development | Neon `dev` branch |
 
 **Current state (2026-10-01):** the Neon integration sets the `jaals-db` connection variables for Production and Preview only. Development is turned off, so local machines use `.env` (the `dev` branch) and `vercel env pull` brings in no database credentials. Setup steps:
@@ -229,7 +229,9 @@ Responses are JSON. Errors use the format `{ "error": { "code": "...", "message"
 - [x] Create a `dev` branch in the Neon console (done: `dev` is a child branch of `jaals-db` main).
 - [x] Point local `.env` files at the `dev` branch, using both its pooled and its direct connection strings. Verified 2026-10-01: both connect, and the server runs PostgreSQL 18.6. New teammates copy `.env.example` to `.env`.
 - [x] Connect the integration to Production and Preview, with Development off.
-- [ ] Confirm that a preview deploy creates a `preview/<branch>` branch in Neon, and that Neon deletes it afterwards (test with the first pull request).
+- [x] Turn on "create database branch for deployment" for Preview (off for Production).
+- [x] Confirm that a preview deploy creates a `preview/<branch>` branch in Neon. Verified with PR #1, which created `preview/setup/tech-spec`.
+- [ ] Confirm that Neon deletes the preview branch after the pull request is merged.
 
 The integration also sets `POSTGRES_*` and `PG*` aliases. We use only `DATABASE_URL` and `DATABASE_URL_UNPOOLED`.
 
