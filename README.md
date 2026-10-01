@@ -1,4 +1,7 @@
 # si526-team
+Team project repo for SI526
+
+**test comment from louise :)**
 
 Shared chore tracker for Team JAALS (SI 526). See [TECH_SPEC.md](TECH_SPEC.md) for the design, decisions and setup status.
 
