@@ -21,3 +21,6 @@ Thumbs.db
 .vercel
 .env*
 !.env.example
+
+# generated Prisma client (rebuilt by postinstall and the Vercel build)
+server/generated/
