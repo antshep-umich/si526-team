@@ -3,7 +3,7 @@
 **Team JAALS** (SI 526): Jennifer, Shivani, Ankun, Anthony, Louise
 **Owner:** Anthony (Dev), as part of the feasibility review
 **Last updated:** 2026-10-01
-**Status:** Draft. Stack decisions are made; items marked *Proposed* are open for team input.
+**Status:** Draft. Stack decisions are made; items marked *Proposed* are open for team input. For setup progress and next steps, see [section 12](#12-setup-status-feasibility-review-tracker).
 
 ---
 
@@ -287,3 +287,65 @@ Email is not needed for the MVP. When a later cycle needs it (reminders, passwor
 - One household per user for the MVP? This spec assumes yes; the Membership table allows more later.
 - Should anyone in a household be able to edit or delete any chore, or only its creator and the household owner? This needs UX and PM input.
 - Recurring chores: are they needed in cycle 1? Discovery research should decide.
+
+---
+
+## 12. Setup status (feasibility review tracker)
+
+Last checked: 2026-10-01.
+
+| Area | Status | Notes |
+|---|---|---|
+| GitHub repo (`antshep-umich/si526-team`, public) | Done | Branch protection on `main`: pull requests need 1 approval, and admins can bypass |
+| Collaborators | In progress | `eggbao` and `BingganRen` accepted; `jcha28` and `shivapa-lang` haven't accepted their invites yet |
+| Vercel project (`si-526/si526-team`, Hobby) | Done | Production deploys from `main`; every pull request gets a preview |
+| Vercel pre-production retention | Done | Set to 1 day |
+| Neon database `jaals-db` (Postgres 18.6) | Done | Branches: `main` (production) and `dev` (local development) |
+| Neon ↔ Vercel integration | Done | Production and Preview only; Development is off |
+| Preview database branches | Done, verified | PR #1 created `preview/setup/tech-spec` |
+| Preview branch cleanup | Done, verified | PR #2's workflow deleted its preview branch on merge |
+| GitHub Actions secrets | Done | `NEON_PROJECT_ID` and `NEON_API_KEY` (both stored as repository secrets) |
+| Local `.env` connected to the `dev` branch | Done, verified | On Anthony's main machine only |
+| Spike 1: deploy skeleton | Not started | See [section 10](#10-feasibility-spikes-to-finish-before-cycle-1-build-work) |
+| Spike 2: auth round trip | Not started | |
+| Spike 3: team deploy check | Not started | Needs `eggbao` or `BingganRen` to push a branch. This is the biggest remaining unknown |
+
+### Next steps
+
+1. Run Spike 3. It needs no code: a teammate pushes any branch and opens a pull request, and we check that Vercel builds the preview.
+2. Run Spike 1. This is the first code: package setup, Vite + React + TypeScript, Express, Prisma.
+3. Run Spike 2 once Spike 1 deploys.
+4. Get the team to confirm or change the *Proposed* rows in [section 2](#2-decisions), and answer [section 11](#11-open-questions).
+
+---
+
+## 13. Repository workflow
+
+- **Nobody commits directly to `main`.** All work goes on a branch and is merged through a pull request with 1 approval. The repo owner can bypass the approval for setup-only changes.
+- **Branch names** use a prefix and a short description, for example `feat/chore-list`, `fix/login-redirect`, `docs/...` or `ci/...`.
+- **Merging and history.** We use merge commits, so every commit from a branch stays in `main`'s history. GitHub deletes the branch automatically after merge ("Automatically delete head branches"). Deleting a merged branch loses nothing: the commits are in `main`, the pull request page keeps the full diff and discussion, and the branch can be restored from the pull request with one click.
+- **Each pull request gets its own preview database** (`preview/<branch>`), copied from main. It's deleted when the pull request closes.
+- **Commit identity.** In this repo, set your git email to the address on the GitHub account that has access to the repo, so commits are credited to that account. Anthony uses `antshep@umich.edu`.
+
+---
+
+## 14. Setting up a new machine
+
+The repo contains no secrets, so `.env` has to be copied over separately.
+
+1. **Install the tools:** Node.js 24 LTS, git, the GitHub CLI (`gh`) and the Vercel CLI (`npm i -g vercel`).
+2. **Sign in to GitHub** as the account that has access to the repo:
+   ```
+   gh auth login
+   gh auth switch --user <your-school-account>   # only if you have more than one account
+   gh auth setup-git
+   ```
+3. **Clone the repo and set your commit identity:**
+   ```
+   gh repo clone antshep-umich/si526-team
+   cd si526-team
+   git config user.email <your-school-email>
+   ```
+4. **Create `.env`.** Copy `.env.example` to `.env` and fill in the `dev` branch connection strings. They're in the Neon console (Vercel → Storage → jaals-db → **Open in Neon** → Branches → `dev` → Connect), or Anthony can send them. Never commit `.env`.
+5. **Vercel CLI (repo owner only, optional):** run `vercel login` as `antshep-umich`, then `vercel link` and choose the `si-526` team and the `si526-team` project.
+6. **Once Spike 1 adds code:** run `npm install`, then `npm run dev`.
