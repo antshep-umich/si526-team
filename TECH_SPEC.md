@@ -231,7 +231,9 @@ Responses are JSON. Errors use the format `{ "error": { "code": "...", "message"
 - [x] Connect the integration to Production and Preview, with Development off.
 - [x] Turn on "create database branch for deployment" for Preview (off for Production).
 - [x] Confirm that a preview deploy creates a `preview/<branch>` branch in Neon. Verified with PR #1, which created `preview/setup/tech-spec`.
-- [ ] Confirm that Neon deletes the preview branch after the pull request is merged.
+- [x] Check that Neon deletes the preview branch after merge. **It does not.** Our integration is Vercel-managed, so Neon deletes a preview branch only when its last Vercel deployment is deleted. On Hobby that happens after the 30-day default retention, not when the pull request closes.
+- [x] Add a GitHub Action (`.github/workflows/neon-preview-cleanup.yml`) that deletes `preview/<branch>` when a pull request closes. It reads the `NEON_PROJECT_ID` and `NEON_API_KEY` repository secrets.
+- [x] Set Vercel's **Deployment Retention Policy → Pre-Production Deployments** to 1 day as a backstop.
 
 The integration also sets `POSTGRES_*` and `PG*` aliases. We use only `DATABASE_URL` and `DATABASE_URL_UNPOOLED`.
 
@@ -262,6 +264,7 @@ Email is not needed for the MVP. When a later cycle needs it (reminders, passwor
 |---|---|---|
 | Vercel Hobby is single-user, so only the owner can see the dashboard, env vars and logs | Others can't debug production on their own | Anthony owns the Vercel project; document env vars in `.env.example`; every pull request gets a preview URL anyone can open |
 | Neon cold start after idle | First request takes about 1 second longer | Acceptable at our scale; optionally warm `/api/health` before research sessions |
+| Stale Neon preview branches pile up and hit the free plan's branch limit | New pull requests deploy without a preview database | GitHub Action deletes each preview branch when its pull request closes; shorter Vercel preview retention as a backstop |
 | Free-tier limits (Neon storage and compute hours, Vercel function usage) | Service throttled or paused | Our usage is orders of magnitude below the limits; check the dashboards monthly |
 | Running Express inside a Vercel Function (rewrites, cold starts, Prisma bundling) | Deployment issues | **Spike 1**, before any feature work |
 | Better Auth URL and cookie settings across preview URLs | Login fails on previews | **Spike 2**; configure trusted origins for `*.vercel.app` previews |

@@ -1,0 +1,20 @@
+# Deletes the Neon preview branch (preview/<git-branch>) when a pull request closes.
+# Our Neon integration is Vercel-managed, so Neon won't do this on its own until
+# Vercel deletes the preview deployment. See TECH_SPEC.md section 7.
+name: Clean up Neon preview branch
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  delete-preview-branch:
+    # Secrets aren't available to pull requests from forks.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: neondatabase/delete-branch-action@v3
+        with:
+          project_id: ${{ secrets.NEON_PROJECT_ID }}
+          branch: preview/${{ github.head_ref }}
+          api_key: ${{ secrets.NEON_API_KEY }}
