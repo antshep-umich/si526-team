@@ -24,4 +24,15 @@ describe("createApp", () => {
       error: { code: "INVALID_JSON", message: "Request body is not valid JSON" },
     });
   });
+
+  it("answers an oversized JSON body with a JSON 413", async () => {
+    const res = await request(createApp())
+      .post("/api/anything")
+      .send({ title: "x".repeat(200 * 1024) });
+
+    expect(res.status).toBe(413);
+    expect(res.body).toEqual({
+      error: { code: "PAYLOAD_TOO_LARGE", message: "Request body is too large" },
+    });
+  });
 });
