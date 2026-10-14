@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { ApiError, HealthResponse } from "../shared/api.ts";
+import CreateHousehold from "./CreateHousehold.tsx";
 
 type Check =
   | { state: "checking" }
@@ -32,6 +33,7 @@ export default function App() {
         {check.state === "ok" && `API: ok · Database: ${check.body.database}`}
         {check.state === "failed" && `API check failed: ${check.reason}`}
       </p>
+      <CreateHousehold />
     </main>
   );
 }
