@@ -6,27 +6,10 @@ Each entry says where the problem is, what goes wrong, and when it needs fixing.
 
 | # | Item | Fix by |
 |---|---|---|
-| 1 | Some 4xx request errors come back as 500 | Before the first API route that accepts data |
 | 2 | `npm run dev` without `.env` stops at startup | Any time |
 | 3 | Health check page breaks on unexpected error bodies | Any time |
 | 4 | Health route tests don't reset the fake database | Before adding more tests to that file |
 | 5 | 404 message repeats the full URL | Before 404s are logged or shown as HTML |
-
-## 1. Some 4xx request errors come back as 500
-
-**Where:** `server/http.ts`, `handleError` (lines 14–25)
-
-**What goes wrong:** Express's JSON body parser already marks some bad requests with the right status code:
-
-- 413: the body is over the 100 KB limit
-- 415: unsupported character set or encoding
-- 400: the request was aborted mid-upload
-
-`handleError` only recognises invalid JSON (400). Everything else becomes a 500 "Something went wrong", which wrongly suggests the server is broken, and the error is logged as a server error.
-
-**Why it waits:** no route accepts a request body yet.
-
-**Fix:** if the error has a 4xx `status` and `expose` is true, send that status with a generic code (for example `PAYLOAD_TOO_LARGE` or `BAD_REQUEST`). Never send the error's own message for a 5xx. Add a test that posts an oversized body and expects 413, next to the invalid JSON test in `server/app.test.ts`.
 
 ## 2. `npm run dev` without `.env` stops at startup
 

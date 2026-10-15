@@ -16,4 +16,24 @@ model Household {
   name       String
   inviteCode String   @unique
   createdAt  DateTime @default(now())
+
+  memberships Membership[]
+}
+
+enum MembershipRole {
+  owner
+  member
+}
+
+model Membership {
+  // Better Auth's user id (text). Becomes a relation to its user table in Spike 2.
+  userId      String         @unique // MVP: one household per user. Drop @unique to allow more.
+  householdId String         @db.Uuid
+  role        MembershipRole
+  joinedAt    DateTime       @default(now())
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  @@id([userId, householdId])
+  @@index([householdId])
 }
