@@ -1,12 +1,14 @@
 import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp } from "../app.js";
-import type { SessionResolver } from "../session.js";
+import type { SessionResolver } from "../middleware/session.js";
 
 // An in-memory stand-in for the two tables these routes use. It enforces the same
 // unique rules as the database (invite code; one household per user) and fails
 // the same way Prisma does (error code P2002).
 const { db, getPrisma } = vi.hoisted(() => {
+  /** Test users' sign-up names: "ana" → "Ana Test". */
+  const nameOf = (userId: string) => `${userId[0]!.toUpperCase()}${userId.slice(1)} Test`;
   interface HouseholdRow {
     id: string;
     name: string;
@@ -90,7 +92,8 @@ const { db, getPrisma } = vi.hoisted(() => {
           ...row,
           memberships: db.memberships
             .filter((m) => m.householdId === row.id)
-            .sort((a, b) => a.joinedAt.getTime() - b.joinedAt.getTime()),
+            .sort((a, b) => a.joinedAt.getTime() - b.joinedAt.getTime())
+            .map((m) => ({ ...m, user: { name: nameOf(m.userId) } })),
         };
       },
       update: async ({ where, data }: { where: { id: string }; data: { inviteCode: string } }) => {
@@ -155,7 +158,7 @@ describe("POST /api/households", () => {
     expect(res.body).toMatchObject({
       name: "Packard St House",
       role: "owner",
-      members: [{ userId: "ana", role: "owner" }],
+      members: [{ userId: "ana", name: "Ana Test", role: "owner" }],
     });
     expect(res.body.inviteCode).toMatch(/^[A-HJKMNP-Z2-9]{8}$/);
     expect(db.memberships).toHaveLength(1);
@@ -222,8 +225,8 @@ describe("POST /api/households/join", () => {
       id,
       role: "member",
       members: [
-        { userId: "ana", role: "owner" },
-        { userId: "ben", role: "member" },
+        { userId: "ana", name: "Ana Test", role: "owner" },
+        { userId: "ben", name: "Ben Test", role: "member" },
       ],
     });
   });

@@ -3,7 +3,7 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { fromNodeHeaders, toNodeHandler } from "better-auth/node";
 import type { RequestHandler } from "express";
 import { getPrisma } from "./db.js";
-import type { SessionResolver } from "./session.js";
+import type { SessionResolver } from "./middleware/session.js";
 
 // Sign-in with Better Auth (TECH_SPEC sections 2 and 7). It runs inside our Express app
 // and keeps its users and sessions in our Postgres (the user, session, account and

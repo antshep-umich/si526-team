@@ -72,20 +72,22 @@ Vercel project (one deployment)
   - The app must use Neon's **pooled** connection string so that function cold starts don't use up all the database connections.
 - **Mobile later:** a mobile client calls the same `/api` routes. Better Auth supports bearer-token sessions for clients that can't use cookies.
 
-### Repo layout (proposed)
+### Repo layout
 
 ```
 /
 ├── api/
 │   └── index.ts          # Vercel entry point: imports and exports the Express app
 ├── server/
-│   ├── app.ts            # builds the Express app (routes, middleware); no app.listen
+│   ├── app.ts            # builds the Express app and wires the layers below; no app.listen
 │   ├── dev.ts            # local only: imports app and calls app.listen(3000); run with tsx
 │   ├── auth.ts           # Better Auth config
 │   ├── db.ts             # Prisma client (single shared instance)
-│   └── routes/           # households.ts, chores.ts, ...
+│   ├── middleware/       # session.ts (requireUser), household.ts (requireHousehold), errors.ts
+│   ├── services/         # the app's rules and database queries: households.ts, chores.ts, ...
+│   └── routes/           # thin HTTP handlers: households.ts, chores.ts, ...
 ├── shared/
-│   └── schemas.ts        # Zod schemas and types used by both the frontend and the API
+│   └── api.ts            # types and validation shared by the frontend and the API
 ├── prisma/
 │   └── schema.prisma
 ├── src/                  # React app, .tsx (Vite default location)
@@ -96,6 +98,12 @@ Vercel project (one deployment)
 ├── vercel.json           # rewrites (see below)
 └── package.json          # one package.json for client and server
 ```
+
+**Server layers** (adopted 2026-10-17, before the chore routes):
+
+- **Routes** only translate HTTP: read the request (`routes/body.ts` for body fields), call a service, and send the result. They don't touch Prisma or decide rules.
+- **Services** hold the rules and the database queries, and never import Express. Anything else that needs the same logic, such as a scheduled reminder job or a mobile client, calls the service directly. When a rule is broken, a service throws a `ServiceError` with a code (`services/errors.ts`).
+- **Middleware** handles what many routes share. `requireUser` rejects requests with no session. `requireHousehold` loads the user's membership, answers 404 `NO_HOUSEHOLD` if there isn't one, and is how routes enforce the household authorization rule (section 6). `handleError` turns each `ServiceError` code into its HTTP status and the JSON error format; the code-to-status table is in `middleware/errors.ts`.
 
 **Conventions confirmed in Spike 1:**
 
@@ -202,6 +210,7 @@ Every route except `/api/auth/*` and `/api/health` requires a session. **Authori
 | Method | Path | Purpose |
 |---|---|---|
 | * | `/api/auth/*` | Better Auth (sign up, sign in, sign out, session) |
+| POST | `/api/password-reset` | **stand-in**: set a new password with only `{ email, newPassword }` (TECH_DEBT #7) |
 | GET | `/api/health` | uptime check |
 | GET | `/api/me` | current user and their household (if any) |
 | POST | `/api/households` | create a household; the creator becomes the owner |
@@ -281,6 +290,7 @@ Email is not needed for the MVP. When a later cycle needs it (reminders, passwor
 | Free-tier limits (Neon storage and compute hours, Vercel function usage) | Service throttled or paused | Our usage is orders of magnitude below the limits; check the dashboards monthly |
 | Running Express inside a Vercel Function (rewrites, cold starts, Prisma bundling) | Deployment issues | **Spike 1**, before any feature work |
 | Better Auth URL and cookie settings across preview URLs | Login fails on previews | Better Auth takes its URL from each request's host, limited to our own Vercel hosts (section 7). Verified on a preview in Spike 2 |
+| Stand-in password reset needs only an email (TECH_DEBT #7) | Anyone who knows a housemate's email can take over their account | Acceptable while users are the team and participants; replace with Better Auth's emailed reset when email is added |
 | Data leaking between households | Privacy problem | Enforce the household check in one middleware; add API tests that try to access another household's data |
 | Team members new to React, Express or TypeScript | Slower cycle 1 | Keep the MVP small; pair on the first routes and components; use plain `fetch` and avoid extra libraries; allow `any` while learning, with a lint warning rather than an error |
 | No email means no self-service password reset | Participants get locked out | Manual reset script; add email in a later cycle if research shows it's needed |

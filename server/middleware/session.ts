@@ -1,5 +1,5 @@
 import type { Request, RequestHandler, Response } from "express";
-import { sendError } from "./http.js";
+import { sendError } from "./errors.js";
 
 /** The signed-in user, as far as our routes care. */
 export interface SessionUser {
