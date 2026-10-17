@@ -1,7 +1,8 @@
 /*
  * Figma "Home - Header menu" / "Home - Menu open" (SCRUM-3). Those frames use raw
- * values (Libre Baskerville, #2B1C14, #615247, #A84A30) rather than tokens; mapped
- * here to font/serif, text/default, text/muted and action/primary.
+ * values (Libre Baskerville, #2B1C14, #615247) rather than tokens; mapped here to
+ * font/serif, text/default and text/muted. Log out is the primary Button in both
+ * modes (team decision, 2026-10-17), not the frame's white box with rust text.
  */
 .page {
   width: 100%;
@@ -80,29 +81,8 @@
   z-index: 10;
   display: flex;
   flex-direction: column;
-  border: 1.5px solid var(--color-border-default);
-  border-radius: 12px;
-  /* The card color is see-through in dark mode, so the menu uses the solid tab-bar surface. */
-  background: var(--color-surface-tab-bar);
+  border-radius: 12px; /* the Button's radius, so the shadow follows it */
   box-shadow: 0 4px 16px rgb(0 0 0 / 12%);
-  overflow: hidden;
-}
-
-.menuItem {
-  padding: 14px 24px;
-  border: none;
-  background: none;
-  color: var(--color-action-primary);
-  font: 400 16px/normal var(--font-sans);
-  text-align: left;
-  white-space: nowrap;
-  cursor: pointer;
-}
-
-.menuItem:focus-visible {
-  outline: 2px solid var(--color-action-focus-ring);
-  outline-offset: -4px;
-  border-radius: 10px;
 }
 
 .empty {

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { Household } from "../api/households.ts";
+import Button from "../components/Button.tsx";
 import styles from "./Home.module.css";
 
 // SCRUM-3 Log in and Log out: the household home with its header menu (Figma
@@ -14,12 +15,12 @@ type HomeProps = {
 export default function Home({ household, onLogOut }: HomeProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const headerRef = useRef<HTMLDivElement>(null);
-  const firstItemRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   // Close the menu on a tap outside it or the Escape key; focus its first item when it opens.
   useEffect(() => {
     if (!menuOpen) return;
-    firstItemRef.current?.focus();
+    menuRef.current?.querySelector("button")?.focus();
     const onPointerDown = (e: PointerEvent) => {
       if (!headerRef.current?.contains(e.target as Node)) setMenuOpen(false);
     };
@@ -53,10 +54,10 @@ export default function Home({ household, onLogOut }: HomeProps) {
           </span>
         </button>
         {menuOpen && (
-          <div className={styles.menu} role="menu">
-            <button type="button" role="menuitem" className={styles.menuItem} ref={firstItemRef} onClick={onLogOut}>
+          <div className={styles.menu} role="menu" ref={menuRef}>
+            <Button role="menuitem" onClick={onLogOut}>
               Log out
-            </button>
+            </Button>
           </div>
         )}
       </div>
