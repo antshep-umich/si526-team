@@ -2,7 +2,7 @@ import express from "express";
 import request from "supertest";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ServiceError } from "../services/errors.js";
-import { handleError } from "./errors.js";
+import { handleError, notFound } from "./errors.js";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -42,5 +42,15 @@ describe("handleError", () => {
 
     expect(res.status).toBe(status);
     expect(res.body).toEqual({ error: { code, message: "Message for the user" } });
+  });
+
+  it("answers requests that match no route with a JSON 404 naming the route", async () => {
+    const app = express();
+    app.use(notFound);
+
+    const res = await request(app).post("/api/nothing-here?token=abc");
+
+    expect(res.status).toBe(404);
+    expect(res.body.error.code).toBe("NOT_FOUND");
   });
 });

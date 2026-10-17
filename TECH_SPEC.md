@@ -30,7 +30,7 @@ A web app where people who share a home add chores, see one shared chore list, a
 | Email | Deferred to a later cycle. Planned provider: Brevo (see [section 8](#8-deferred-email-and-reminders)) | Decided (deferred) |
 | Runtime | Node.js 24 LTS (matches Vercel's default and the team's local install) | Decided |
 | Request validation | Zod schemas, shared by the frontend and the API | Proposed |
-| Testing | Vitest (unit tests), Supertest (API tests) | Proposed |
+| Testing | Vitest for everything: Supertest for the API, Testing Library + jsdom for React, Playwright (driven from Vitest) for end-to-end. See the README's Tests section | Decided |
 | Code style | ESLint and Prettier | Proposed |
 
 ### Why these choices
@@ -373,4 +373,4 @@ The repo contains no secrets, so `.env` has to be copied over separately.
    ```
 4. **Create `.env`.** Copy `.env.example` to `.env` and fill in the `dev` branch connection strings. They're in the Neon console (Vercel → Storage → jaals-db → **Open in Neon** → Branches → `dev` → Connect), or Anthony can send them. Also set `BETTER_AUTH_SECRET` to a random string of 32+ characters; `.env.example` shows a command that makes one. Never commit `.env`.
 5. **Vercel CLI (repo owner only, optional):** run `vercel login` as `antshep-umich`, then `vercel link` and choose the `si-526` team and the `si526-team` project.
-6. **Install and run:** `npm install` (this also generates the Prisma client), then `npm run dev`. Open http://localhost:5173; the page should read "API: ok · Database: ok". Run `npm test` for the unit tests.
+6. **Install and run:** `npm install` (this also generates the Prisma client), then `npm run dev`. Open http://localhost:5173 and you should see the Log in screen. Run `npm test` for the unit tests. For the end-to-end tests, run `npx playwright install chromium` once, then `npm run test:e2e`.

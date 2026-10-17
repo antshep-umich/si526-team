@@ -1,0 +1,25 @@
+# End-to-end tests against each Vercel preview, once Vercel reports it deployed.
+# Each preview has its own Neon database branch, so the test accounts never
+# reach the dev or production data. Production deployments are skipped.
+name: E2E on preview
+
+on:
+  deployment_status:
+
+jobs:
+  e2e:
+    if: github.event.deployment_status.state == 'success' && github.event.deployment.environment == 'Preview'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.deployment.sha }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+        env:
+          E2E_BASE_URL: ${{ github.event.deployment_status.environment_url }}
