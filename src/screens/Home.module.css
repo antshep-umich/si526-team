@@ -1,0 +1,111 @@
+/*
+ * Figma "Home - Header menu" / "Home - Menu open" (SCRUM-3). Those frames use raw
+ * values (Libre Baskerville, #2B1C14, #615247, #A84A30) rather than tokens; mapped
+ * here to font/serif, text/default, text/muted and action/primary.
+ */
+.page {
+  width: 100%;
+  max-width: 402px;
+  margin: 0 auto;
+  padding: 60px 24px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 39px; /* title bottom (87) to empty state (126) */
+}
+
+.header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+/* No text style in Figma for this: bold serif 22px in a 27px-tall line, as in the frame. */
+.title {
+  min-width: 0;
+  overflow-wrap: break-word;
+  font: 700 22px/27px var(--font-serif);
+  color: var(--color-text-default);
+}
+
+/* 24×24 icon as drawn; the button around it is 44×44 so it's easy to tap. */
+.menuButton {
+  flex-shrink: 0;
+  margin: -10px;
+  padding: 10px;
+  border: none;
+  border-radius: 12px;
+  background: none;
+  color: var(--color-text-default);
+  cursor: pointer;
+}
+
+.menuButton:focus-visible {
+  outline: 2px solid var(--color-action-focus-ring);
+  outline-offset: -2px;
+}
+
+.menuIcon {
+  position: relative;
+  display: block;
+  width: 24px;
+  height: 24px;
+}
+
+/* Three 20×2 bars at y = 5, 11 and 17, radius 1. */
+.menuIcon span {
+  position: absolute;
+  left: 2px;
+  width: 20px;
+  height: 2px;
+  border-radius: 1px;
+  background: currentColor;
+}
+.menuIcon span:nth-child(1) {
+  top: 5px;
+}
+.menuIcon span:nth-child(2) {
+  top: 11px;
+}
+.menuIcon span:nth-child(3) {
+  top: 17px;
+}
+
+/* Opens at y = 96 in Figma, 9px below the title row, right-aligned with the icon. */
+.menu {
+  position: absolute;
+  top: calc(100% + 9px);
+  right: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  border: 1.5px solid var(--color-border-default);
+  border-radius: 12px;
+  /* The card color is see-through in dark mode, so the menu uses the solid tab-bar surface. */
+  background: var(--color-surface-tab-bar);
+  box-shadow: 0 4px 16px rgb(0 0 0 / 12%);
+  overflow: hidden;
+}
+
+.menuItem {
+  padding: 14px 24px;
+  border: none;
+  background: none;
+  color: var(--color-action-primary);
+  font: 400 16px/normal var(--font-sans);
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.menuItem:focus-visible {
+  outline: 2px solid var(--color-action-focus-ring);
+  outline-offset: -4px;
+  border-radius: 10px;
+}
+
+.empty {
+  font: 400 16px/normal var(--font-sans);
+  color: var(--color-text-muted);
+}
