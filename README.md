@@ -8,7 +8,9 @@ Shared chore tracker for Team JAALS (SI 526). See [TECH_SPEC.md](TECH_SPEC.md) f
 
 ## Quick start
 
-Needs Node.js 24 and a `.env` file (copy `.env.example` and fill in the Neon `dev` branch connection strings; see TECH_SPEC section 14).
+Needs Node.js 24 and a `.env` file (copy `.env.example`, then fill in the Neon `dev` branch connection strings and a random `BETTER_AUTH_SECRET`; see TECH_SPEC section 14).
+
+To use the app locally, create an account on the sign-in screen. Accounts live in the shared `dev` database, so any made-up email works.
 
     npm install      # also generates the Prisma client
     npm run dev      # React on http://localhost:5173, API on http://localhost:3000

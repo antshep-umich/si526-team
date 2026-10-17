@@ -1,4 +1,4 @@
-// Data model: TECH_SPEC section 5. Better Auth's tables (user, session, ...) arrive in Spike 2.
+// Data model: TECH_SPEC section 5.
 
 generator client {
   provider            = "prisma-client"
@@ -26,14 +26,82 @@ enum MembershipRole {
 }
 
 model Membership {
-  // Better Auth's user id (text). Becomes a relation to its user table in Spike 2.
   userId      String         @unique // MVP: one household per user. Drop @unique to allow more.
   householdId String         @db.Uuid
   role        MembershipRole
   joinedAt    DateTime       @default(now())
 
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
 
   @@id([userId, householdId])
   @@index([householdId])
+}
+
+// Better Auth's tables, generated with `npx auth@latest generate` (Better Auth 1.7.10).
+// Better Auth reads and writes these itself. If an upgrade changes them, regenerate
+// and compare rather than editing by hand.
+
+model User {
+  id            String      @id
+  name          String
+  email         String
+  emailVerified Boolean     @default(false)
+  image         String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+  membership    Membership? // Membership[] once a user can be in more than one household
+
+  @@unique([email])
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
 }

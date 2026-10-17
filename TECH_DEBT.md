@@ -10,6 +10,7 @@ Each entry says where the problem is, what goes wrong, and when it needs fixing.
 | 3 | Health check page breaks on unexpected error bodies | Any time |
 | 4 | Health route tests don't reset the fake database | Before adding more tests to that file |
 | 5 | 404 message repeats the full URL | Before 404s are logged or shown as HTML |
+| 6 | Sign-in rate limiting is per Function instance | Before the app is shared outside the team |
 
 ## 2. `npm run dev` without `.env` stops at startup
 
@@ -44,3 +45,13 @@ Each entry says where the problem is, what goes wrong, and when it needs fixing.
 **What goes wrong:** the message "No route for GET …" includes `req.originalUrl`, query string and all. That's harmless in a JSON response. If these messages are ever logged, or shown in HTML, a token in a query string would end up there too.
 
 **Fix:** use `req.path` instead of `req.originalUrl`, and update the expected message in `server/app.test.ts` if it changes.
+
+## 6. Sign-in rate limiting is per Function instance
+
+**Where:** `server/auth.ts`, `createAuth` (Better Auth's `rateLimit` option, currently left at its defaults)
+
+**What goes wrong:** on Vercel, Better Auth limits requests to 100 per 10 seconds per client, but it keeps the counts in memory. Each Function instance has its own memory, so the limit is per instance and resets whenever an instance starts. Someone guessing passwords would be slowed down less than the numbers suggest. Locally, rate limiting is off.
+
+**Why it waits:** the only users are the team and about 10 research participants, and passwords are hashed.
+
+**Fix:** set `rateLimit: { storage: "database" }`, plus stricter `customRules` for `/sign-in/email` (for example 5 per minute). Run `npx auth@latest generate` again to add the `rateLimit` table, then create a migration.

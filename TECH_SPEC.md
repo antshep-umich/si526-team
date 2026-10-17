@@ -147,7 +147,7 @@ Out of scope for the MVP: email of any kind, password reset by email, recurring 
 
 ## 5. Data model (draft)
 
-Better Auth creates and manages its own tables: `user`, `session`, `account` and `verification`. Our tables:
+Better Auth reads and writes its own tables: `user`, `session`, `account` and `verification`. They're defined in `prisma/schema.prisma`, generated with `npx auth@latest generate`, so Prisma migrations create them like any other table. User ids are text, not uuid. Passwords are stored hashed, in `account.password`. Our tables:
 
 **Household**
 | Field | Type | Notes |
@@ -160,7 +160,7 @@ Better Auth creates and manages its own tables: `user`, `session`, `account` and
 **Membership**
 | Field | Type | Notes |
 |---|---|---|
-| userId | FK → user | |
+| userId | FK → user (text) | deleting a user deletes their membership |
 | householdId | FK → Household | |
 | role | enum: `owner`, `member` | the owner can regenerate the invite code and remove members |
 | joinedAt | timestamp | |
@@ -225,8 +225,9 @@ Responses are JSON. Errors use the format `{ "error": { "code": "...", "message"
 |---|---|---|
 | `DATABASE_URL` | Neon integration | pooled connection for the app at runtime |
 | `DATABASE_URL_UNPOOLED` | Neon integration | direct connection for Prisma migrations |
-| `BETTER_AUTH_SECRET` | us (random 32+ bytes) | signing sessions |
-| `BETTER_AUTH_URL` | us | the app's base URL for each environment |
+| `BETTER_AUTH_SECRET` | us (random 32+ bytes), separate values for local, Preview and Production | signing session cookies. Better Auth refuses to start on Vercel without it |
+
+No `BETTER_AUTH_URL`: every preview has a different URL, so `server/auth.ts` lets Better Auth take its URL from each request's host instead. It only accepts our own hosts: `si526-team.vercel.app`, `si526-team-si-526.vercel.app` and `si526-team-*-si-526.vercel.app` on Vercel, and `localhost` locally.
 
 **Environments:**
 
@@ -279,7 +280,7 @@ Email is not needed for the MVP. When a later cycle needs it (reminders, passwor
 | Stale Neon preview branches pile up and hit the free plan's branch limit | New pull requests deploy without a preview database | GitHub Action deletes each preview branch when its pull request closes; shorter Vercel preview retention as a backstop |
 | Free-tier limits (Neon storage and compute hours, Vercel function usage) | Service throttled or paused | Our usage is orders of magnitude below the limits; check the dashboards monthly |
 | Running Express inside a Vercel Function (rewrites, cold starts, Prisma bundling) | Deployment issues | **Spike 1**, before any feature work |
-| Better Auth URL and cookie settings across preview URLs | Login fails on previews | **Spike 2**; configure trusted origins for `*.vercel.app` previews |
+| Better Auth URL and cookie settings across preview URLs | Login fails on previews | Better Auth takes its URL from each request's host, limited to our own Vercel hosts (section 7). Confirm on a preview in Spike 2 |
 | Data leaking between households | Privacy problem | Enforce the household check in one middleware; add API tests that try to access another household's data |
 | Team members new to React, Express or TypeScript | Slower cycle 1 | Keep the MVP small; pair on the first routes and components; use plain `fetch` and avoid extra libraries; allow `any` while learning, with a lint warning rather than an error |
 | No email means no self-service password reset | Participants get locked out | Manual reset script; add email in a later cycle if research shows it's needed |
@@ -290,7 +291,9 @@ Email is not needed for the MVP. When a later cycle needs it (reminders, passwor
 
 - [x] **Spike 1: deploy skeleton.** A Vite + React + TypeScript page and an Express `/api/health` route that reads one row from Neon through Prisma, deployed to Vercel. Confirms the rewrites, TypeScript function bundling (including imports from `shared/`), pooled connection and that migrations run during the build. Done 2026-10-01 in PR #4. One fix was needed: the build script was renamed from `vercel-build` to `build:vercel` because Vercel's Node runtime runs `vercel-build` by itself, which made the build run twice.
 - [ ] **Spike 2: auth round trip.** Better Auth sign-up, sign-in and session check working locally and on a preview URL.
-- [ ] **Spike 3: team deploy check.** A teammate (not the Vercel owner) pushes a branch and confirms a preview deployment builds.
+  - [x] Locally (2026-10-17, branch `Sprint2_Dev`, Better Auth 1.7.10). Checked with curl through the Vite proxy and in a browser: sign-up sets an `HttpOnly` session cookie, the session reads back, a signed-in user can create a household, sign-out makes protected routes answer 401, a wrong password gets 401, signing in again restores the session, and a sign-up from another site gets 403 `INVALID_ORIGIN`.
+  - [ ] On a preview URL. Needs `BETTER_AUTH_SECRET` set in Vercel for Preview and Production, and a pushed branch.
+- [x] **Spike 3: team deploy check.** A teammate (not the Vercel owner) pushes a branch and confirms a preview deployment builds. Passed 2026-10-01: PR #5 (`shivapa-lang`) and PR #6 (`eggbao`) both built Vercel previews. Feature PRs #8 and #9 from the same teammates built previews too (2026-10-14). On the free plan, commits from people other than the Vercel owner deploy fine as long as the repo is public.
 
 ---
 
@@ -319,14 +322,13 @@ Last checked: 2026-10-01.
 | GitHub Actions secrets | Done | `NEON_PROJECT_ID` and `NEON_API_KEY` (both stored as repository secrets) |
 | Local `.env` connected to the `dev` branch | Done, verified | On both of Anthony's machines |
 | Spike 1: deploy skeleton | Done, verified | PR #4: preview served the page, `/api/health` read Neon through Prisma, and the build applied the first migration |
-| Spike 2: auth round trip | Not started | |
-| Spike 3: team deploy check | Not started | Needs `eggbao` or `BingganRen` to push a branch. This is the biggest remaining unknown |
+| Spike 2: auth round trip | In progress | Works locally; preview check pending (see [section 10](#10-feasibility-spikes-to-finish-before-cycle-1-build-work)) |
+| Spike 3: team deploy check | Done, verified | PRs #5 and #8 (`shivapa-lang`) and #6 and #9 (`eggbao`) all built Vercel previews |
 
 ### Next steps
 
-1. Run Spike 3. It needs no code: a teammate pushes any branch and opens a pull request, and we check that Vercel builds the preview.
-2. Run Spike 2 once Spike 1 deploys.
-3. Get the team to confirm or change the *Proposed* rows in [section 2](#2-decisions), and answer [section 11](#11-open-questions).
+1. Run Spike 2 (auth). Until it's done, protected routes return 401 on deployed previews and production.
+2. Get the team to confirm or change the *Proposed* rows in [section 2](#2-decisions), and answer [section 11](#11-open-questions).
 
 ---
 
@@ -357,6 +359,6 @@ The repo contains no secrets, so `.env` has to be copied over separately.
    cd si526-team
    git config user.email <your-school-email>
    ```
-4. **Create `.env`.** Copy `.env.example` to `.env` and fill in the `dev` branch connection strings. They're in the Neon console (Vercel → Storage → jaals-db → **Open in Neon** → Branches → `dev` → Connect), or Anthony can send them. Never commit `.env`.
+4. **Create `.env`.** Copy `.env.example` to `.env` and fill in the `dev` branch connection strings. They're in the Neon console (Vercel → Storage → jaals-db → **Open in Neon** → Branches → `dev` → Connect), or Anthony can send them. Also set `BETTER_AUTH_SECRET` to a random string of 32+ characters; `.env.example` shows a command that makes one. Never commit `.env`.
 5. **Vercel CLI (repo owner only, optional):** run `vercel login` as `antshep-umich`, then `vercel link` and choose the `si-526` team and the `si526-team` project.
 6. **Install and run:** `npm install` (this also generates the Prisma client), then `npm run dev`. Open http://localhost:5173; the page should read "API: ok · Database: ok". Run `npm test` for the unit tests.

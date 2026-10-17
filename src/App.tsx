@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import type { ApiError, HealthResponse } from "../shared/api.ts";
+import { authClient } from "./auth.ts";
 import CreateHousehold from "./CreateHousehold.tsx";
+import SignIn from "./SignIn.tsx";
 
 type Check =
   | { state: "checking" }
@@ -20,6 +22,7 @@ async function checkHealth(): Promise<Check> {
 
 export default function App() {
   const [check, setCheck] = useState<Check>({ state: "checking" });
+  const { data: session, isPending } = authClient.useSession();
 
   useEffect(() => {
     checkHealth().then(setCheck);
@@ -33,7 +36,19 @@ export default function App() {
         {check.state === "ok" && `API: ok · Database: ${check.body.database}`}
         {check.state === "failed" && `API check failed: ${check.reason}`}
       </p>
-      <CreateHousehold />
+      {isPending && <p>Checking whether you're signed in…</p>}
+      {!isPending && !session && <SignIn />}
+      {session && (
+        <>
+          <p>
+            Signed in as {session.user.name} ({session.user.email}){" "}
+            <button type="button" onClick={() => authClient.signOut()}>
+              Sign out
+            </button>
+          </p>
+          <CreateHousehold />
+        </>
+      )}
     </main>
   );
 }
