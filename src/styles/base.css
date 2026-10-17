@@ -1,0 +1,62 @@
+/* Page-wide defaults. Import once per page, after tokens.css and fonts.css. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Overscroll and anything past the gradient show the bottom color. */
+html {
+  background: var(--color-background-bottom);
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: linear-gradient(to bottom, var(--color-background-top), var(--color-background-bottom));
+  color: var(--color-text-default);
+  font: var(--type-body);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+/*
+ * Icons whose colors are drawn into the Figma export come in a light and a dark
+ * file (src/assets/icons/light|dark). ThemedIcon renders both; these rules show
+ * the one that matches the current theme. Same selectors as tokens.css.
+ */
+[data-icon-theme="dark"] {
+  display: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) [data-icon-theme="light"] {
+    display: none;
+  }
+  :root:not([data-theme="light"]) [data-icon-theme="dark"] {
+    display: block;
+  }
+}
+
+:root[data-theme="dark"] [data-icon-theme="light"] {
+  display: none;
+}
+:root[data-theme="dark"] [data-icon-theme="dark"] {
+  display: block;
+}

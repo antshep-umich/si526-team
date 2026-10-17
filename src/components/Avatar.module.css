@@ -1,0 +1,14 @@
+/* Figma: Components / Avatar (148:521) */
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 22px;
+  background: var(--color-progress-track);
+  color: var(--color-action-primary);
+  font: var(--type-button); /* 600 15/20, same as the button label */
+  white-space: nowrap;
+}

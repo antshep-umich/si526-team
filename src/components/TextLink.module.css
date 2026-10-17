@@ -1,0 +1,19 @@
+/* Underlined serif link under a form's main button ("Forgot your password?", "Back"). */
+.link {
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--color-text-muted);
+  font: var(--type-reading); /* serif 16/24 */
+  text-align: center;
+  text-decoration: underline;
+  text-underline-position: from-font;
+  cursor: pointer;
+}
+
+.link:focus-visible {
+  outline: 2px solid var(--color-action-focus-ring);
+  outline-offset: 2px;
+  border-radius: 4px;
+}

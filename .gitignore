@@ -24,3 +24,6 @@ Thumbs.db
 
 # generated Prisma client (rebuilt by postinstall and the Vercel build)
 server/generated/
+
+# browser test artifacts
+.playwright-mcp/

@@ -1,0 +1,20 @@
+/* Figma: Components / Chip (148:516) */
+.chip {
+  display: inline-flex;
+  align-items: flex-start;
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font: var(--type-chip);
+  white-space: nowrap;
+}
+
+.overdue {
+  background: var(--color-overdue-fill);
+  color: var(--color-overdue-on-fill);
+}
+
+.success {
+  background: var(--color-success-chip);
+  color: var(--color-success-chip-text);
+}

@@ -16,6 +16,12 @@ To use the app locally, create an account on the sign-in screen. Accounts live i
     npm run dev      # React on http://localhost:5173, API on http://localhost:3000
     npm test         # unit tests
 
+## Design system
+
+Colors, fonts and text styles from the Figma "App Design" file live in `src/styles/tokens.css`. Light or dark mode follows the device's system setting. The Figma components are React components in `src/components/`.
+
+To see every component, run `npm run dev` and open http://localhost:5173/components.html. On a deployment, it's at `/components`. It follows the device's light or dark setting unless you pick Light or Dark with its switch, and "Show sizes" prints each component's size so you can compare it with Figma.
+
 ## Database changes
 
 Edit `prisma/schema.prisma`, then run `npx prisma migrate dev --name <what-changed>` and commit the new folder in `prisma/migrations/`. Vercel applies migrations automatically when it builds.

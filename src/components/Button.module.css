@@ -1,0 +1,41 @@
+/* Figma: Components / Button (148:503) */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 22px;
+  border: none;
+  border-radius: 12px;
+  font: var(--type-button);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.primary {
+  background: var(--color-action-primary);
+  color: var(--color-action-on-primary);
+}
+
+/* The 2px border sits outside the padding, as in Figma: outline buttons are 4px taller (52px). */
+.outline {
+  background: transparent;
+  border: 2px solid var(--color-action-primary);
+  color: var(--color-action-primary);
+}
+
+.fullWidth {
+  width: 100%;
+}
+
+/* "Focus shows the 2px keyboard focus ring with a 3px gap." Radius 15 = 12 + 3. */
+.button:focus-visible,
+.button[data-force-focus] {
+  outline: 2px solid var(--color-action-focus-ring);
+  outline-offset: 3px;
+}
+
+/* Not in Figma yet: a placeholder until UX designs a disabled state. */
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

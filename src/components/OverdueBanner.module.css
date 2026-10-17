@@ -1,0 +1,54 @@
+/* Figma: Components / Overdue banner (148:561) */
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 59px;
+  padding: 10px 12px 10px 14px;
+  border-radius: 14px;
+  background: var(--color-overdue-fill);
+  color: var(--color-overdue-on-fill);
+}
+
+.text {
+  display: flex;
+  flex: 1 0 0;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 1px;
+  overflow: hidden;
+}
+
+.text p {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.title {
+  font: var(--type-button); /* 600 15/20 */
+}
+
+.message {
+  font: var(--type-meta);
+}
+
+.action {
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: var(--type-field-label); /* 700 13/18 */
+  text-decoration: underline;
+  text-underline-position: from-font;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.action:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+  border-radius: 2px;
+}

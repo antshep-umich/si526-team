@@ -1,0 +1,178 @@
+/* Demo page layout, following the Figma "Component list" frame (gap 28 between sections). */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  max-width: 512px; /* Figma's 480px column plus the 16px side gutters */
+  margin: 0 auto;
+  padding: 40px 16px 48px;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.title {
+  font: var(--type-screen-title);
+}
+
+.subtitle {
+  font: var(--type-meta);
+  color: var(--color-text-muted);
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.segmented {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 12px;
+  background: var(--color-surface-card);
+}
+
+.segment {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 9px;
+  background: none;
+  color: var(--color-text-muted);
+  font: var(--type-tab-label);
+  cursor: pointer;
+}
+
+.segment[aria-checked="true"] {
+  background: var(--color-action-primary);
+  color: var(--color-action-on-primary);
+}
+
+.segment:focus-visible {
+  outline: 2px solid var(--color-action-focus-ring);
+  outline-offset: 2px;
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: var(--type-small);
+  color: var(--color-text-muted);
+}
+
+.toggle input {
+  accent-color: var(--color-action-primary);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.overline {
+  font: var(--type-overline);
+  letter-spacing: var(--tracking-overline);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.column,
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hint {
+  font: var(--type-meta);
+  color: var(--color-text-muted);
+}
+
+/* Measured wrapper: draws a dashed outline and prints width × height when sizes are on. */
+.measured {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.measuredBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.measuredBody {
+  display: flex;
+}
+
+.measuredBlock > .measuredBody > * {
+  flex: 1;
+}
+
+.measured[data-show] .measuredBody > *,
+.measuredBlock[data-show] .measuredBody > * {
+  box-shadow: 0 0 0 1px rgb(0 160 255 / 70%);
+}
+
+.size {
+  font: 600 11px/14px ui-monospace, "SF Mono", Menlo, monospace;
+  color: rgb(0 140 230);
+}
+
+.swatches {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.swatch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font: var(--type-meta);
+  color: var(--color-text-muted);
+}
+
+.swatch code {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 11px;
+}
+
+.chipColor {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 8px;
+}
+
+.typeList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
