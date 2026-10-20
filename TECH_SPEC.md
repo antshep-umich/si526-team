@@ -82,10 +82,13 @@ Vercel project (one deployment)
 │   ├── app.ts            # builds the Express app and wires the layers below; no app.listen
 │   ├── dev.ts            # local only: imports app and calls app.listen(3000); run with tsx
 │   ├── auth.ts           # Better Auth config
-│   ├── db.ts             # Prisma client (single shared instance)
-│   ├── middleware/       # session.ts (requireUser), household.ts (requireHousehold), errors.ts
-│   ├── services/         # the app's rules and database queries: households.ts, chores.ts, ...
-│   └── routes/           # thin HTTP handlers: households.ts, chores.ts, ...
+│   ├── middleware/       # 1. session.ts (requireUser), household.ts (requireHousehold), errors.ts
+│   ├── routes/           # 2. URL + middleware → controller: households.ts, chores.ts, ...
+│   ├── controllers/      # 3. request in, response out: households.ts, chores.ts, ...
+│   ├── services/         # 4. the app's rules: households.ts, chores.ts, ...
+│   ├── models/           # 5. the only database code: households.ts, memberships.ts, accounts.ts, ...
+│   ├── db.ts             # 6. Prisma client (single shared instance)
+│   └── test/             # fakeModels.ts: in-memory models for tests
 ├── shared/
 │   └── api.ts            # types and validation shared by the frontend and the API
 ├── prisma/
@@ -99,11 +102,16 @@ Vercel project (one deployment)
 └── package.json          # one package.json for client and server
 ```
 
-**Server layers** (adopted 2026-10-17, before the chore routes):
+**Server layers** (adopted 2026-10-17; controllers and models added 2026-10-20). A request passes through them in order, and each layer only uses the ones below it. `server/architecture.test.ts` checks the imports and fails `npm test` if a layer reaches past its neighbors.
 
-- **Routes** only translate HTTP: read the request (`routes/body.ts` for body fields), call a service, and send the result. They don't touch Prisma or decide rules.
-- **Services** hold the rules and the database queries, and never import Express. Anything else that needs the same logic, such as a scheduled reminder job or a mobile client, calls the service directly. When a rule is broken, a service throws a `ServiceError` with a code (`services/errors.ts`).
-- **Middleware** handles what many routes share. `requireUser` rejects requests with no session. `requireHousehold` loads the user's membership, answers 404 `NO_HOUSEHOLD` if there isn't one, and is how routes enforce the household authorization rule (section 6). `handleError` turns each `ServiceError` code into its HTTP status and the JSON error format; the code-to-status table is in `middleware/errors.ts`.
+1. **Middleware** handles what many routes share. `requireUser` rejects requests with no session. `requireHousehold` loads the user's membership, answers 404 `NO_HOUSEHOLD` if there isn't one, and is how routes enforce the household authorization rule (section 6). `handleError` turns each `ServiceError` code into its HTTP status and the JSON error format; the code-to-status table is in `middleware/errors.ts`.
+2. **Routes** map a URL and its middleware to a controller, and nothing else: `router.post("/join", households.join)`.
+3. **Controllers** read the request (`controllers/body.ts` for body fields), call a service, and shape and send the response (for example `toHouseholdResponse`). They never touch models or Prisma.
+4. **Services** hold the rules, and never import Express or Prisma. Anything else that needs the same logic, such as a scheduled reminder job or a mobile client, calls the service directly. When a rule is broken, a service throws a `ServiceError` with a code (`services/errors.ts`).
+5. **Models** are the only code that reads or writes the database, one file per table or group of tables. With Prisma they're functions (`findHouseholdByInviteCode`, `createMembership`), not classes; the tables themselves are defined in `prisma/schema.prisma`. A write that breaks a unique rule throws `UniqueConflictError` (`models/errors.ts`), so services don't need to know Prisma's error codes. `models/accounts.ts` reaches Better Auth's tables through Better Auth, so passwords are stored exactly as sign-up stores them.
+6. **db.ts** creates the one shared Prisma client.
+
+**Tests by layer:** route tests go through the whole app with in-memory models (`server/test/fakeModels.ts`, typed against the real model functions so it can't drift). Service tests use the same fake models, or stub a model module. Model tests check the actual Prisma queries against a stub client. The e2e tests cover the real database.
 
 **Conventions confirmed in Spike 1:**
 
@@ -224,7 +232,39 @@ Every route except `/api/auth/*` and `/api/health` requires a session. **Authori
 | POST | `/api/chores/:id/complete` | mark complete |
 | DELETE | `/api/chores/:id/complete` | undo completion |
 
-Responses are JSON. Errors use the format `{ "error": { "code": "...", "message": "..." } }` with the matching HTTP status code.
+Responses are JSON. Errors use the format `{ "error": { "code": "...", "message": "..." } }` with the matching HTTP status code. The frontend reacts to the error `code`, not the status.
+
+### Status codes
+
+Named in `shared/httpStatus.ts` (`HttpStatus.CREATED` rather than `201`) and used by both the API and the frontend.
+
+**Success**
+
+| Endpoint | Status |
+|---|---|
+| `POST /api/households` | **201 Created**, with `Location: /api/households/current` |
+| `POST /api/households/join` | **201 Created** with `Location` when it adds the user; **200 OK** when they were already in that household (a repeat tap) |
+| `GET /api/households/current`, `POST …/invite-code`, `GET /api/health` | **200 OK** |
+| `POST /api/password-reset` | **204 No Content** |
+
+**Errors** (the same on every endpoint)
+
+| Status | When | Error codes |
+|---|---|---|
+| **400 Bad Request** | The request itself is malformed | `INVALID_JSON`, `BAD_REQUEST` |
+| **401 Unauthorized** | Nobody is signed in. Checked before anything else about the request | `UNAUTHENTICATED` |
+| **403 Forbidden** | Signed in, but not allowed (for example, a member changing the invite code) | `FORBIDDEN` |
+| **404 Not Found** | The URL names something that doesn't exist: an unknown route, or "your household" when you have none | `NOT_FOUND`, `NO_HOUSEHOLD` |
+| **405 Method Not Allowed** | The path exists, but not with this method. The `Allow` header lists the methods it takes | `METHOD_NOT_ALLOWED` |
+| **409 Conflict** | The request clashes with the current state | `ALREADY_IN_HOUSEHOLD` |
+| **413 Content Too Large** | The body is over the size limit | `PAYLOAD_TOO_LARGE` |
+| **415 Unsupported Media Type** | A body that isn't JSON | `UNSUPPORTED_MEDIA_TYPE` |
+| **422 Unprocessable Content** | Well-formed JSON whose values break a rule, including values that point at nothing (an unknown invite code or email) | `VALIDATION_ERROR`, `PASSWORD_LENGTH`, `INVITE_CODE_NOT_FOUND`, `ACCOUNT_NOT_FOUND` |
+| **429 Too Many Requests** | Too many sign-ins or sign-ups (Better Auth's limit) | (Better Auth's own body) |
+| **500 Internal Server Error** | A bug or an unexpected failure; details go to the server log, never the response | `INTERNAL_ERROR` |
+| **503 Service Unavailable** | `GET /api/health` couldn't reach the database | `DATABASE_UNAVAILABLE` |
+
+Services report broken rules as `ServiceError` codes; `middleware/errors.ts` holds the one table that maps each code to its status. A new code won't compile until it has a status there.
 
 ---
 

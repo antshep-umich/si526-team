@@ -1,16 +1,19 @@
 import express, { type RequestHandler } from "express";
 import { authHandler, betterAuthSession } from "./auth.js";
 import { handleError, notFound } from "./middleware/errors.js";
+import { requireJsonBody } from "./middleware/json.js";
 import { requireUser, type SessionResolver } from "./middleware/session.js";
 import { healthRouter } from "./routes/health.js";
 import { householdsRouter } from "./routes/households.js";
 import { passwordResetRouter } from "./routes/passwordReset.js";
 
-// Layers (see TECH_SPEC section 3):
-//   middleware/  cross-cutting request handling: sessions, households, errors
-//   routes/      thin HTTP handlers: read the request, call a service, send the result
-//   services/    the app's rules and database queries, with no Express types, so
-//                scheduled jobs or another client can reuse them
+// Layers, in the order a request passes through them (TECH_SPEC section 3):
+//   middleware/   shared request handling: sessions, households, errors
+//   routes/       URL + middleware → controller, nothing else
+//   controllers/  read the request, call a service, shape and send the response
+//   services/     the app's rules; no Express or Prisma, so other callers can reuse them
+//   models/       the only code that reads or writes the database
+//   db.ts         the Prisma client (tables in prisma/schema.prisma)
 
 export interface AppOptions {
   /** Works out who is making a request. Defaults to Better Auth's session cookie. */
@@ -30,8 +33,13 @@ export function createApp(options: AppOptions = {}) {
   app.all("/api/auth/*splat", options.authHandler ?? authHandler);
   app.use(express.json());
   app.use("/api", healthRouter);
-  app.use("/api/password-reset", passwordResetRouter);
-  app.use("/api/households", requireUser(options.getSessionUser ?? betterAuthSession), householdsRouter);
+  app.use("/api/password-reset", requireJsonBody, passwordResetRouter);
+  app.use(
+    "/api/households",
+    requireUser(options.getSessionUser ?? betterAuthSession),
+    requireJsonBody,
+    householdsRouter,
+  );
 
   app.use(notFound);
   app.use(handleError);

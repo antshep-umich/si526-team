@@ -1,4 +1,5 @@
 import type { Request, RequestHandler, Response } from "express";
+import { HttpStatus } from "../../shared/httpStatus.js";
 import { sendError } from "./errors.js";
 
 /** The signed-in user, as far as our routes care. */
@@ -17,7 +18,7 @@ export function requireUser(resolve: SessionResolver): RequestHandler {
   return async (req, res, next) => {
     const user = await resolve(req);
     if (!user) {
-      sendError(res, 401, "UNAUTHENTICATED", "Sign in to continue");
+      sendError(res, HttpStatus.UNAUTHORIZED, "UNAUTHENTICATED", "Sign in to continue");
       return;
     }
     res.locals.user = user;

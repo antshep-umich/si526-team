@@ -2,12 +2,13 @@ import express from "express";
 import request from "supertest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createHousehold } from "../services/households.js";
-import { db } from "../test/fakeDb.js";
+import { db } from "../test/fakeModels.js";
 import { handleError } from "./errors.js";
 import { currentMembership, requireHousehold } from "./household.js";
 import { requireUser } from "./session.js";
 
-vi.mock("../db.js", () => import("../test/fakeDb.js"));
+vi.mock("../models/households.js", () => import("../test/fakeModels.js"));
+vi.mock("../models/memberships.js", () => import("../test/fakeModels.js"));
 
 /** Signs in as the x-test-user header, then requires a household. */
 function appForHouseholdRoutes() {

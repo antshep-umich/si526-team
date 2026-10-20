@@ -27,7 +27,10 @@ describe("handleError", () => {
   });
 
   it.each([
-    ["VALIDATION_ERROR", 400],
+    ["VALIDATION_ERROR", 422],
+    ["PASSWORD_LENGTH", 422],
+    ["INVITE_CODE_NOT_FOUND", 422],
+    ["ACCOUNT_NOT_FOUND", 422],
     ["FORBIDDEN", 403],
     ["NO_HOUSEHOLD", 404],
     ["ALREADY_IN_HOUSEHOLD", 409],

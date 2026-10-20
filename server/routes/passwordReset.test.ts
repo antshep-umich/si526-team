@@ -44,10 +44,10 @@ describe("POST /api/password-reset", () => {
     expect(ctx.internalAdapter.deleteUserSessions).toHaveBeenCalledWith("user-ana");
   });
 
-  it("answers 404 for an email with no account", async () => {
+  it("answers 422 for an email with no account", async () => {
     const res = await reset({ email: "nobody@example.com", newPassword: "new-password-1" });
 
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(422);
     expect(res.body.error.code).toBe("ACCOUNT_NOT_FOUND");
     expect(ctx.internalAdapter.updatePassword).not.toHaveBeenCalled();
   });
@@ -56,18 +56,37 @@ describe("POST /api/password-reset", () => {
     ["too short", "short"],
     ["too long", "x".repeat(129)],
     ["missing", undefined],
-  ])("rejects a password that is %s", async (_label, newPassword) => {
+  ])("rejects a password that is %s with 422", async (_label, newPassword) => {
     const res = await reset({ email: "ana@example.com", newPassword });
 
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(422);
     expect(res.body.error.code).toBe("PASSWORD_LENGTH");
     expect(ctx.internalAdapter.updatePassword).not.toHaveBeenCalled();
   });
 
-  it("asks for an email when there is none", async () => {
+  it("asks for an email when there is none (422)", async () => {
     const res = await reset({ newPassword: "new-password-1" });
 
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(422);
     expect(res.body.error.code).toBe("VALIDATION_ERROR");
+  });
+});
+
+describe("POST /api/password-reset HTTP details", () => {
+  it("answers other methods with 405 and Allow: POST", async () => {
+    const res = await request(app).get("/api/password-reset");
+
+    expect(res.status).toBe(405);
+    expect(res.headers.allow).toBe("POST");
+  });
+
+  it("answers a form-encoded body with 415", async () => {
+    const res = await request(app)
+      .post("/api/password-reset")
+      .type("form")
+      .send({ email: "ana@example.com", newPassword: "new-password-1" });
+
+    expect(res.status).toBe(415);
+    expect(ctx.internalAdapter.updatePassword).not.toHaveBeenCalled();
   });
 });

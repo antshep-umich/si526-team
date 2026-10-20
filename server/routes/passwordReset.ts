@@ -1,12 +1,8 @@
 import express from "express";
-import { resetPassword } from "../services/passwordReset.js";
-import { bodyText } from "./body.js";
+import * as passwordReset from "../controllers/passwordReset.js";
+import { methodNotAllowed } from "../middleware/errors.js";
 
-// STAND-IN "Forgot your password?" (see services/passwordReset.ts and TECH_DEBT.md #7).
+// Mounted at /api/password-reset. No session needed: it's for people who can't sign in.
 export const passwordResetRouter = express.Router();
 
-// Set a new password: { email, newPassword }. Signs the account out everywhere.
-passwordResetRouter.post("/", async (req, res) => {
-  await resetPassword(bodyText(req, "email"), bodyText(req, "newPassword"));
-  res.status(204).end();
-});
+passwordResetRouter.route("/").post(passwordReset.reset).all(methodNotAllowed);

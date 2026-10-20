@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { db } from "../test/fakeDb.js";
+import { db } from "../test/fakeModels.js";
 import { ServiceError } from "./errors.js";
 import {
   createHousehold,
@@ -9,7 +9,8 @@ import {
   regenerateInviteCode,
 } from "./households.js";
 
-vi.mock("../db.js", () => import("../test/fakeDb.js"));
+vi.mock("../models/households.js", () => import("../test/fakeModels.js"));
+vi.mock("../models/memberships.js", () => import("../test/fakeModels.js"));
 
 beforeEach(() => {
   db.reset();
@@ -69,8 +70,9 @@ describe("joinHousehold", () => {
     const { inviteCode } = await createHousehold("ana", "Maple St House");
     const typed = ` ${inviteCode.slice(0, 4).toLowerCase()}-${inviteCode.slice(4)} `;
 
-    const household = await joinHousehold("ben", typed);
+    const { household, joined } = await joinHousehold("ben", typed);
 
+    expect(joined).toBe(true);
     expect(household.memberships.map((m) => [m.userId, m.role])).toEqual([
       ["ana", "owner"],
       ["ben", "member"],
@@ -85,12 +87,13 @@ describe("joinHousehold", () => {
     expect(await codeOf(() => joinHousehold("ben", "ZZZZZZZZ"))).toBe("INVITE_CODE_NOT_FOUND");
   });
 
-  it("succeeds without a duplicate when the user is already in that household", async () => {
+  it("succeeds without a duplicate (joined: false) when the user is already in that household", async () => {
     const { inviteCode } = await createHousehold("ana", "Maple St House");
     await joinHousehold("ben", inviteCode);
 
-    const household = await joinHousehold("ben", inviteCode);
+    const { household, joined } = await joinHousehold("ben", inviteCode);
 
+    expect(joined).toBe(false);
     expect(household.memberships).toHaveLength(2);
   });
 

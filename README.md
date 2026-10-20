@@ -28,7 +28,7 @@ All tests use [Vitest](https://vitest.dev). `vitest.config.ts` splits them into 
 
 | Project | Where | What it covers | Runs in |
 |---|---|---|---|
-| `server` | `server/**/*.test.ts`, `shared/**/*.test.ts` | services, middleware, routes (through Express with Supertest), shared validation | Node, with an in-memory fake database (`server/test/fakeDb.ts`) |
+| `server` | `server/**/*.test.ts`, `shared/**/*.test.ts` | routes and controllers (through Express with Supertest), services, models, middleware, shared validation, and the layer rules (`server/architecture.test.ts`) | Node, with in-memory models (`server/test/fakeModels.ts`) instead of a database |
 | `web` | `src/**/*.test.{ts,tsx}` | components, screens, App's screen routing, API helpers | jsdom, with React Testing Library |
 | `e2e` | `e2e/*.e2e.test.ts` | the real app in a real browser: sign up, log in/out, create and join a household, password reset, light/dark mode, the components page | Chromium via Playwright, against a running app and database |
 

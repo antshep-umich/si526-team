@@ -1,4 +1,5 @@
 // Turns Better Auth's error codes into our wording, and says which field it belongs to.
+import { HttpStatus } from "../../shared/httpStatus.ts";
 
 export type Field = "name" | "email" | "password" | "confirm" | "form";
 
@@ -21,7 +22,7 @@ export function describeAuthError(error: AuthError): { field: Field; message: st
     return { field: "password", message: `Use at least ${MIN_PASSWORD} characters.` };
   }
   if (code === "PASSWORD_TOO_LONG") return { field: "password", message: "That password is too long." };
-  if (error?.status === 429) {
+  if (error?.status === HttpStatus.TOO_MANY_REQUESTS) {
     return { field: "form", message: "Too many tries. Wait a moment, then try again." };
   }
   if (!error?.status) return { field: "form", message: NETWORK_MESSAGE };
