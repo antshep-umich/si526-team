@@ -7,7 +7,6 @@ Each entry says where the problem is, what goes wrong, and when it needs fixing.
 | # | Item | Fix by |
 |---|---|---|
 | 2 | `npm run dev` without `.env` stops at startup | Any time |
-| 3 | Health check page breaks on unexpected error bodies | Any time |
 | 4 | Health route tests don't reset the fake database | Before adding more tests to that file |
 | 5 | 404 message repeats the full URL | Before 404s are logged or shown as HTML |
 | 6 | Sign-in rate limiting is per Function instance | Before the app is shared outside the team |
@@ -23,14 +22,6 @@ Each entry says where the problem is, what goes wrong, and when it needs fixing.
 
 **Fix:** switch to `--env-file-if-exists=.env` (Node 22.9 and later). The app then starts and the page reports the missing database setting. Check that the flag works through `tsx` before relying on it.
 
-## 3. Health check page breaks on unexpected error bodies
-
-**Where:** `src/App.tsx`, `checkHealth` (line 14)
-
-**What goes wrong:** when the API returns an error that is JSON but not in our `{ error: { code, message } }` format (for example a Vercel platform error), `body?.error.message` throws. The page then shows "Cannot read properties of undefined" instead of the HTTP status.
-
-**Fix:** ``body?.error?.message ?? `HTTP ${res.status}` ``.
-
 ## 4. Health route tests don't reset the fake database
 
 **Where:** `server/routes/health.test.ts`, `afterEach` (lines 11–13)
@@ -41,7 +32,7 @@ Each entry says where the problem is, what goes wrong, and when it needs fixing.
 
 ## 5. 404 message repeats the full URL
 
-**Where:** `server/app.ts`, the 404 handler (line 16)
+**Where:** `server/middleware/errors.ts`, `notFound`
 
 **What goes wrong:** the message "No route for GET …" includes `req.originalUrl`, query string and all. That's harmless in a JSON response. If these messages are ever logged, or shown in HTML, a token in a query string would end up there too.
 
@@ -59,7 +50,7 @@ Each entry says where the problem is, what goes wrong, and when it needs fixing.
 
 ## 7. "Forgot your password?" lets anyone reset any account
 
-**Where:** `server/routes/passwordReset.ts` (`POST /api/password-reset`) and `src/screens/ForgotPassword.tsx`
+**Where:** `server/services/passwordReset.ts` (the rule), `server/models/accounts.ts` (storage), `server/controllers/passwordReset.ts` and `server/routes/passwordReset.ts` (`POST /api/password-reset`), and `src/screens/ForgotPassword.tsx`
 
 **What goes wrong:** the stand-in reset asks only for an email address, then sets a new password for that account. Anyone who knows (or guesses) a housemate's email can take over their account. It also tells a visitor whether an email has an account. The route isn't covered by Better Auth's rate limiting.
 
