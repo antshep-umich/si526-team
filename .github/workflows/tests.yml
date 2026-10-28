@@ -1,20 +1,135 @@
-# Typecheck and unit tests (server + web projects) on every push and pull request.
-# They don't touch a database, so no secrets are needed.
+# Typecheck and tests (the server, web and scripts projects, as in `npm test`)
+# on every push and on pull requests into main. They don't touch a database, so
+# no secrets are needed. Pushes and merged pull requests are then published to
+# the test dashboard (GitHub Pages, served from the gh-pages branch). End-to-end
+# tests run separately against previews (e2e-preview.yml). See TECH_SPEC section 15.
+#
+# Text from commits and pull requests only ever reaches scripts through env:,
+# never through ${{ }} inside run:, so it can't inject shell commands.
 name: Tests
 
 on:
   push:
+    branches-ignore: [gh-pages]
   pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, closed]
+
+permissions:
+  contents: read
 
 jobs:
-  unit:
+  test:
+    name: Tests
+    # A closed pull request only matters if it merged: that run records the
+    # branch's final state for the dashboard.
+    if: github.event_name == 'push' || github.event.action != 'closed' || github.event.pull_request.merged
     runs-on: ubuntu-latest
+    outputs:
+      has-summary: ${{ steps.files.outputs.has-summary }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          # For a merged pull request, test the branch's final commit, not the merge result.
+          ref: ${{ github.event.action == 'closed' && github.event.pull_request.head.sha || '' }}
+
       - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
+
       - run: npm ci
-      - run: npm run typecheck
-      - run: npm test
+
+      - name: Typecheck
+        id: typecheck
+        continue-on-error: true
+        run: npm run typecheck
+
+      - name: Run tests
+        id: tests
+        continue-on-error: true
+        run: npx vitest run --mode report --project server --project web --project scripts
+
+      - name: Summarize results and AC coverage
+        id: summary
+        if: ${{ !cancelled() && hashFiles('test-report/results.json') != '' }}
+        continue-on-error: true
+        run: node scripts/test-report/summarize.ts
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_MERGED: ${{ github.event.pull_request.merged }}
+          PR_MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+          PR_MERGED_AT: ${{ github.event.pull_request.merged_at }}
+
+      - name: Check for a summary
+        id: files
+        if: ${{ !cancelled() }}
+        run: |
+          if [ -f test-report/summary.json ]; then
+            echo "has-summary=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has-summary=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload results for the publish job
+        if: ${{ !cancelled() && steps.files.outputs.has-summary == 'true' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-report
+          path: test-report/
+          retention-days: 30
+
+      # One HTML file you can open straight from the run's page.
+      - name: Prepare the HTML report
+        if: ${{ !cancelled() && hashFiles('test-report/html/index.html') != '' }}
+        run: cp test-report/html/index.html test-report.html
+
+      - name: Upload the HTML report
+        if: ${{ !cancelled() && hashFiles('test-report.html') != '' }}
+        uses: actions/upload-artifact@v7
+        with:
+          path: test-report.html
+          archive: false
+          retention-days: 30
+
+      - name: Fail if the typecheck or tests failed, or AC tags have problems
+        if: ${{ steps.typecheck.outcome == 'failure' || steps.tests.outcome == 'failure' || steps.summary.outcome == 'failure' }}
+        run: |
+          echo "::error::The typecheck or tests failed, or AC files and tags have problems. The steps above have the details."
+          exit 1
+
+  publish:
+    name: Publish dashboard
+    needs: test
+    # Pushes and merged pull requests from this repository go on the dashboard,
+    # including red runs. Open pull requests don't.
+    if: >-
+      ${{ !cancelled() && needs.test.outputs.has-summary == 'true' &&
+      (github.event_name == 'push' ||
+      (github.event.pull_request.merged && github.event.pull_request.head.repo.full_name == github.repository)) }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.action == 'closed' && github.event.pull_request.head.sha || '' }}
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: test-report
+          path: test-report
+
+      - name: Publish to gh-pages
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          node scripts/test-report/publish.ts
