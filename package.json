@@ -14,6 +14,8 @@
     "postinstall": "prisma generate",
     "test": "vitest run --project server --project web --project scripts",
     "test:watch": "vitest --project server --project web --project scripts",
+    "test:ui": "vitest --ui --project server --project web --project scripts",
+    "test:report": "vitest run --mode report --project server --project web --project scripts && node scripts/test-report/summarize.ts && node scripts/test-report/preview.ts",
     "test:e2e": "vitest run --project e2e",
     "typecheck": "tsc -b"
   },
@@ -37,6 +39,7 @@
     "@types/react-dom": "^19.3.0",
     "@types/supertest": "^7.2.1",
     "@vitejs/plugin-react": "^6.1.1",
+    "@vitest/ui": "5.0.3",
     "concurrently": "^10.0.5",
     "dotenv": "^18.0.5",
     "jsdom": "30.1.3",

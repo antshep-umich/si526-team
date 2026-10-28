@@ -6,6 +6,11 @@ const STORY_KEY = /^[A-Z][A-Z0-9]*-\d+$/;
 const AC_ID = /^AC\d+$/;
 const VERIFY_VALUES = ["test", "manual"];
 
+/** True for a Jira key like `SCRUM-18`, which is how story tags are spelled. */
+export function isStoryKey(tag: string): boolean {
+  return STORY_KEY.test(tag);
+}
+
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -25,7 +30,7 @@ export function parseStory(fileName: string, raw: unknown): { story: Story | nul
   }
 
   const key = raw.story;
-  if (typeof key !== "string" || !STORY_KEY.test(key)) {
+  if (typeof key !== "string" || !isStoryKey(key)) {
     problem(`"story" must be a Jira key like SCRUM-18, got ${JSON.stringify(key)}`);
   } else if (fileName !== `${key}.json`) {
     problem(`file name must match its story key ${key} (expected ${key}.json)`);

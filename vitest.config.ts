@@ -14,9 +14,18 @@ const { stories } = loadStories("acceptance");
 //   scripts  the test report and dashboard scripts, in Node
 //   e2e      the real app in a real browser (Playwright), against a running server
 // `npm test` runs server + web + scripts; `npm run test:e2e` runs e2e.
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   test: {
     tags: stories.map((s) => ({ name: s.story, description: s.title })),
+    // `--mode report` also writes the files the test dashboard is built from.
+    reporters:
+      mode === "report"
+        ? [
+            "default",
+            ["html", { outputDir: "test-report/html", singleFile: true }],
+            ["./scripts/test-report/reporter.ts", { outputFile: "test-report/results.json" }],
+          ]
+        : ["default"],
     projects: [
       {
         test: {
@@ -58,4 +67,4 @@ export default defineConfig({
       },
     ],
   },
-});
+}));
