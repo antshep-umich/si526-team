@@ -7,6 +7,7 @@ invite code, and keep track of who's doing which chore.
 - **Live app:** https://si526-team.vercel.app (the `main` branch)
 - **Design:** Figma "App Design" file (Colors & Fonts, Components, and Mock up pages)
 - **Design and decisions in depth:** [TECH_SPEC.md](TECH_SPEC.md) · **Known issues:** [TECH_DEBT.md](TECH_DEBT.md)
+- **Test dashboard:** https://antshep-umich.github.io/si526-team/ (results, history and Jira acceptance criteria; see [Tests](#tests))
 - **Using an AI coding agent?** Point it at [AGENTS.md](AGENTS.md), a compact briefing written for agents.
 
 It's a **mobile web app**: designed for phones (402×874, the iPhone 17 frame) and it follows the
@@ -69,6 +70,8 @@ phone's light or dark setting.
 | `npm run dev` | Runs the app locally: the React app on port 5173 and the API on port 3000 (the app forwards `/api` to it) |
 | `npm test` | Unit and component tests. Fast, no database needed |
 | `npm run test:watch` | The same tests, re-running as you save |
+| `npm run test:ui` | The same tests in a browser page where you can browse and re-run them |
+| `npm run test:report` | The same tests, then builds a local copy of the test dashboard (it prints where) |
 | `npm run test:e2e` | End-to-end tests in a real browser against your local app (see [Tests](#tests)) |
 | `npm run typecheck` | Checks TypeScript across the whole project |
 | `npm run build` | Builds the app the way Vercel does |
@@ -218,16 +221,17 @@ prints each component's size so you can compare it with Figma.
 
 ## Tests
 
-All tests use [Vitest](https://vitest.dev), split into three groups:
+All tests use [Vitest](https://vitest.dev), split into four groups:
 
 | Group | Covers | Runs in |
 |---|---|---|
 | `server` | the API through Express, services, models, middleware, and the layer rules | Node, with in-memory stand-ins instead of a database |
 | `web` | components, screens, `App.tsx`'s screen flow, and the API helpers | a simulated browser (jsdom) with React Testing Library |
+| `scripts` | the scripts that build the test dashboard (`scripts/test-report/`) | Node |
 | `e2e` | the real app in a real browser: sign up, log in and out, create and join a household, password reset, light and dark mode | Chromium (Playwright), against a running app and database |
 
 ```
-npm test             # server + web
+npm test             # server + web + scripts
 npm run test:e2e     # end to end
 ```
 
@@ -240,8 +244,15 @@ npm run test:e2e     # end to end
 
   Deployed sites limit sign-ins, so these runs pace themselves and take about a minute.
 
-**In GitHub Actions:** every push and pull request runs the typecheck and `npm test`. Every preview
-deployment also runs the end-to-end tests against itself.
+**In GitHub Actions:** every push, and every pull request into `main`, runs the typecheck and the
+same tests as `npm test`. Pushes and merged pull requests are then published to the
+[test dashboard](https://antshep-umich.github.io/si526-team/). Every preview deployment also runs the
+end-to-end tests against itself.
+
+**Acceptance criteria:** tests that prove a Jira story's acceptance criteria are tagged with its key
+and named after the criterion (`"AC2: refuses a second household for the same user"`), and the
+story's criteria are listed in `acceptance/<KEY>.json`. The dashboard shows which are met.
+[acceptance/README.md](acceptance/README.md) explains how, and TECH_SPEC section 15 has the details.
 
 **Writing tests:** put test files next to the code they test (`Button.tsx` → `Button.test.tsx`).
 Find elements the way a person would, by role and visible text, such as

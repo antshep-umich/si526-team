@@ -30,7 +30,7 @@ A web app where people who share a home add chores, see one shared chore list, a
 | Email | Deferred to a later cycle. Planned provider: Brevo (see [section 8](#8-deferred-email-and-reminders)) | Decided (deferred) |
 | Runtime | Node.js 24 LTS (matches Vercel's default and the team's local install) | Decided |
 | Request validation | Zod schemas, shared by the frontend and the API | Proposed |
-| Testing | Vitest for everything: Supertest for the API, Testing Library + jsdom for React, Playwright (driven from Vitest) for end-to-end. See the README's Tests section | Decided |
+| Testing | Vitest for everything: Supertest for the API, Testing Library + jsdom for React, Playwright (driven from Vitest) for end-to-end. See the README's Tests section. CI runs them on every push and publishes a test dashboard (see [section 15](#15-testing-ci-and-the-test-dashboard)) | Decided |
 | Code style | ESLint and Prettier | Proposed |
 
 ### Why these choices
@@ -76,6 +76,8 @@ Vercel project (one deployment)
 
 ```
 /
+├── .github/workflows/    # tests.yml (typecheck, tests, dashboard), e2e-preview.yml, neon-preview-cleanup.yml
+├── acceptance/           # one JSON file of acceptance criteria per Jira story (section 15)
 ├── api/
 │   └── index.ts          # Vercel entry point: imports and exports the Express app
 ├── server/
@@ -93,10 +95,12 @@ Vercel project (one deployment)
 │   └── api.ts            # types and validation shared by the frontend and the API
 ├── prisma/
 │   └── schema.prisma
+├── scripts/test-report/  # test results, AC coverage and the dashboard site (section 15)
 ├── src/                  # React app, .tsx (Vite default location)
 ├── public/
 ├── index.html            # Vite entry point
 ├── vite.config.ts        # dev proxy: /api → http://localhost:3000
+├── vitest.config.ts      # test projects (server, web, scripts, e2e), story tags and report mode
 ├── tsconfig.json         # strict mode on
 ├── vercel.json           # rewrites (see below)
 └── package.json          # one package.json for client and server
@@ -375,20 +379,25 @@ Last checked: 2026-10-01.
 | Spike 1: deploy skeleton | Done, verified | PR #4: preview served the page, `/api/health` read Neon through Prisma, and the build applied the first migration |
 | Spike 2: auth round trip | Done, verified | Locally and on a preview (`Sprint2_Dev`); see [section 10](#10-feasibility-spikes-to-finish-before-cycle-1-build-work) |
 | Spike 3: team deploy check | Done, verified | PRs #5 and #8 (`shivapa-lang`) and #6 and #9 (`eggbao`) all built Vercel previews |
+| Tests workflow (`tests.yml`) | Done | Typecheck and tests on every push and on pull requests into `main`, then publishes the dashboard. The publishing part first ran on 2026-10-28 |
+| Test dashboard (GitHub Pages) | In progress | The `gh-pages` branch exists (2026-10-28); Pages isn't turned on yet ([section 15](#15-testing-ci-and-the-test-dashboard)) |
+| Required test check on `main` | Not set up | Add once the workflow has run on a pull request |
 
 ### Next steps
 
 1. Merge `Sprint2_Dev` to `main` when the sprint's ready. Production then gets the auth tables and sign-in; its `BETTER_AUTH_SECRET` is already set.
 2. Build the chore features (MVP items 3 to 6 in [section 4](#4-mvp-scope-cycle-1)), plus a join-household screen.
 3. Get the team to confirm or change the *Proposed* rows in [section 2](#2-decisions), and answer [section 11](#11-open-questions).
+4. Turn on the test dashboard and the required test check ([section 15](#15-testing-ci-and-the-test-dashboard), "One-time setup").
 
 ---
 
 ## 13. Repository workflow
 
 - **Nobody commits directly to `main`.** All work goes on a branch and is merged through a pull request with 1 approval. The repo owner can bypass the approval for setup-only changes.
-- **Branch names** use a prefix and a short description, for example `feat/chore-list`, `fix/login-redirect`, `docs/...` or `ci/...`.
-- **Merging and history.** We use merge commits, so every commit from a branch stays in `main`'s history. GitHub deletes the branch automatically after merge ("Automatically delete head branches"). Deleting a merged branch loses nothing: the commits are in `main`, the pull request page keeps the full diff and discussion, and the branch can be restored from the pull request with one click.
+- **Branches.** Each person works on their own dev branch (for example `louise-dev`) and pushes to it directly, as often as they like. There's no naming prefix. Pull requests are only for merging a dev branch into `main`, never into another branch.
+- **Tests run on every push** to any branch, and again on each pull request into `main` against what `main` would look like after the merge (see [section 15](#15-testing-ci-and-the-test-dashboard)).
+- **Merging and history.** We use merge commits, so every commit from a branch stays in `main`'s history. GitHub deletes the branch automatically after merge ("Automatically delete head branches"). Deleting a merged branch loses nothing: the commits are in `main`, the pull request page keeps the full diff and discussion, and the branch can be restored from the pull request with one click. To keep working after a merge, create your branch again from the updated `main`; the same name is fine.
 - **Each pull request gets its own preview database** (`preview/<branch>`), copied from main. It's deleted when the pull request closes.
 - **Commit identity.** In this repo, set your git email to the address on the GitHub account that has access to the repo, so commits are credited to that account. Anthony uses `antshep@umich.edu`.
 
@@ -414,3 +423,51 @@ The repo contains no secrets, so `.env` has to be copied over separately.
 4. **Create `.env`.** Copy `.env.example` to `.env` and fill in the `dev` branch connection strings. They're in the Neon console (Vercel → Storage → jaals-db → **Open in Neon** → Branches → `dev` → Connect), or Anthony can send them. Also set `BETTER_AUTH_SECRET` to a random string of 32+ characters; `.env.example` shows a command that makes one. Never commit `.env`.
 5. **Vercel CLI (repo owner only, optional):** run `vercel login` as `antshep-umich`, then `vercel link` and choose the `si-526` team and the `si526-team` project.
 6. **Install and run:** `npm install` (this also generates the Prisma client), then `npm run dev`. Open http://localhost:5173 and you should see the Log in screen. Run `npm test` for the unit tests. For the end-to-end tests, run `npx playwright install chromium` once, then `npm run test:e2e`.
+
+---
+
+## 15. Testing, CI and the test dashboard
+
+The tests are also our evidence that Jira stories' acceptance criteria (ACs) are met, including ones the UI can't show (for example, "a user can't be in two households"). The **test dashboard** at https://antshep-umich.github.io/si526-team/ shows the latest results, history and AC coverage. It's an internal page laid out for a desktop browser, but it's public like the repo, so nothing secret belongs in test names, AC text or commit messages.
+
+### What runs when
+
+The `Tests` workflow (`.github/workflows/tests.yml`) runs the typecheck and the `server`, `web` and `scripts` test projects, the same ones as `npm test`. End-to-end tests aren't part of it; they run against each preview deployment (`e2e-preview.yml`).
+
+| Event | Tests run on | Goes on the dashboard as |
+|---|---|---|
+| Push to any branch except `main` | The pushed commit | That branch's row under "Branches in progress" (replaced on each push) |
+| Pull request into `main` opened or updated | The merge result (branch + current `main`) | Nothing; it's the pull request's check |
+| Pull request merged | The branch's final commit | A row under "Merged branches", kept permanently |
+| Push to `main` (each merge) | The new `main` | The latest result, the chart, AC coverage and `main`'s history |
+
+Failing runs are published too. A run whose typecheck or tests failed, or whose AC files or tags have problems, fails its check. Every run uploads `test-report` (results, summary and HTML report) and `test-report.html` (the HTML report alone) as artifacts for 30 days.
+
+### Acceptance criteria and tags
+
+- **One file per Jira story** in `acceptance/`, named after its key (`acceptance/SCRUM-18.json`): the key, the title, and each AC's `id` (`AC1`, `AC2`, ...), its `text` as written in Jira, and `verify`: `test` or `manual` (with a `note` saying how it's shown, for example a visual check in the demo). `acceptance/README.md` has an example.
+- **Tag the tests** that prove a story's ACs with its key, `{ tags: ["SCRUM-18"] }`, usually on the `describe` block, and **start each such test's name with its AC id**: `"AC2: refuses a second household for the same user"`. One test can cover several ACs (`"AC1, AC3: ..."`). Supporting tests keep plain names.
+- **Write tests from the AC text, not from the code.** If the code doesn't meet an AC, the test should fail and stay failing until the code is fixed.
+- **Checks.** Vitest only accepts tags that have an AC file, so a mistyped key fails the run. The summary step also fails the check when a test names an AC but has no story tag (or more than one), or names an AC id the story doesn't have.
+- **Statuses** on the dashboard: *passing* (all its tests passed), *failing* (any failed), *no test yet* (a `test` AC with no tests that ran) and *manual*.
+- **Any test can prove an AC:** a `server` test for API rules, or a `web` component test (jsdom + Testing Library) for screen behavior. End-to-end tests aren't in the report, so an AC only an end-to-end test can show is marked `manual` with a note pointing to that test.
+
+### Running it locally
+
+    npm test             # server + web + scripts
+    npm run test:ui      # the same tests in a browser page
+    npm run test:report  # tests, then a local copy of the dashboard
+
+`npm run test:report` writes `test-report/` (git-ignored) and prints the path of the local dashboard. It adds each run to the same local history, so running it twice gives two bars in the chart.
+
+### How publishing works
+
+- The `publish` job runs `scripts/test-report/publish.ts`. It reads the `gh-pages` branch, adds the run to `data/history.json`, copies in the run's HTML report, re-renders `index.html`, and replaces `gh-pages` with a single new commit. It pushes with `--force-with-lease`, so if another run published first, it starts over from the new state instead of overwriting it.
+- **Kept:** every `main` row forever, with full reports for the newest 30; the latest run of each branch that still exists (deleted branches drop off); every merged pull request's final run and report. Each report is about 1 MB.
+- Only the workflow writes to `gh-pages`. Don't push to it by hand.
+- Pull requests from forks are tested but never published.
+
+### One-time setup (repo owner)
+
+1. **Turn on Pages** after the first push that runs the workflow has created `gh-pages`: Settings → Pages → Build and deployment → Source: *Deploy from a branch*, Branch: `gh-pages`, folder `/ (root)`.
+2. **Require the test check** once the workflow has run on a pull request: in the branch protection for `main`, turn on "Require status checks to pass" and add the `Tests` check.

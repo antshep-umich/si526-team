@@ -5,7 +5,7 @@ save you from exploring the codebase. Deeper detail lives in `TECH_SPEC.md` (§ 
 `TECH_DEBT.md` and `README.md`. **If you change anything this file describes, update it in the
 same commit.**
 
-_Last updated: 2026-10-20, on `Sprint2_Dev` (commit `9b2abde` and later)._
+_Last updated: 2026-10-28 (test dashboard added); before that 2026-10-20, on `Sprint2_Dev` (commit `9b2abde` and later)._
 
 ## The project
 
@@ -34,7 +34,9 @@ and (next) add chores, see the household's chore list and mark chores done.
 npm install            # also runs prisma generate
 npm run dev            # Vite on :5173 + API on :3000 (Vite proxies /api). Needs .env
 npm run typecheck      # tsc -b across app, server, node and e2e configs
-npm test               # server + web unit tests (~10 s, no database)
+npm test               # server + web + scripts unit tests (~10 s, no database)
+npm run test:ui        # the same tests in Vitest's browser UI
+npm run test:report    # the same tests, then a local copy of the test dashboard in test-report/site
 npm run test:e2e       # real browser vs local app + dev DB (run `npx playwright install chromium` once)
 npm run build          # what Vercel builds (plus `prisma migrate deploy` in build:vercel)
 npx prisma migrate deploy               # apply teammates' migrations to the dev DB (never resets)
@@ -67,6 +69,8 @@ src/                    React app
   auth.ts               Better Auth React client (authClient)
   demo/                 /components.html dev page (every component, theme switch, sizes)
 e2e/                    Playwright tests driven by Vitest
+acceptance/             <JIRA-KEY>.json: each story's acceptance criteria (see Testing)
+scripts/test-report/    test results reporter, AC coverage, and the test dashboard site (TECH_SPEC §15)
 prisma/                 schema.prisma + migrations
 TECH_SPEC.md            design, decisions, data model, API, status codes, setup
 TECH_DEBT.md            known small problems and when to fix them
@@ -137,10 +141,12 @@ A request goes through six layers in order. **Each layer may only use the layers
 |---|---|---|
 | `server` | `server/**/*.test.ts`, `shared/**/*.test.ts` | Route tests use `createApp({ getSessionUser })` with an `x-test-user` header, and fake models via `vi.mock("../models/households.js", () => import("../test/fakeModels.js"))` (same for memberships). `fakeModels.ts` is typed against the real models. |
 | `web` | `src/**/*.test.{ts,tsx}` | jsdom + Testing Library. Mock `../auth.ts` and `../api/*.ts` with `vi.hoisted` + `vi.mock`. CSS Module class names are unhashed in tests (`toHaveClass("primary")`). |
+| `scripts` | `scripts/**/*.test.ts` | The test dashboard's own scripts (TECH_SPEC §15). Node, run directly with type stripping in CI, so `.ts` imports and erasable syntax only. |
 | `e2e` | `e2e/*.e2e.test.ts` | Real Chromium at 402×874. Locally it reuses or starts `npm run dev` and deletes its `@e2e.test` accounts afterwards. `E2E_BASE_URL=<url>` targets a deployment, with sign-ins paced for the rate limit. |
 
 - Find elements by role and visible label (`getByRole("button", { name: "Log in" })`), not class names or test ids. Test files sit next to the code they test.
-- CI (`.github/workflows/`): `tests.yml` runs typecheck + `npm test` on every push and pull request. `e2e-preview.yml` runs the e2e suite against each **preview** deployment (never production).
+- **Acceptance criteria (TECH_SPEC §15):** each Jira story's ACs live in `acceptance/<KEY>.json` (`id`, `text` as written in Jira, `verify: "test" | "manual"`). Tests that prove an AC carry the story's tag (`describe("…", { tags: ["SCRUM-18"] }, …)`) and start with the AC id (`it("AC2: …")`). Write them from the AC text, not the code; a failing AC test is a finding, not something to adjust. Vitest rejects tags with no AC file, and the report step fails on an `ACn:` test with no story tag or an unknown AC id.
+- CI (`.github/workflows/`): `tests.yml` runs typecheck + the `server`, `web` and `scripts` tests on every push and on pull requests into `main`, then publishes pushes and merged PRs to the test dashboard (GitHub Pages from the `gh-pages` branch, https://antshep-umich.github.io/si526-team/). `e2e-preview.yml` runs the e2e suite against each **preview** deployment (never production).
 
 ## Conventions
 
@@ -185,3 +191,4 @@ A request goes through six layers in order. **Each layer may only use the layers
 - Don't change Better Auth's tables by hand or query them with Prisma. Use `models/accounts.ts`.
 - Don't put secrets in code, tests, docs or commit messages.
 - Don't run e2e tests against production. CI only targets previews.
+- Don't push to `gh-pages` by hand. Only the `Tests` workflow writes it, one commit at a time.
