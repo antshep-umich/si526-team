@@ -23,6 +23,11 @@ function link(href: string, html: string): string {
 // Linking the file itself (not the folder) also works when the page is opened from disk.
 const reportHref = (report: string) => `${report}/index.html`;
 
+/** A link to a whole report. The empty data-search clears any filter a story link left behind. */
+function reportLink(report: string, html: string): string {
+  return `<a href="${esc(reportHref(report))}" data-search="">${html}</a>`;
+}
+
 function utcText(iso: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return "";
@@ -112,7 +117,7 @@ ${emptyNote("The first one appears after the next push to main, which usually me
   const message = s.meta.message ? `, <em>${esc(s.meta.message)}</em>` : "";
   const commitText = s.meta.sha ? `Commit ${commit(s.meta)}${message}, tested ${time(s.startedAt)} in ${seconds(s.durationMs)}.` : "";
   const links = [
-    latest.report ? link(reportHref(latest.report), "Open the full report") : "",
+    latest.report ? reportLink(latest.report, "Open the full report") : "",
     s.meta.runUrl ? link(s.meta.runUrl, "See the workflow run") : "",
   ].filter(Boolean);
 
@@ -197,7 +202,7 @@ function chartSection(site: SiteData): string {
     const inner = `${segments.join("")}${hit}`;
     const attrs = `class="bar" data-run="${esc(s.meta.runId)}" data-time="${esc(s.startedAt)}" data-tip="${esc(tip)}"`;
     return entry.report
-      ? `<a ${attrs} href="${esc(reportHref(entry.report))}" aria-label="${esc(`Report for ${utcText(s.startedAt)}`)}">${inner}</a>`
+      ? `<a ${attrs} href="${esc(reportHref(entry.report))}" data-search="" aria-label="${esc(`Report for ${utcText(s.startedAt)}`)}">${inner}</a>`
       : `<g ${attrs}>${inner}</g>`;
   });
 
@@ -235,57 +240,143 @@ const STATUS_LABEL: Record<AcStatus, string> = {
 
 const STATUS_MARK: Record<AcStatus, Mark> = { passing: "pass", failing: "fail", untested: "none", manual: "manual" };
 
-function storyBlock(story: StoryCoverage): string {
-  const count = (status: AcStatus) => story.criteria.filter((c) => c.status === status).length;
-  const manual = count("manual");
-  const tested = story.criteria.length - manual;
-  const tally = [
-    tested > 0 ? `${count("passing")} of ${tested} tested ${tested === 1 ? "criterion" : "criteria"} passing.` : "",
-    manual > 0 ? `${manual} shown manually.` : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
+type Verdict = "accepted" | "not-accepted" | "incomplete";
 
-  const items = story.criteria.map((c) => {
-    const tests = c.tests.length
-      ? `<ul class="tests">${c.tests.map((t) => `<li>${esc(t.name)}${t.state === "passed" ? "" : ` (${t.state})`}</li>`).join("")}</ul>`
-      : "";
-    const note = c.note ? `<p class="note">${esc(c.note)}</p>` : "";
-    return `<li class="criterion" data-status="${c.status}">${glyph(STATUS_MARK[c.status])}<div>
-<p><span class="ac">${esc(c.id)}</span> ${esc(c.text)}</p>
-<p class="state">${STATUS_LABEL[c.status]}</p>${note}${tests}
-</div></li>`;
-  });
+const VERDICT_LABEL: Record<Verdict, string> = { accepted: "Accepted", "not-accepted": "Not accepted", incomplete: "Incomplete" };
+const VERDICT_MARK: Record<Verdict, Mark> = { accepted: "pass", "not-accepted": "fail", incomplete: "none" };
 
-  return `<article class="story">
-<h3><span class="key">${esc(story.story)}</span> ${esc(story.title)}</h3>
-<p class="tally">${tally}</p>
-<ul class="criteria">
-${items.join("\n")}
-</ul>
-</article>`;
+/** Accepted when every AC is met. Manual ACs count as met: they're checked outside these tests. */
+function verdictOf(story: StoryCoverage): Verdict {
+  if (story.criteria.some((c) => c.status === "failing")) return "not-accepted";
+  if (story.criteria.some((c) => c.status === "untested")) return "incomplete";
+  return "accepted";
 }
 
-function coverageSection(site: SiteData): string {
-  const heading = `<h2>Acceptance criteria</h2>`;
+/** "AC2", "AC2 and AC4", "AC1, AC2 and AC4". */
+function idList(ids: string[]): string {
+  return ids.length < 2 ? ids.join("") : `${ids.slice(0, -1).join(", ")} and ${ids[ids.length - 1]}`;
+}
+
+function verdictText(story: StoryCoverage, verdict: Verdict): string {
+  const withStatus = (status: AcStatus) => story.criteria.filter((c) => c.status === status).map((c) => c.id);
+  const label = VERDICT_LABEL[verdict];
+  if (verdict === "not-accepted") return `${label}: ${idList(withStatus("failing"))} failing`;
+  if (verdict === "incomplete") {
+    const untested = withStatus("untested");
+    return `${label}: ${idList(untested)} ${untested.length === 1 ? "has" : "have"} no test yet`;
+  }
+  const manual = withStatus("manual").length;
+  return manual > 0 ? `${label}, with ${manual} checked manually` : label;
+}
+
+const GOTO_ICON = `<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M11.5 3.5h5v5M16.5 3.5l-7.5 7.5M14 11.5v4a1 1 0 0 1-1 1H4.5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+type TestRef = { id?: string; moduleId?: string };
+
+/**
+ * The box-with-arrow link that opens the Vitest report showing these tests.
+ * The report reads its search from local storage, so the page's script stores
+ * `data-search` there on click; a test link also opens that test directly.
+ */
+function gotoLink(report: string, what: string, search: string, test?: TestRef): string {
+  const hash =
+    test?.id && test.moduleId ? `#/?file=${encodeURIComponent(test.moduleId)}&test=${encodeURIComponent(test.id)}` : "#/";
+  const label = `Open the tests for ${what} in the Vitest report`;
+  return `<a class="goto" href="${esc(reportHref(report) + hash)}" target="_blank" rel="noopener" data-search="${esc(search)}" aria-label="${esc(label)}" title="${esc(label)}">${GOTO_ICON}</a>`;
+}
+
+const hasTests = (story: StoryCoverage) => story.criteria.some((c) => c.tests.length > 0);
+
+function criterionRow(story: StoryCoverage, c: StoryCoverage["criteria"][number], report: string | null): string {
+  const first = c.tests.find((t: TestRef) => t.id && t.moduleId) ?? c.tests[0];
+  const goto = report && first ? gotoLink(report, `${story.story} ${c.id}`, `tag:${story.story}`, first) : "";
+  const line = `${glyph(STATUS_MARK[c.status])}<span class="label"><span class="ac">${esc(c.id)}</span> ${esc(c.text)}<span class="state">${STATUS_LABEL[c.status]}</span></span>${goto}`;
+  const note = c.note ? `<p class="note">${esc(c.note)}</p>` : "";
+  const tests = c.tests.length
+    ? `<ul class="tests">${c.tests.map((t) => `<li>${esc(t.name)}${t.state === "passed" ? "" : ` (${t.state})`}</li>`).join("")}</ul>`
+    : "";
+  if (!note && !tests) return `<li class="criterion" data-status="${c.status}"><div class="line">${line}</div></li>`;
+  // A failing AC starts open, so the failing test is in view.
+  return `<li class="criterion" data-status="${c.status}"><details${c.status === "failing" ? " open" : ""}><summary class="line">${line}</summary>
+<div class="detail">${note}${tests}</div></details></li>`;
+}
+
+function storyBlock(story: StoryCoverage, report: string | null): string {
+  const verdict = verdictOf(story);
+  const goto = report && hasTests(story) ? gotoLink(report, story.story, `tag:${story.story}`) : "";
+  return `<details class="story" data-key="${esc(story.story)}" data-verdict="${verdict}"${verdict === "accepted" ? "" : " open"}>
+<summary class="line">${glyph(VERDICT_MARK[verdict])}<span class="label"><span class="key">${esc(story.story)}</span> <span class="title">${esc(story.title)}</span><span class="state">${verdictText(story, verdict)}</span></span>${goto}</summary>
+<ul class="criteria">
+${story.criteria.map((c) => criterionRow(story, c, report)).join("\n")}
+</ul>
+</details>`;
+}
+
+function storyGroup(
+  kind: "epic" | "group",
+  key: string | null,
+  title: string,
+  stories: StoryCoverage[],
+  report: string | null,
+): string {
+  const accepted = stories.filter((s) => verdictOf(s) === "accepted").length;
+  const tally = `${accepted} of ${stories.length} ${stories.length === 1 ? "story" : "stories"} accepted`;
+  const tested = stories.filter(hasTests).map((s) => s.story);
+  const goto = report && tested.length ? gotoLink(report, `epic ${key ?? title}`, `tag:${tested.join(" or ")}`) : "";
+  const keyAttr = key ? ` data-key="${esc(key)}"` : "";
+  const keyText = key ? `<span class="key">${esc(key)}</span> ` : "";
+  return `<details class="${kind}"${keyAttr}${accepted === stories.length ? "" : " open"}>
+<summary class="line"><span class="label">${keyText}<span class="title">${esc(title)}</span><span class="state">${tally}</span></span>${kind === "epic" ? goto : ""}</summary>
+${stories.map((s) => storyBlock(s, report)).join("\n")}
+</details>`;
+}
+
+function storiesSection(site: SiteData): string {
+  const heading = `<h2>Stories</h2>`;
   const latest = site.main[0];
   if (!latest) {
-    return `<section id="coverage">${heading}${emptyNote("Acceptance criteria appear after the first run on main.")}</section>`;
+    return `<section id="stories">${heading}${emptyNote("Stories appear after the first run on main.")}</section>`;
   }
-  if (latest.summary.stories.length === 0) {
-    return `<section id="coverage">${heading}${emptyNote(
+  const { stories } = latest.summary;
+  if (stories.length === 0) {
+    return `<section id="stories">${heading}${emptyNote(
       "No stories have acceptance criteria yet. Add a file to <code>acceptance/</code> for each Jira story and tag its tests; <code>acceptance/README.md</code> explains how.",
     )}</section>`;
   }
-  return `<section id="coverage">
+
+  const report = latest.report;
+  const epics = new Map<string, { title: string; stories: StoryCoverage[] }>();
+  const loose: StoryCoverage[] = [];
+  for (const story of stories) {
+    if (!story.epic) {
+      loose.push(story);
+      continue;
+    }
+    const group = epics.get(story.epic.key) ?? { title: story.epic.title, stories: [] };
+    group.stories.push(story);
+    epics.set(story.epic.key, group);
+  }
+
+  let body: string;
+  if (epics.size === 0) {
+    body = loose.map((s) => storyBlock(s, report)).join("\n");
+  } else {
+    const ordered = [...epics.entries()].sort(([a], [b]) => a.localeCompare(b, "en", { numeric: true }));
+    body = ordered.map(([key, group]) => storyGroup("epic", key, group.title, group.stories, report)).join("\n");
+    if (loose.length) body += `\n${storyGroup("group", null, "Stories without an epic", loose, report)}`;
+  }
+
+  return `<section id="stories">
 ${heading}
-<p class="intro">From the latest run on main, ${time(latest.summary.startedAt)}.</p>
-${latest.summary.stories.map(storyBlock).join("\n")}
+<p class="intro">The acceptance criteria our tests can check, from the latest run on main, ${time(latest.summary.startedAt)}. Jira is still where stories are tracked.</p>
+<div class="tree">
+${body}
+</div>
 </section>`;
 }
 
 function reportCell(entry: SiteEntry): string {
-  return entry.report ? link(reportHref(entry.report), "Open report") : `<span class="muted">expired</span>`;
+  return entry.report ? reportLink(entry.report, "Open report") : `<span class="muted">expired</span>`;
 }
 
 function commitCell(meta: RunMeta): string {
@@ -324,11 +415,14 @@ function mergedSection(site: SiteData): string {
     const number = pr ? `#${pr.number}` : "";
     const prCell = `${pr && meta.repoUrl ? link(`${meta.repoUrl}/pull/${pr.number}`, number) : number} ${esc(pr?.title ?? "")}`;
     const after = pr?.mergeSha ? site.main.find((m) => m.summary.meta.sha === pr.mergeSha) : undefined;
-    const afterHref = after ? (after.report ? reportHref(after.report) : after.summary.meta.runUrl) : null;
-    const reports = [
-      e.report ? link(reportHref(e.report), "Final run") : "",
-      afterHref ? link(afterHref, "Main after merge") : "",
-    ].filter(Boolean);
+    const afterLink = !after
+      ? ""
+      : after.report
+        ? reportLink(after.report, "Main after merge")
+        : after.summary.meta.runUrl
+          ? link(after.summary.meta.runUrl, "Main after merge")
+          : "";
+    const reports = [e.report ? reportLink(e.report, "Final run") : "", afterLink].filter(Boolean);
     return [
       prCell,
       `<span class="branch">${esc(meta.branch)}</span>`,
@@ -423,17 +517,33 @@ p { margin: 0 0 0.5rem; max-width: 42rem; }
 .dates { position: relative; height: 1.4rem; margin-top: 0.35rem; }
 .dates span { top: 0; transform: translateX(-50%); white-space: nowrap; }
 .tip { position: fixed; z-index: 10; max-width: 22rem; padding: 0.45rem 0.65rem; border-radius: 4px; background: var(--ink); color: var(--paper); font-size: 0.8rem; line-height: 1.4; white-space: pre-line; pointer-events: none; }
-.story { margin-top: 1.75rem; max-width: 46rem; }
-.story .key { margin-right: 0.35em; color: var(--ink-2); }
-.tally { margin: 0.25rem 0 0.5rem; color: var(--ink-2); font-size: 0.9rem; }
-.criteria { margin: 0; padding: 0; list-style: none; }
-.criterion { display: grid; grid-template-columns: 1.35rem 1fr; gap: 0.75rem; padding: 0.8rem 0; border-top: 1px solid var(--rule); }
-.criterion .glyph { width: 1.35rem; height: 1.35rem; margin-top: 0.08rem; }
-.criterion p { margin: 0; }
+.tree { max-width: 52rem; margin-top: 1rem; border-bottom: 1px solid var(--rule); }
+.tree summary { list-style: none; cursor: pointer; }
+.tree summary::-webkit-details-marker { display: none; }
+.line { display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.65rem 0; }
+.line .label { flex: 1; min-width: 0; }
+.line .state { display: block; margin-top: 0.1rem; color: var(--ink-2); font-size: 0.85rem; font-weight: 400; }
+.line .glyph { width: 1.2rem; height: 1.2rem; margin-top: 0.12rem; }
+.line .key { margin-right: 0.3em; color: var(--ink-2); font-weight: 700; }
+.line .title { font-weight: 700; }
+/* A chevron marks rows that open and close; rows without one keep the same indent. */
+.tree summary.line::before, .tree div.line::before { content: ""; flex: none; width: 0.45rem; height: 0.45rem; margin: 0.5rem 0.15rem 0 0.1rem; }
+.tree summary.line::before { border-right: 2px solid var(--ink-3); border-bottom: 2px solid var(--ink-3); transform: rotate(-45deg); transition: transform 120ms ease-out; }
+.tree details[open] > summary.line::before { transform: rotate(45deg); }
+@media (prefers-reduced-motion: reduce) { .tree summary.line::before { transition: none; } }
+.epic, .group, .tree > .story { border-top: 1px solid var(--ink-3); }
+.epic > summary .title, .group > summary .title { font-size: 1.1rem; }
+.epic > .story, .group > .story { margin-left: 1.5rem; border-top: 1px solid var(--rule); }
+.criteria { margin: 0 0 0.4rem 1.5rem; padding: 0; list-style: none; }
+.criterion { border-top: 1px solid var(--rule); }
+.criterion .line { padding: 0.5rem 0; }
 .criterion .ac { font-weight: 700; margin-right: 0.3em; }
-.criterion .state { margin-top: 0.15rem; color: var(--ink-2); font-size: 0.85rem; }
-.criterion .note { margin-top: 0.15rem; }
-.tests { margin: 0.3rem 0 0; padding: 0; list-style: none; font-size: 0.8rem; color: var(--ink-3); }
+.criterion .detail { margin: 0 0 0.6rem 3.15rem; }
+.criterion .note { margin: 0; }
+.tests { margin: 0.15rem 0 0; padding: 0; list-style: none; font-size: 0.8rem; color: var(--ink-3); }
+.goto { flex: none; display: inline-flex; padding: 0.2rem; margin-top: 0.05rem; border-radius: 3px; color: var(--ink-3); text-decoration: none; }
+.goto svg { width: 1.05rem; height: 1.05rem; }
+.goto:hover { color: var(--ink); background: color-mix(in srgb, var(--ink) 8%, transparent); }
 .table-wrap { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
 th { padding: 0.5rem 1rem 0.5rem 0; border-bottom: 1px solid var(--ink-3); color: var(--ink-2); font-weight: 700; text-align: left; white-space: nowrap; }
@@ -446,6 +556,28 @@ footer { margin-top: 4rem; padding-top: 1rem; border-top: 1px solid var(--rule);
 
 const SCRIPT = `
 (() => {
+  // Vitest's HTML report keeps its search in local storage under this key (Vitest 5).
+  // Links with data-search set it just before the report opens: "tag:SCRUM-3" shows
+  // that story's tests, "" clears it. If Vitest renames the key, the links still open
+  // the report, just unfiltered.
+  const FILTER_KEY = "vitest-ui_task-tree-filter";
+  const remember = (event) => {
+    const a = event.target.closest && event.target.closest("a[data-search]");
+    if (!a) return;
+    try {
+      let saved = {};
+      try { saved = JSON.parse(localStorage.getItem(FILTER_KEY) || "{}") || {}; } catch {}
+      localStorage.setItem(FILTER_KEY, JSON.stringify({
+        ...saved,
+        failed: false, success: false, skipped: false, slow: false, onlyTests: false,
+        search: a.dataset.search,
+        project: "__vitest_ui_all_projects__",
+      }));
+    } catch {}
+  };
+  document.addEventListener("click", remember);
+  document.addEventListener("auxclick", remember);
+
   const format = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });
   const local = (iso) => { const d = new Date(iso); return isNaN(d) ? "" : format.format(d); };
   for (const t of document.querySelectorAll("time[datetime]")) { const text = local(t.getAttribute("datetime")); if (text) t.textContent = text; }
@@ -488,7 +620,7 @@ export function renderSite(site: SiteData): string {
 <main>
 ${latestSection(site)}
 ${chartSection(site)}
-${coverageSection(site)}
+${storiesSection(site)}
 ${branchesSection(site)}
 ${mergedSection(site)}
 ${historySection(site)}

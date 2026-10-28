@@ -1,13 +1,15 @@
 # Acceptance criteria
 
 One JSON file per Jira story, named after its key (`SCRUM-18.json`). The test
-dashboard uses these files to show which acceptance criteria (ACs) are met.
-Full details are in TECH_SPEC section 15.
+dashboard uses these files to show which acceptance criteria (ACs) our tests
+can prove, especially ones the app doesn't make visible. It doesn't replace
+Jira. Full details are in TECH_SPEC section 15.
 
 ```json
 {
   "story": "SCRUM-18",
   "title": "Create Household screen",
+  "epic": { "key": "SCRUM-10", "title": "Households" },
   "criteria": [
     { "id": "AC1", "text": "As written in Jira", "verify": "test" },
     { "id": "AC2", "text": "As written in Jira", "verify": "manual", "note": "Visual; shown in the UI demo" }
@@ -15,6 +17,7 @@ Full details are in TECH_SPEC section 15.
 }
 ```
 
+- `epic` (optional): the story's Jira epic. The dashboard groups stories under their epics; stories without one are listed after them.
 - `id`: `AC1`, `AC2`, ... in the order the story lists them.
 - `text`: the criterion exactly as written in Jira.
 - `verify`: `test` if an automated test proves it, `manual` if it's shown some

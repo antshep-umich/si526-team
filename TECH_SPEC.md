@@ -428,7 +428,7 @@ The repo contains no secrets, so `.env` has to be copied over separately.
 
 ## 15. Testing, CI and the test dashboard
 
-The tests are also our evidence that Jira stories' acceptance criteria (ACs) are met, including ones the UI can't show (for example, "a user can't be in two households"). The **test dashboard** at https://antshep-umich.github.io/si526-team/ shows the latest results, history and AC coverage. It's an internal page laid out for a desktop browser, but it's public like the repo, so nothing secret belongs in test names, AC text or commit messages.
+The tests are also our evidence that Jira stories' acceptance criteria (ACs) are met, especially ones the UI can't show (for example, "a user can't be in two households"). The **test dashboard** at https://antshep-umich.github.io/si526-team/ shows the latest results, history, and the stories whose ACs our tests check. It doesn't replace Jira, which is still where stories are tracked. It's an internal page laid out for a desktop browser, but it's public like the repo, so nothing secret belongs in test names, AC text or commit messages.
 
 ### What runs when
 
@@ -439,17 +439,19 @@ The `Tests` workflow (`.github/workflows/tests.yml`) runs the typecheck and the 
 | Push to any branch except `main` | The pushed commit | That branch's row under "Branches in progress" (replaced on each push) |
 | Pull request into `main` opened or updated | The merge result (branch + current `main`) | Nothing; it's the pull request's check |
 | Pull request merged | The branch's final commit | A row under "Merged branches", kept permanently |
-| Push to `main` (each merge) | The new `main` | The latest result, the chart, AC coverage and `main`'s history |
+| Push to `main` (each merge) | The new `main` | The latest result, the chart, the Stories section and `main`'s history |
 
 Failing runs are published too. A run whose typecheck or tests failed, or whose AC files or tags have problems, fails its check. Every run uploads `test-report` (results, summary and HTML report) and `test-report.html` (the HTML report alone) as artifacts for 30 days.
 
 ### Acceptance criteria and tags
 
-- **One file per Jira story** in `acceptance/`, named after its key (`acceptance/SCRUM-18.json`): the key, the title, and each AC's `id` (`AC1`, `AC2`, ...), its `text` as written in Jira, and `verify`: `test` or `manual` (with a `note` saying how it's shown, for example a visual check in the demo). `acceptance/README.md` has an example.
+- **One file per Jira story** in `acceptance/`, named after its key (`acceptance/SCRUM-18.json`): the key, the title, optionally its `epic` (`{ "key": "SCRUM-10", "title": "Households" }`), and each AC's `id` (`AC1`, `AC2`, ...), its `text` as written in Jira, and `verify`: `test` or `manual` (with a `note` saying how it's shown, for example a visual check in the demo). `acceptance/README.md` has an example.
 - **Tag the tests** that prove a story's ACs with its key, `{ tags: ["SCRUM-18"] }`, usually on the `describe` block, and **start each such test's name with its AC id**: `"AC2: refuses a second household for the same user"`. One test can cover several ACs (`"AC1, AC3: ..."`). Supporting tests keep plain names.
 - **Write tests from the AC text, not from the code.** If the code doesn't meet an AC, the test should fail and stay failing until the code is fixed.
 - **Checks.** Vitest only accepts tags that have an AC file, so a mistyped key fails the run. The summary step also fails the check when a test names an AC but has no story tag (or more than one), or names an AC id the story doesn't have.
-- **Statuses** on the dashboard: *passing* (all its tests passed), *failing* (any failed), *no test yet* (a `test` AC with no tests that ran) and *manual*.
+- **AC statuses:** *passing* (all its tests passed), *failing* (any failed), *no test yet* (a `test` AC with no tests that ran) and *manual*.
+- **The Stories section** nests epics → stories → ACs, from the latest run on `main`. Each story gets a verdict: *Accepted* (every AC passing or manual), *Not accepted* (an AC failing) or *Incomplete* (an AC with no test yet). Accepted stories start collapsed, and so does an epic whose stories are all accepted. Stories without an epic come last.
+- **Box-with-arrow links** on each epic, story and AC open the run's Vitest report in a new tab, filtered to those tests; an AC's link also opens its test. The report keeps its search in local storage (key `vitest-ui_task-tree-filter`, Vitest 5), so the dashboard writes the filter there just before opening it, and its plain "Open report" links clear it. If a Vitest upgrade renames that key, the links still open the report, unfiltered.
 - **Any test can prove an AC:** a `server` test for API rules, or a `web` component test (jsdom + Testing Library) for screen behavior. End-to-end tests aren't in the report, so an AC only an end-to-end test can show is marked `manual` with a note pointing to that test.
 
 ### Running it locally

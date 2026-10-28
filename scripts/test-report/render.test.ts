@@ -40,7 +40,7 @@ function section(html: string, id: string): string {
   return match[0];
 }
 
-const SECTIONS = ["latest", "chart", "coverage", "branches", "merged", "history"];
+const SECTIONS = ["latest", "chart", "stories", "branches", "merged", "history"];
 
 describe("escapeHtml", () => {
   it("escapes the characters that matter in text and attributes", () => {
@@ -54,6 +54,7 @@ describe("renderSite", () => {
     const story: StoryCoverage = {
       story: "SCRUM-18",
       title: evil,
+      epic: { key: "SCRUM-1", title: evil },
       criteria: [{ id: "AC1", text: evil, verify: "test", status: "passing", tests: [{ name: evil, state: "passed" }] }],
     };
     const site = build([
@@ -129,7 +130,7 @@ describe("renderSite", () => {
         { id: "AC4", text: "d", verify: "manual", status: "manual", tests: [], note: "UI demo" },
       ],
     };
-    const coverage = section(renderSite(build([run({}, at(1), { stories: [story] })])), "coverage").toLowerCase();
+    const coverage = section(renderSite(build([run({}, at(1), { stories: [story] })])), "stories").toLowerCase();
     for (const label of ["passing", "failing", "no test yet", "manual"]) expect(coverage).toContain(label);
   });
 
@@ -142,5 +143,111 @@ describe("renderSite", () => {
     const failed = run({ runId: "2-1" }, at(2), { outcome: "failed", totals: { total: 10, passed: 9, failed: 1, skipped: 0 } });
     const html = renderSite(build([run({}, at(1)), failed]));
     expect(section(html, "latest")).toContain('data-outcome="failed"');
+  });
+});
+
+describe("the Stories section", () => {
+  type Ac = StoryCoverage["criteria"][number];
+  const ac = (id: string, status: Ac["status"], testIds: string[] = []): Ac => ({
+    id,
+    text: `${id} text`,
+    verify: status === "manual" ? "manual" : "test",
+    status,
+    tests: testIds.map((testId) => ({
+      name: `${id}: a test`,
+      state: status === "failing" ? "failed" : "passed",
+      id: testId,
+      moduleId: "m1",
+    })),
+  });
+  const accounts = { key: "SCRUM-1", title: "Accounts" };
+  const households = { key: "SCRUM-10", title: "Households" };
+  const stories: StoryCoverage[] = [
+    { story: "SCRUM-2", title: "Sign up", epic: accounts, criteria: [ac("AC1", "passing", ["m1_0_0"]), ac("AC2", "manual")] },
+    { story: "SCRUM-3", title: "Log in", epic: accounts, criteria: [ac("AC1", "passing", ["m1_1_0"]), ac("AC2", "failing", ["m1_1_1"])] },
+    { story: "SCRUM-4", title: "Create a household", epic: households, criteria: [ac("AC1", "passing", ["m1_2_0"]), ac("AC2", "untested")] },
+    { story: "SCRUM-9", title: "Settings", criteria: [ac("AC1", "manual")] },
+  ];
+  const html = renderSite(build([run({}, at(1), { stories })]));
+  const storiesHtml = section(html, "stories");
+
+  /** The opening tag of a story's or epic's collapsible block. */
+  const openingTag = (kind: "story" | "epic", key: string, within = storiesHtml) => {
+    const match = new RegExp(`<details class="${kind}" data-key="${key}"[^>]*>`).exec(within);
+    if (!match) throw new Error(`no ${kind} ${key}`);
+    return match[0];
+  };
+
+  /** A box-with-arrow link, found by its accessible name. */
+  const goto = (what: string) =>
+    new RegExp(`<a class="goto"[^>]*aria-label="Open the tests for ${what} in the Vitest report"[^>]*>`).exec(storiesHtml)?.[0];
+
+  it("is headed Stories", () => {
+    expect(storiesHtml).toContain("<h2>Stories</h2>");
+  });
+
+  it("gives each story a verdict in words", () => {
+    expect(openingTag("story", "SCRUM-2")).toContain('data-verdict="accepted"');
+    expect(openingTag("story", "SCRUM-3")).toContain('data-verdict="not-accepted"');
+    expect(openingTag("story", "SCRUM-4")).toContain('data-verdict="incomplete"');
+    for (const word of ["Accepted", "Not accepted", "Incomplete"]) expect(storiesHtml).toContain(word);
+  });
+
+  it("collapses accepted stories and opens the rest", () => {
+    expect(openingTag("story", "SCRUM-2")).not.toMatch(/\sopen[\s>]/);
+    expect(openingTag("story", "SCRUM-3")).toMatch(/\sopen[\s>]/);
+    expect(openingTag("story", "SCRUM-4")).toMatch(/\sopen[\s>]/);
+  });
+
+  it("nests stories under their epics, with stories that have no epic last", () => {
+    const order = ["SCRUM-1", "SCRUM-2", "SCRUM-3", "SCRUM-10", "SCRUM-4", "SCRUM-9"].map((key) =>
+      storiesHtml.search(new RegExp(`data-key="${key}"`)),
+    );
+    expect(order.every((index) => index >= 0)).toBe(true);
+    expect([...order].sort((a, b) => a - b)).toEqual(order);
+    expect(storiesHtml).toContain("Stories without an epic");
+  });
+
+  it("counts the accepted stories in each epic", () => {
+    expect(storiesHtml).toContain("1 of 2 stories accepted");
+    expect(storiesHtml).toContain("0 of 1 story accepted");
+  });
+
+  it("collapses an epic only when all its stories are accepted", () => {
+    const onlyAccepted = section(renderSite(build([run({}, at(1), { stories: [stories[0]] })])), "stories");
+    expect(openingTag("epic", "SCRUM-1", onlyAccepted)).not.toMatch(/\sopen[\s>]/);
+    expect(openingTag("epic", "SCRUM-1")).toMatch(/\sopen[\s>]/);
+  });
+
+  it("lists stories without an epic level when no story has an epic", () => {
+    const flat = section(renderSite(build([run({}, at(1), { stories: [{ ...stories[1], epic: undefined }] })])), "stories");
+    expect(flat).not.toContain('class="epic"');
+    expect(flat).toContain('data-key="SCRUM-3"');
+  });
+
+  it("links a story to the latest main report, filtered to its tag", () => {
+    const link = goto("SCRUM-3");
+    expect(link).toContain('href="reports/main/1-1/index.html#/"');
+    expect(link).toContain('data-search="tag:SCRUM-3"');
+    expect(link).toContain('target="_blank"');
+  });
+
+  it("links an epic to the report filtered to all of its stories", () => {
+    expect(goto("epic SCRUM-1")).toContain('data-search="tag:SCRUM-2 or SCRUM-3"');
+  });
+
+  it("links an AC to its own test, inside its story's filter", () => {
+    const link = goto("SCRUM-3 AC2");
+    expect(link).toContain('href="reports/main/1-1/index.html#/?file=m1&amp;test=m1_1_1"');
+    expect(link).toContain('data-search="tag:SCRUM-3"');
+  });
+
+  it("has no link where there are no tests to show", () => {
+    expect(goto("SCRUM-4 AC2")).toBeUndefined();
+    expect(goto("SCRUM-9")).toBeUndefined();
+  });
+
+  it("clears the report's filter from links that open a whole report", () => {
+    expect(section(html, "history")).toMatch(/href="reports\/main\/1-1\/index.html" data-search=""/);
   });
 });
