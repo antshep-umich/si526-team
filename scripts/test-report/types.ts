@@ -102,3 +102,21 @@ export interface RunSummary {
   /** Mistakes in AC files or tags. Any problem fails the CI run. */
   problems: string[];
 }
+
+export interface SiteEntry {
+  summary: RunSummary;
+  /** Folder (relative to the site root) holding the run's HTML report, or null once it's been deleted. */
+  report: string | null;
+}
+
+/** The dashboard's history, saved as `data/history.json` on the gh-pages branch. */
+export interface SiteData {
+  version: 1;
+  updatedAt: string;
+  /** Every run on main, newest first. */
+  main: SiteEntry[];
+  /** The latest run of each branch that still exists, most recent first. */
+  branches: SiteEntry[];
+  /** Each merged PR's final branch run, newest merge first. Kept forever. */
+  merged: SiteEntry[];
+}
