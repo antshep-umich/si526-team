@@ -97,7 +97,7 @@ describe("renderSite", () => {
         at(3),
       ),
     ]);
-    expect(section(renderSite(site), "merged")).toContain('href="reports/main/7-1/"');
+    expect(section(renderSite(site), "merged")).toContain('href="reports/main/7-1/index.html"');
   });
 
   it("has no main-run link for a merge whose main run isn't recorded", () => {
@@ -114,8 +114,8 @@ describe("renderSite", () => {
     const runs = Array.from({ length: MAIN_REPORTS_KEPT + 1 }, (_, i) => run({ runId: `${i}-1` }, at(i)));
     const history = section(renderSite(build(runs)), "history");
     expect(history).toContain("expired");
-    expect(history).not.toContain('href="reports/main/0-1/"');
-    expect(history).toContain('href="reports/main/1-1/"');
+    expect(history).not.toContain('href="reports/main/0-1/index.html"');
+    expect(history).toContain('href="reports/main/1-1/index.html"');
   });
 
   it("labels each AC's status in words, not just color", () => {
@@ -131,6 +131,11 @@ describe("renderSite", () => {
     };
     const coverage = section(renderSite(build([run({}, at(1), { stories: [story] })])), "coverage").toLowerCase();
     for (const label of ["passing", "failing", "no test yet", "manual"]) expect(coverage).toContain(label);
+  });
+
+  it("keeps a duration's number and unit on the same line", () => {
+    const html = renderSite(build([run({}, at(1))]));
+    expect(section(html, "latest")).toContain("0.4 s");
   });
 
   it("says which way the latest main run went", () => {

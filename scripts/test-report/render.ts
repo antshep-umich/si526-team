@@ -20,7 +20,8 @@ function link(href: string, html: string): string {
   return `<a href="${esc(href)}">${html}</a>`;
 }
 
-const reportHref = (report: string) => `${report}/`;
+// Linking the file itself (not the folder) also works when the page is opened from disk.
+const reportHref = (report: string) => `${report}/index.html`;
 
 function utcText(iso: string): string {
   const date = new Date(iso);
@@ -45,9 +46,10 @@ function shortDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-US", { timeZone: "UTC", month: "short", day: "numeric" });
 }
 
+/** Non-breaking spaces keep "0.7 s" together when a sentence wraps. */
 function seconds(ms: number): string {
-  if (ms < 60_000) return `${(ms / 1000).toFixed(1)} s`;
-  return `${Math.floor(ms / 60_000)} min ${Math.round((ms % 60_000) / 1000)} s`;
+  if (ms < 60_000) return `${(ms / 1000).toFixed(1)} s`;
+  return `${Math.floor(ms / 60_000)} min ${Math.round((ms % 60_000) / 1000)} s`;
 }
 
 function commit(meta: RunMeta): string {
@@ -473,6 +475,7 @@ export function renderSite(site: SiteData): string {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>JAALS test results</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='9' fill='%233f6fb5'/%3E%3Cpath d='M5.6 10.4l3 3 5.8-6.6' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <meta name="description" content="Test results for the JAALS chore tracker: the latest run on main, acceptance criteria by Jira story, branches in progress and merged branches.">
 <style>${STYLES}</style>
 </head>
