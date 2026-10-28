@@ -12,8 +12,8 @@
     "build:vercel": "prisma generate && prisma migrate deploy && npm run build",
     "preview": "vite preview",
     "postinstall": "prisma generate",
-    "test": "vitest run --project server --project web",
-    "test:watch": "vitest --project server --project web",
+    "test": "vitest run --project server --project web --project scripts",
+    "test:watch": "vitest --project server --project web --project scripts",
     "test:e2e": "vitest run --project e2e",
     "typecheck": "tsc -b"
   },
