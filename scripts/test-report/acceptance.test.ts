@@ -21,6 +21,16 @@ describe("parseStory", () => {
     expect(story).toEqual(validStory);
   });
 
+  it("keeps the story's epic when it has one", () => {
+    const { story, problems } = parseStory("SCRUM-18.json", {
+      ...validStory,
+      epic: { key: "SCRUM-1", title: "Accounts and households" },
+    });
+
+    expect(problems).toEqual([]);
+    expect(story?.epic).toEqual({ key: "SCRUM-1", title: "Accounts and households" });
+  });
+
   it("requires the file name to match the story key", () => {
     const { story, problems } = parseStory("SCRUM-18.json", { ...validStory, story: "SCRUM-19" });
 
@@ -59,6 +69,9 @@ describe("parseStory", () => {
       /verify/i,
     ],
     ["something that isn't an object", ["SCRUM-18"], "SCRUM-18.json", /object/i],
+    ["an epic without a title", { ...validStory, epic: { key: "SCRUM-1" } }, "SCRUM-18.json", /epic/i],
+    ["an epic whose key isn't a Jira key", { ...validStory, epic: { key: "accounts", title: "Accounts" } }, "SCRUM-18.json", /epic/i],
+    ["an epic that's just text", { ...validStory, epic: "SCRUM-1" }, "SCRUM-18.json", /epic/i],
   ];
 
   it.each(invalid)("rejects %s, naming the file", (_label, raw, fileName, detail) => {

@@ -14,11 +14,18 @@ export interface Criterion {
   note?: string;
 }
 
+/** The Jira epic a story belongs to. Only used to group stories on the dashboard. */
+export interface Epic {
+  key: string;
+  title: string;
+}
+
 /** One Jira story's acceptance criteria, from `acceptance/<KEY>.json`. */
 export interface Story {
   /** Jira key, for example `SCRUM-18`. Also the Vitest tag for its tests. */
   story: string;
   title: string;
+  epic?: Epic;
   criteria: Criterion[];
 }
 
@@ -26,6 +33,10 @@ export type TestState = "passed" | "failed" | "skipped";
 
 /** One test as the reporter saw it (`test-report/results.json`). */
 export interface TestRecord {
+  /** Vitest's id for the test; its HTML report links to `#/?file=<moduleId>&test=<id>`. */
+  id: string;
+  /** Vitest's id for the test's file. */
+  moduleId: string;
   /** Path from the repo root. */
   file: string;
   name: string;
@@ -75,12 +86,14 @@ export type AcStatus = "passing" | "failing" | "untested" | "manual";
 
 export interface CriterionCoverage extends Criterion {
   status: AcStatus;
-  tests: { name: string; state: TestState }[];
+  /** `id` and `moduleId` are missing from runs recorded before they were added. */
+  tests: { name: string; state: TestState; id?: string; moduleId?: string }[];
 }
 
 export interface StoryCoverage {
   story: string;
   title: string;
+  epic?: Epic;
   criteria: CriterionCoverage[];
 }
 

@@ -35,6 +35,9 @@ export default class TestResultsReporter implements Reporter {
       for (const test of testModule.children.allTests()) {
         const { state } = test.result();
         tests.push({
+          // Vitest's own ids, which its HTML report uses in links (#/?file=…&test=…).
+          id: test.id,
+          moduleId: test.module.id,
           // Forward slashes on every OS (the team develops on Windows too).
           file: relative(this.root, test.module.moduleId).split(sep).join("/"),
           name: test.name,

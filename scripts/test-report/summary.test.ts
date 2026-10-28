@@ -3,7 +3,16 @@ import { buildCoverage, buildRunSummary, parseAcIds, runMetaFromEnv } from "./su
 import type { RunMeta, Story, TestRecord, TestResults, TestState } from "./types.ts";
 
 function testRecord(name: string, state: TestState, tags: string[] = []): TestRecord {
-  return { file: "server/routes/households.test.ts", name, fullName: `POST /api/households > ${name}`, tags, state, durationMs: 3 };
+  return {
+    id: `mod1_${name.length}`,
+    moduleId: "mod1",
+    file: "server/routes/households.test.ts",
+    name,
+    fullName: `POST /api/households > ${name}`,
+    tags,
+    state,
+    durationMs: 3,
+  };
 }
 
 const story: Story = {
@@ -61,11 +70,20 @@ describe("buildCoverage", () => {
     expect(statuses([testRecord("AC3: matches", "failed", ["SCRUM-18"])]).AC3).toBe("failing");
   });
 
-  it("lists each AC's tests with their state", () => {
+  it("lists each AC's tests with their state and the ids the Vitest report links by", () => {
     const { stories } = buildCoverage([testRecord("AC1, AC2: both", "passed", ["SCRUM-18"])], [story]);
-    expect(stories[0].criteria[0].tests).toEqual([{ name: "POST /api/households > AC1, AC2: both", state: "passed" }]);
+    expect(stories[0].criteria[0].tests).toEqual([
+      { name: "POST /api/households > AC1, AC2: both", state: "passed", id: "mod1_14", moduleId: "mod1" },
+    ]);
     expect(stories[0].criteria[1].tests).toHaveLength(1);
     expect(stories[0].criteria[0]).toMatchObject({ id: "AC1", text: "Creates a household", verify: "test" });
+  });
+
+  it("carries each story's epic", () => {
+    const withEpic: Story = { ...story, epic: { key: "SCRUM-1", title: "Accounts and households" } };
+    const { stories } = buildCoverage([], [withEpic, { ...story, story: "SCRUM-20" }]);
+    expect(stories[0].epic).toEqual({ key: "SCRUM-1", title: "Accounts and households" });
+    expect(stories[1].epic).toBeUndefined();
   });
 
   it("covers every story, including ones with no tests", () => {

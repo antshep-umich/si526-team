@@ -32,6 +32,7 @@ export function buildCoverage(tests: TestRecord[], stories: Story[]): { stories:
   const coverage: StoryCoverage[] = stories.map((s) => ({
     story: s.story,
     title: s.title,
+    ...(s.epic ? { epic: s.epic } : {}),
     criteria: s.criteria.map((c) => ({ ...c, status: "untested", tests: [] })),
   }));
   const byKey = new Map(coverage.map((s) => [s.story, s]));
@@ -62,7 +63,7 @@ export function buildCoverage(tests: TestRecord[], stories: Story[]): { stories:
         problems.push(`${where} names ${id}, which isn't in acceptance/${story.story}.json`);
         continue;
       }
-      criterion.tests.push({ name: test.fullName, state: test.state });
+      criterion.tests.push({ name: test.fullName, state: test.state, id: test.id, moduleId: test.moduleId });
     }
   }
 

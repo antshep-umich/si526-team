@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import type { Criterion, Story } from "./types.ts";
+import type { Criterion, Epic, Story } from "./types.ts";
 
 const STORY_KEY = /^[A-Z][A-Z0-9]*-\d+$/;
 const AC_ID = /^AC\d+$/;
@@ -37,6 +37,16 @@ export function parseStory(fileName: string, raw: unknown): { story: Story | nul
   }
   if (!nonEmptyString(raw.title)) problem(`"title" is missing`);
 
+  let epic: Epic | undefined;
+  if (raw.epic !== undefined) {
+    const e = raw.epic;
+    if (isObject(e) && typeof e.key === "string" && isStoryKey(e.key) && nonEmptyString(e.title)) {
+      epic = { key: e.key, title: e.title };
+    } else {
+      problem(`"epic" must be { "key": "SCRUM-1", "title": "..." } with a Jira key and a title`);
+    }
+  }
+
   const criteria: Criterion[] = [];
   if (!Array.isArray(raw.criteria) || raw.criteria.length === 0) {
     problem(`"criteria" must list at least one acceptance criterion`);
@@ -69,7 +79,9 @@ export function parseStory(fileName: string, raw: unknown): { story: Story | nul
   }
 
   if (problems.length > 0) return { story: null, problems };
-  return { story: { story: key as string, title: raw.title as string, criteria }, problems };
+  const story: Story = { story: key as string, title: raw.title as string, criteria };
+  if (epic) story.epic = epic;
+  return { story, problems };
 }
 
 /** Reads every `*.json` file in `dir`. A missing directory means no stories yet. */
