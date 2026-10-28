@@ -90,9 +90,11 @@ function emptyNote(text: string): string {
   return `<p class="empty">${text}</p>`;
 }
 
-function table(headers: string[], rows: string[][]): string {
+/** Cells stay on one line, except the `wrap` column (a commit message or PR title), which takes the spare width. */
+function table(headers: string[], rows: string[][], wrap: number): string {
+  const cell = (c: string, i: number) => (i === wrap ? `<td class="wrap">${c}</td>` : `<td>${c}</td>`);
   const head = headers.map((h) => `<th scope="col">${h}</th>`).join("");
-  const body = rows.map((cells) => `<tr>${cells.map((c) => `<td>${c}</td>`).join("")}</tr>`).join("\n");
+  const body = rows.map((cells) => `<tr>${cells.map(cell).join("")}</tr>`).join("\n");
   return `<div class="table-wrap"><table><thead><tr>${head}</tr></thead><tbody>\n${body}\n</tbody></table></div>`;
 }
 
@@ -214,6 +216,8 @@ function chartSection(site: SiteData): string {
 
   return `<section id="chart">
 ${heading}
+<p class="intro">Each bar is one run on main, oldest on the left. Select a bar to open its report.</p>
+<div class="panel chart-panel">
 <ul class="legend">
 <li><span class="swatch passed"></span>Passed</li>
 <li><span class="swatch failed"></span>Failed</li>
@@ -227,7 +231,7 @@ ${bars.join("\n")}
 </svg>
 <div class="dates" aria-hidden="true">${dates}</div>
 </div>
-<p class="note">Each bar is one run, oldest on the left. Select a bar to open its report.</p>
+</div>
 </section>`;
 }
 
@@ -238,12 +242,24 @@ const STATUS_LABEL: Record<AcStatus, string> = {
   manual: "Manual",
 };
 
-const STATUS_MARK: Record<AcStatus, Mark> = { passing: "pass", failing: "fail", untested: "none", manual: "manual" };
-
 type Verdict = "accepted" | "not-accepted" | "incomplete";
 
 const VERDICT_LABEL: Record<Verdict, string> = { accepted: "Accepted", "not-accepted": "Not accepted", incomplete: "Incomplete" };
-const VERDICT_MARK: Record<Verdict, Mark> = { accepted: "pass", "not-accepted": "fail", incomplete: "none" };
+
+/** An AC's checkbox, like a chore chart filled in with a pen. Always shown beside its status word. */
+function box(status: AcStatus): string {
+  const shapes: Record<AcStatus, string> = {
+    passing: `<rect x="1" y="1" width="14" height="14" rx="3" fill="var(--passed)"/><path d="M4.4 8.3l2.4 2.4 4.8-5.3" fill="none" stroke="var(--on-mark)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>`,
+    failing: `<rect x="1" y="1" width="14" height="14" rx="3" fill="var(--failed)"/><path d="M5.3 5.3l5.4 5.4M10.7 5.3l-5.4 5.4" stroke="var(--on-mark)" stroke-width="1.8" stroke-linecap="round"/>`,
+    untested: `<rect x="1.75" y="1.75" width="12.5" height="12.5" rx="2.5" fill="none" stroke="var(--skipped)" stroke-width="1.5"/>`,
+    manual: `<rect x="1.75" y="1.75" width="12.5" height="12.5" rx="2.5" fill="none" stroke="var(--ink-2)" stroke-width="1.5" stroke-dasharray="2.6 1.9"/><circle cx="8" cy="8" r="1.9" fill="var(--ink-2)"/>`,
+  };
+  return `<svg class="box" viewBox="0 0 16 16" aria-hidden="true">${shapes[status]}</svg>`;
+}
+
+const CHEVRON = `<svg class="chev" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const NO_CHEVRON = `<span class="chev" aria-hidden="true"></span>`;
+const NO_GOTO = `<span class="goto" aria-hidden="true"></span>`;
 
 /** Accepted when every AC is met. Manual ACs count as met: they're checked outside these tests. */
 function verdictOf(story: StoryCoverage): Verdict {
@@ -257,16 +273,16 @@ function idList(ids: string[]): string {
   return ids.length < 2 ? ids.join("") : `${ids.slice(0, -1).join(", ")} and ${ids[ids.length - 1]}`;
 }
 
-function verdictText(story: StoryCoverage, verdict: Verdict): string {
+/** Why a story has its verdict, in a few words; empty when there's nothing to add. */
+function verdictReason(story: StoryCoverage, verdict: Verdict): string {
   const withStatus = (status: AcStatus) => story.criteria.filter((c) => c.status === status).map((c) => c.id);
-  const label = VERDICT_LABEL[verdict];
-  if (verdict === "not-accepted") return `${label}: ${idList(withStatus("failing"))} failing`;
+  if (verdict === "not-accepted") return `${idList(withStatus("failing"))} failing`;
   if (verdict === "incomplete") {
     const untested = withStatus("untested");
-    return `${label}: ${idList(untested)} ${untested.length === 1 ? "has" : "have"} no test yet`;
+    return `${idList(untested)} ${untested.length === 1 ? "has" : "have"} no test yet`;
   }
-  const manual = withStatus("manual").length;
-  return manual > 0 ? `${label}, with ${manual} checked manually` : label;
+  const manual = withStatus("manual");
+  return manual.length > 0 ? `${idList(manual)} checked manually` : "";
 }
 
 const GOTO_ICON = `<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M11.5 3.5h5v5M16.5 3.5l-7.5 7.5M14 11.5v4a1 1 0 0 1-1 1H4.5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
@@ -287,31 +303,36 @@ function gotoLink(report: string, what: string, search: string, test?: TestRef):
 
 const hasTests = (story: StoryCoverage) => story.criteria.some((c) => c.tests.length > 0);
 
-function criterionRow(story: StoryCoverage, c: StoryCoverage["criteria"][number], report: string | null): string {
+/** One AC: its id, text and status, opening to the tests that check it. */
+function acRow(story: StoryCoverage, c: StoryCoverage["criteria"][number], report: string | null): string {
   const first = c.tests.find((t: TestRef) => t.id && t.moduleId) ?? c.tests[0];
-  const goto = report && first ? gotoLink(report, `${story.story} ${c.id}`, `tag:${story.story}`, first) : "";
-  const line = `${glyph(STATUS_MARK[c.status])}<span class="label"><span class="ac">${esc(c.id)}</span> ${esc(c.text)}<span class="state">${STATUS_LABEL[c.status]}</span></span>${goto}`;
-  const note = c.note ? `<p class="note">${esc(c.note)}</p>` : "";
+  const goto = report && first ? gotoLink(report, `${story.story} ${c.id}`, `tag:${story.story}`, first) : NO_GOTO;
+  const cells = `<span class="ac-id">${esc(c.id)}</span><span class="ac-text">${esc(c.text)}</span><span class="ac-status">${box(c.status)}${STATUS_LABEL[c.status]}</span>${goto}`;
+  const note = c.note ? `<p class="ac-note">${esc(c.note)}</p>` : "";
   const tests = c.tests.length
-    ? `<ul class="tests">${c.tests.map((t) => `<li>${esc(t.name)}${t.state === "passed" ? "" : ` (${t.state})`}</li>`).join("")}</ul>`
+    ? `<ul class="tests">${c.tests.map((t) => `<li>${esc(t.name)}${t.state === "passed" ? "" : ` <span class="test-state">${t.state}</span>`}</li>`).join("")}</ul>`
     : "";
-  if (!note && !tests) return `<li class="criterion" data-status="${c.status}"><div class="line">${line}</div></li>`;
+  if (!note && !tests) return `<li class="ac" data-status="${c.status}"><div class="ac-row">${NO_CHEVRON}${cells}</div></li>`;
   // A failing AC starts open, so the failing test is in view.
-  return `<li class="criterion" data-status="${c.status}"><details${c.status === "failing" ? " open" : ""}><summary class="line">${line}</summary>
-<div class="detail">${note}${tests}</div></details></li>`;
+  return `<li class="ac" data-status="${c.status}"><details${c.status === "failing" ? " open" : ""}><summary class="ac-row">${CHEVRON}${cells}</summary>
+<div class="ac-detail">${note}${tests}</div></details></li>`;
 }
 
+/** One story: a row with its AC checkboxes and verdict, opening to its ACs. */
 function storyBlock(story: StoryCoverage, report: string | null): string {
   const verdict = verdictOf(story);
-  const goto = report && hasTests(story) ? gotoLink(report, story.story, `tag:${story.story}`) : "";
+  const reason = verdictReason(story, verdict);
+  const goto = report && hasTests(story) ? gotoLink(report, story.story, `tag:${story.story}`) : NO_GOTO;
+  const boxes = story.criteria.map((c) => `<span title="${esc(`${c.id}: ${STATUS_LABEL[c.status]}`)}">${box(c.status)}</span>`).join("");
   return `<details class="story" data-key="${esc(story.story)}" data-verdict="${verdict}"${verdict === "accepted" ? "" : " open"}>
-<summary class="line">${glyph(VERDICT_MARK[verdict])}<span class="label"><span class="key">${esc(story.story)}</span> <span class="title">${esc(story.title)}</span><span class="state">${verdictText(story, verdict)}</span></span>${goto}</summary>
-<ul class="criteria">
-${story.criteria.map((c) => criterionRow(story, c, report)).join("\n")}
-</ul>
+<summary class="story-row">${CHEVRON}<span class="story-name"><span class="key">${esc(story.story)}</span><span class="title">${esc(story.title)}</span>${reason ? `<span class="reason">${reason}</span>` : ""}</span><span class="boxes" aria-hidden="true">${boxes}</span><span class="pill" data-verdict="${verdict}">${VERDICT_LABEL[verdict]}</span>${goto}</summary>
+<ol class="acs">
+${story.criteria.map((c) => acRow(story, c, report)).join("\n")}
+</ol>
 </details>`;
 }
 
+/** An epic (or the stories without one): a panel with a header band and its stories. */
 function storyGroup(
   kind: "epic" | "group",
   key: string | null,
@@ -319,17 +340,41 @@ function storyGroup(
   stories: StoryCoverage[],
   report: string | null,
 ): string {
-  const accepted = stories.filter((s) => verdictOf(s) === "accepted").length;
+  const verdicts = stories.map(verdictOf);
+  const accepted = verdicts.filter((v) => v === "accepted").length;
   const tally = `${accepted} of ${stories.length} ${stories.length === 1 ? "story" : "stories"} accepted`;
   const tested = stories.filter(hasTests).map((s) => s.story);
-  const goto = report && tested.length ? gotoLink(report, `epic ${key ?? title}`, `tag:${tested.join(" or ")}`) : "";
-  const keyAttr = key ? ` data-key="${esc(key)}"` : "";
-  const keyText = key ? `<span class="key">${esc(key)}</span> ` : "";
-  return `<details class="${kind}"${keyAttr}${accepted === stories.length ? "" : " open"}>
-<summary class="line"><span class="label">${keyText}<span class="title">${esc(title)}</span><span class="state">${tally}</span></span>${kind === "epic" ? goto : ""}</summary>
+  const goto =
+    kind === "epic" && report && tested.length ? gotoLink(report, `epic ${key ?? title}`, `tag:${tested.join(" or ")}`) : NO_GOTO;
+  const segments = stories
+    .map((s, i) => `<i data-verdict="${verdicts[i]}" title="${esc(`${s.story}: ${VERDICT_LABEL[verdicts[i]]}`)}"></i>`)
+    .join("");
+  const name =
+    kind === "epic" && key
+      ? `<span class="level">Epic</span><span class="key">${esc(key)}</span><span class="title">${esc(title)}</span>`
+      : `<span class="title">${esc(title)}</span>`;
+  return `<details class="${kind}"${key ? ` data-key="${esc(key)}"` : ""}${accepted === stories.length ? "" : " open"}>
+<summary class="group-head">${CHEVRON}<span class="group-name">${name}</span><span class="progress"><span class="segments" aria-hidden="true">${segments}</span><span class="tally">${tally}</span></span>${goto}</summary>
+<div class="story-list">
 ${stories.map((s) => storyBlock(s, report)).join("\n")}
+</div>
 </details>`;
 }
+
+/** "2 of 4 stories accepted. 1 not accepted and 1 incomplete." */
+function storiesTotal(stories: StoryCoverage[]): string {
+  const count = (v: Verdict) => stories.filter((s) => verdictOf(s) === v).length;
+  const rest = [
+    count("not-accepted") ? `${count("not-accepted")} not accepted` : "",
+    count("incomplete") ? `${count("incomplete")} incomplete` : "",
+  ].filter(Boolean);
+  const accepted = `${count("accepted")} of ${stories.length} ${stories.length === 1 ? "story" : "stories"} accepted.`;
+  return rest.length ? `${accepted} ${rest.join(" and ")}.` : accepted;
+}
+
+const MARKS_LEGEND = `<ul class="legend marks" aria-label="What the checkboxes mean">${(["passing", "failing", "untested", "manual"] as const)
+  .map((s) => `<li>${box(s)}${STATUS_LABEL[s]}</li>`)
+  .join("")}</ul>`;
 
 function storiesSection(site: SiteData): string {
   const heading = `<h2>Stories</h2>`;
@@ -359,7 +404,7 @@ function storiesSection(site: SiteData): string {
 
   let body: string;
   if (epics.size === 0) {
-    body = loose.map((s) => storyBlock(s, report)).join("\n");
+    body = `<div class="story-list panel">\n${loose.map((s) => storyBlock(s, report)).join("\n")}\n</div>`;
   } else {
     const ordered = [...epics.entries()].sort(([a], [b]) => a.localeCompare(b, "en", { numeric: true }));
     body = ordered.map(([key, group]) => storyGroup("epic", key, group.title, group.stories, report)).join("\n");
@@ -369,6 +414,7 @@ function storiesSection(site: SiteData): string {
   return `<section id="stories">
 ${heading}
 <p class="intro">The acceptance criteria our tests can check, from the latest run on main, ${time(latest.summary.startedAt)}. Jira is still where stories are tracked.</p>
+<div class="stories-head"><p class="total">${storiesTotal(stories)}</p>${MARKS_LEGEND}</div>
 <div class="tree">
 ${body}
 </div>
@@ -400,7 +446,7 @@ function branchesSection(site: SiteData): string {
   return `<section id="branches">
 ${heading}
 <p class="intro">The latest push to each branch. A branch drops off this list when it's deleted.</p>
-${table(["Branch", "Result", "Tests", "Last commit", "Tested", "Report"], rows)}
+${table(["Branch", "Result", "Tests", "Last commit", "Tested", "Report"], rows, 3)}
 </section>`;
 }
 
@@ -435,7 +481,7 @@ function mergedSection(site: SiteData): string {
   return `<section id="merged">
 ${heading}
 <p class="intro">Each branch's final run before its pull request merged. These are kept permanently.</p>
-${table(["Pull request", "Branch", "Final run", "Tests", "Merged", "Reports"], rows)}
+${table(["Pull request", "Branch", "Final run", "Tests", "Merged", "Reports"], rows, 0)}
 </section>`;
 }
 
@@ -455,7 +501,7 @@ function historySection(site: SiteData): string {
   return `<section id="history">
 ${heading}
 <p class="intro">Every run on main, newest first. Full reports are kept for the newest 30.</p>
-${table(["Tested", "Commit", "Result", "Tests", "Time", "Report"], rows)}
+${table(["Tested", "Commit", "Result", "Tests", "Time", "Report"], rows, 1)}
 </section>`;
 }
 
@@ -466,11 +512,16 @@ const STYLES = `
 @font-face { font-family: Libron; src: url("assets/fonts/Libron-BoldItalic.woff2") format("woff2"); font-weight: 700; font-style: italic; font-display: swap; }
 :root {
   color-scheme: light dark;
-  --paper: #f2f4f1; --ink: #1c2420; --ink-2: #48534d; --ink-3: #5c6761; --rule: #d3dad4;
+  /* Surfaces: the page, panels that hold a dataset or an epic, an epic's header band, and the recessed AC list. */
+  --paper: #f2f4f1; --panel: #fbfcfa; --band: #e4e9e3; --well: #f2f4f1;
+  --ink: #1c2420; --ink-2: #48534d; --ink-3: #5c6761; --rule: #d3dad4; --rule-strong: #b8c2ba;
   --passed: #3f6fb5; --failed: #d03b3b; --skipped: #848d88; --on-mark: #ffffff;
 }
 @media (prefers-color-scheme: dark) {
-  :root { --paper: #151b18; --ink: #e5ebe6; --ink-2: #b4beb8; --ink-3: #97a29b; --rule: #2c3530; }
+  :root {
+    --paper: #151b18; --panel: #1b221e; --band: #242d28; --well: #151b18;
+    --ink: #e5ebe6; --ink-2: #b4beb8; --ink-3: #97a29b; --rule: #2c3530; --rule-strong: #3d4842;
+  }
 }
 * { box-sizing: border-box; }
 html { font-size: 18px; }
@@ -479,32 +530,41 @@ body { margin: 0; background: var(--paper); color: var(--ink); font-family: Libr
 .page { max-width: 64rem; margin: 0 auto; padding: 2.5rem 2rem 5rem; }
 a { color: inherit; text-decoration: underline; text-decoration-color: var(--ink-3); text-decoration-thickness: 1px; text-underline-offset: 0.18em; }
 a:hover { text-decoration-color: currentColor; }
-:focus-visible { outline: 2px solid var(--passed); outline-offset: 2px; border-radius: 2px; }
+:focus-visible { outline: 2px solid var(--passed); outline-offset: 2px; border-radius: 3px; }
 code { font-family: inherit; font-weight: 700; }
 .masthead { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 0.25rem 1.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--rule); }
 .masthead h1 { margin: 0; font-size: 1rem; font-weight: 700; }
 .masthead p { margin: 0; color: var(--ink-3); font-size: 0.85rem; }
-section { margin-top: 3.5rem; }
-h2 { margin: 0 0 0.75rem; font-size: 1.333rem; font-weight: 700; line-height: 1.25; }
+section { margin-top: 4.5rem; }
+h2 { margin: 0 0 0.4rem; font-size: 2rem; font-weight: 400; line-height: 1.15; letter-spacing: -0.012em; }
 h3 { margin: 0; font-size: 1.1rem; font-weight: 700; line-height: 1.3; }
 p { margin: 0 0 0.5rem; max-width: 42rem; }
 .intro, .empty, .note { color: var(--ink-2); }
+section > .intro { margin-bottom: 1.25rem; }
 .note { font-size: 0.85rem; }
 .muted { color: var(--ink-3); }
 .glyph { width: 1.05em; height: 1.05em; flex: none; }
 .status { display: inline-flex; align-items: center; gap: 0.4em; white-space: nowrap; }
-.latest { margin-top: 2.5rem; }
-.latest .verdict { display: flex; align-items: center; gap: 0.35em; margin: 0 0 1rem; font-size: 2.667rem; font-weight: 400; line-height: 1.1; letter-spacing: -0.01em; }
+/* Jira-style keys (SCRUM-3) in small caps, so they sit quieter than the titles beside them. */
+.key { font-variant-caps: all-small-caps; letter-spacing: 0.06em; font-weight: 700; color: var(--ink-2); }
+
+.latest { margin-top: 2.75rem; }
+.latest .verdict { display: flex; align-items: center; gap: 0.35em; margin: 0 0 1rem; font-size: 2.667rem; font-weight: 400; line-height: 1.1; letter-spacing: -0.012em; }
 .latest .verdict .glyph { width: 0.82em; height: 0.82em; }
 .latest .links { display: flex; flex-wrap: wrap; gap: 0.25rem 1.5rem; margin-top: 1rem; }
-.problems { margin-top: 1.5rem; padding: 1rem 1.25rem; border: 1px solid var(--rule); border-left: 4px solid var(--failed); border-radius: 4px; max-width: 42rem; }
+.problems { margin-top: 1.5rem; padding: 1rem 1.25rem; background: var(--panel); border: 1px solid var(--rule); border-left: 4px solid var(--failed); border-radius: 6px; max-width: 42rem; }
 .problems h3 { font-size: 1rem; }
 .problems ul { margin: 0.5rem 0 0; padding-left: 1.2rem; font-size: 0.9rem; }
+
+/* Panels hold one dataset each: the chart, an epic, a table. */
+.panel, .table-wrap { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; }
+
 .legend { display: flex; flex-wrap: wrap; gap: 0.25rem 1.25rem; margin: 0 0 0.75rem; padding: 0; list-style: none; font-size: 0.85rem; color: var(--ink-2); }
 .swatch { display: inline-block; width: 0.75em; height: 0.75em; margin-right: 0.4em; border-radius: 2px; vertical-align: -0.02em; }
 .swatch.passed, .chart .passed { background: var(--passed); fill: var(--passed); }
 .swatch.failed, .chart .failed { background: var(--failed); fill: var(--failed); }
 .swatch.skipped, .chart .skipped { background: var(--skipped); fill: var(--skipped); }
+.chart-panel { padding: 1.1rem 1.25rem 0.6rem; }
 .chart { position: relative; padding-left: 2.25rem; }
 .chart svg { display: block; width: 100%; height: 200px; overflow: visible; }
 .chart .grid { stroke: var(--rule); stroke-width: 1; vector-effect: non-scaling-stroke; }
@@ -517,41 +577,72 @@ p { margin: 0 0 0.5rem; max-width: 42rem; }
 .dates { position: relative; height: 1.4rem; margin-top: 0.35rem; }
 .dates span { top: 0; transform: translateX(-50%); white-space: nowrap; }
 .tip { position: fixed; z-index: 10; max-width: 22rem; padding: 0.45rem 0.65rem; border-radius: 4px; background: var(--ink); color: var(--paper); font-size: 0.8rem; line-height: 1.4; white-space: pre-line; pointer-events: none; }
-.tree { max-width: 52rem; margin-top: 1rem; border-bottom: 1px solid var(--rule); }
+
+/* Stories: each epic is a panel with a header band, stories are rows on it, and an
+   open story's acceptance criteria sit in a recessed list. Type shrinks a step per level. */
+.stories-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 0.5rem 2rem; margin-bottom: 1rem; }
+.stories-head .total { margin: 0; font-weight: 700; }
+.marks { margin: 0; }
+.marks li { display: inline-flex; align-items: center; gap: 0.4em; }
+.box { display: block; width: 1rem; height: 1rem; flex: none; }
+.tree { display: grid; gap: 1.25rem; }
 .tree summary { list-style: none; cursor: pointer; }
 .tree summary::-webkit-details-marker { display: none; }
-.line { display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.65rem 0; }
-.line .label { flex: 1; min-width: 0; }
-.line .state { display: block; margin-top: 0.1rem; color: var(--ink-2); font-size: 0.85rem; font-weight: 400; }
-.line .glyph { width: 1.2rem; height: 1.2rem; margin-top: 0.12rem; }
-.line .key { margin-right: 0.3em; color: var(--ink-2); font-weight: 700; }
-.line .title { font-weight: 700; }
-/* A chevron marks rows that open and close; rows without one keep the same indent. */
-.tree summary.line::before, .tree div.line::before { content: ""; flex: none; width: 0.45rem; height: 0.45rem; margin: 0.5rem 0.15rem 0 0.1rem; }
-.tree summary.line::before { border-right: 2px solid var(--ink-3); border-bottom: 2px solid var(--ink-3); transform: rotate(-45deg); transition: transform 120ms ease-out; }
-.tree details[open] > summary.line::before { transform: rotate(45deg); }
-@media (prefers-reduced-motion: reduce) { .tree summary.line::before { transition: none; } }
-.epic, .group, .tree > .story { border-top: 1px solid var(--ink-3); }
-.epic > summary .title, .group > summary .title { font-size: 1.1rem; }
-.epic > .story, .group > .story { margin-left: 1.5rem; border-top: 1px solid var(--rule); }
-.criteria { margin: 0 0 0.4rem 1.5rem; padding: 0; list-style: none; }
-.criterion { border-top: 1px solid var(--rule); }
-.criterion .line { padding: 0.5rem 0; }
-.criterion .ac { font-weight: 700; margin-right: 0.3em; }
-.criterion .detail { margin: 0 0 0.6rem 3.15rem; }
-.criterion .note { margin: 0; }
-.tests { margin: 0.15rem 0 0; padding: 0; list-style: none; font-size: 0.8rem; color: var(--ink-3); }
-.goto { flex: none; display: inline-flex; padding: 0.2rem; margin-top: 0.05rem; border-radius: 3px; color: var(--ink-3); text-decoration: none; }
+.chev { display: block; width: 1rem; height: 1rem; flex: none; color: var(--ink-3); transition: transform 140ms ease-out; }
+details[open] > summary > .chev { transform: rotate(90deg); }
+@media (prefers-reduced-motion: reduce) { .chev { transition: none; } }
+.goto { display: inline-flex; align-items: center; justify-content: center; width: 1.75rem; height: 1.75rem; flex: none; border-radius: 4px; color: var(--ink-3); text-decoration: none; }
 .goto svg { width: 1.05rem; height: 1.05rem; }
-.goto:hover { color: var(--ink); background: color-mix(in srgb, var(--ink) 8%, transparent); }
+a.goto:hover { color: var(--ink); background: color-mix(in srgb, var(--ink) 9%, transparent); }
+
+.epic, .group { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; }
+.group-head { display: grid; grid-template-columns: 1rem minmax(0, 1fr) auto 1.75rem; align-items: center; gap: 0.85rem; padding: 0.9rem 1rem 0.9rem 1.1rem; background: var(--band); }
+.epic[open] > .group-head, .group[open] > .group-head { border-bottom: 1px solid var(--rule-strong); }
+.group-name { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 0.6rem; min-width: 0; }
+.group-name .level { color: var(--ink-3); font-size: 0.9rem; }
+.group-name .key { font-size: 1.1rem; }
+.group-name .title { font-size: 1.333rem; font-weight: 700; line-height: 1.2; }
+.group .group-name .title { font-weight: 400; font-style: italic; }
+.progress { display: flex; align-items: center; gap: 0.75rem; color: var(--ink-2); font-size: 0.85rem; white-space: nowrap; }
+.segments { display: flex; gap: 3px; width: 6.5rem; }
+.segments i { flex: 1; height: 0.55rem; border-radius: 2px; }
+.segments i[data-verdict="accepted"] { background: var(--passed); }
+.segments i[data-verdict="not-accepted"] { background: var(--failed); }
+.segments i[data-verdict="incomplete"] { box-shadow: inset 0 0 0 1.5px var(--skipped); }
+
+.story-list > .story + .story { border-top: 1px solid var(--rule); }
+.story-row { display: grid; grid-template-columns: 1rem minmax(0, 1fr) 7.5rem 8.25rem 1.75rem; align-items: center; gap: 0.85rem; padding: 0.75rem 1rem 0.75rem 1.1rem; }
+.story-row:hover { background: color-mix(in srgb, var(--ink) 3%, transparent); }
+.story-name { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 0.55rem; min-width: 0; }
+.story-name .key { font-size: 0.95rem; }
+.story-name .title { font-weight: 700; }
+.story-name .reason { flex-basis: 100%; color: var(--ink-2); font-size: 0.8rem; }
+.boxes { display: flex; flex-wrap: wrap; gap: 3px; }
+.pill { justify-self: start; padding: 0.2rem 0.75rem; border-radius: 999px; font-size: 0.8rem; font-weight: 700; white-space: nowrap; background: color-mix(in srgb, var(--passed) 16%, var(--panel)); }
+.pill[data-verdict="not-accepted"] { background: color-mix(in srgb, var(--failed) 16%, var(--panel)); }
+.pill[data-verdict="incomplete"] { background: transparent; box-shadow: inset 0 0 0 1px var(--skipped); color: var(--ink-2); }
+
+.acs { list-style: none; margin: 0 1rem 1rem 3rem; padding: 0; background: var(--well); border: 1px solid var(--rule); border-radius: 6px; }
+.ac + .ac { border-top: 1px solid var(--rule); }
+.ac-row { display: grid; grid-template-columns: 1rem 2.6rem minmax(0, 1fr) 7.25rem 1.75rem; align-items: start; gap: 0.6rem; padding: 0.5rem 0.6rem 0.5rem 0.75rem; font-size: 0.889rem; line-height: 1.45; }
+.ac-row > .chev { margin-top: 0.2rem; }
+.ac-row > .goto { margin-top: -0.2rem; }
+.ac-id { font-weight: 700; color: var(--ink-2); }
+.ac-status { display: inline-flex; align-items: center; gap: 0.4em; padding-top: 0.12rem; color: var(--ink-2); font-size: 0.8rem; white-space: nowrap; }
+.ac-detail { padding: 0 0.75rem 0.65rem 5.75rem; font-size: 0.8rem; color: var(--ink-3); }
+.ac-note { margin: 0; color: var(--ink-2); }
+.tests { margin: 0; padding: 0; list-style: none; }
+.test-state { font-weight: 700; color: var(--ink-2); }
+
 .table-wrap { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-th { padding: 0.5rem 1rem 0.5rem 0; border-bottom: 1px solid var(--ink-3); color: var(--ink-2); font-weight: 700; text-align: left; white-space: nowrap; }
-td { padding: 0.65rem 1rem 0.65rem 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
-td:last-child, th:last-child { padding-right: 0; }
+th { padding: 0.6rem 1rem; background: var(--band); border-bottom: 1px solid var(--rule-strong); color: var(--ink-2); font-weight: 700; text-align: left; white-space: nowrap; }
+td { padding: 0.7rem 1rem; border-bottom: 1px solid var(--rule); vertical-align: top; white-space: nowrap; }
+td.wrap { width: 100%; min-width: 14rem; white-space: normal; }
+tbody tr:last-child td { border-bottom: 0; }
 td em { color: var(--ink-2); }
-.branch { font-weight: 700; overflow-wrap: anywhere; }
-footer { margin-top: 4rem; padding-top: 1rem; border-top: 1px solid var(--rule); color: var(--ink-3); font-size: 0.8rem; }
+.branch { font-weight: 700; }
+footer { margin-top: 4.5rem; padding-top: 1rem; border-top: 1px solid var(--rule); color: var(--ink-3); font-size: 0.8rem; }
 `;
 
 const SCRIPT = `
