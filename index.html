@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JAALS test results</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='9' fill='%233f6fb5'/%3E%3Cpath d='M5.6 10.4l3 3 5.8-6.6' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<meta name="description" content="Test results for the JAALS chore tracker: the latest run on main, acceptance criteria by Jira story, branches in progress and merged branches.">
+<style>
+@font-face { font-family: Libron; src: url("assets/fonts/Libron-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: Libron; src: url("assets/fonts/Libron-Italic.woff2") format("woff2"); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: Libron; src: url("assets/fonts/Libron-Bold.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: Libron; src: url("assets/fonts/Libron-BoldItalic.woff2") format("woff2"); font-weight: 700; font-style: italic; font-display: swap; }
+:root {
+  color-scheme: light dark;
+  /* Surfaces: the page, panels that hold a dataset or an epic, an epic's header band, and the recessed AC list. */
+  --paper: #f2f4f1; --panel: #fbfcfa; --band: #e4e9e3; --well: #f2f4f1;
+  --ink: #1c2420; --ink-2: #48534d; --ink-3: #5c6761; --rule: #d3dad4; --rule-strong: #b8c2ba;
+  --passed: #3f6fb5; --failed: #d03b3b; --skipped: #848d88; --on-mark: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #151b18; --panel: #1b221e; --band: #242d28; --well: #151b18;
+    --ink: #e5ebe6; --ink-2: #b4beb8; --ink-3: #97a29b; --rule: #2c3530; --rule-strong: #3d4842;
+  }
+}
+* { box-sizing: border-box; }
+html { font-size: 18px; }
+body { margin: 0; background: var(--paper); color: var(--ink); font-family: Libron, Georgia, serif; line-height: 1.5; font-variant-numeric: tabular-nums; -webkit-text-size-adjust: 100%; }
+/* An internal page, laid out for a desktop browser window. */
+.page { max-width: 64rem; margin: 0 auto; padding: 2.5rem 2rem 5rem; }
+a { color: inherit; text-decoration: underline; text-decoration-color: var(--ink-3); text-decoration-thickness: 1px; text-underline-offset: 0.18em; }
+a:hover { text-decoration-color: currentColor; }
+:focus-visible { outline: 2px solid var(--passed); outline-offset: 2px; border-radius: 3px; }
+code { font-family: inherit; font-weight: 700; }
+.masthead { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 0.25rem 1.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--rule); }
+.masthead h1 { margin: 0; font-size: 1rem; font-weight: 700; }
+.masthead p { margin: 0; color: var(--ink-3); font-size: 0.85rem; }
+section { margin-top: 4.5rem; }
+h2 { margin: 0 0 0.4rem; font-size: 2rem; font-weight: 400; line-height: 1.15; letter-spacing: -0.012em; }
+h3 { margin: 0; font-size: 1.1rem; font-weight: 700; line-height: 1.3; }
+p { margin: 0 0 0.5rem; max-width: 42rem; }
+.intro, .empty, .note { color: var(--ink-2); }
+section > .intro { margin-bottom: 1.25rem; }
+.note { font-size: 0.85rem; }
+.muted { color: var(--ink-3); }
+.glyph { width: 1.05em; height: 1.05em; flex: none; }
+.status { display: inline-flex; align-items: center; gap: 0.4em; white-space: nowrap; }
+/* Jira-style keys (SCRUM-3) in small caps, so they sit quieter than the titles beside them. */
+.key { font-variant-caps: all-small-caps; letter-spacing: 0.06em; font-weight: 700; color: var(--ink-2); }
+
+.latest { margin-top: 2.75rem; }
+.latest .verdict { display: flex; align-items: center; gap: 0.35em; margin: 0 0 1rem; font-size: 2.667rem; font-weight: 400; line-height: 1.1; letter-spacing: -0.012em; }
+.latest .verdict .glyph { width: 0.82em; height: 0.82em; }
+.latest .links { display: flex; flex-wrap: wrap; gap: 0.25rem 1.5rem; margin-top: 1rem; }
+.problems { margin-top: 1.5rem; padding: 1rem 1.25rem; background: var(--panel); border: 1px solid var(--rule); border-left: 4px solid var(--failed); border-radius: 6px; max-width: 42rem; }
+.problems h3 { font-size: 1rem; }
+.problems ul { margin: 0.5rem 0 0; padding-left: 1.2rem; font-size: 0.9rem; }
+
+/* Panels hold one dataset each: the chart, an epic, a table. */
+.panel, .table-wrap { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 0.25rem 1.25rem; margin: 0 0 0.75rem; padding: 0; list-style: none; font-size: 0.85rem; color: var(--ink-2); }
+.swatch { display: inline-block; width: 0.75em; height: 0.75em; margin-right: 0.4em; border-radius: 2px; vertical-align: -0.02em; }
+.swatch.passed, .chart .passed { background: var(--passed); fill: var(--passed); }
+.swatch.failed, .chart .failed { background: var(--failed); fill: var(--failed); }
+.swatch.skipped, .chart .skipped { background: var(--skipped); fill: var(--skipped); }
+.chart-panel { padding: 1.1rem 1.25rem 0.6rem; }
+.chart { position: relative; padding-left: 2.25rem; }
+.chart svg { display: block; width: 100%; height: 200px; overflow: visible; }
+.chart .grid { stroke: var(--rule); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.chart .hit { fill: transparent; }
+.chart .bar:hover .hit, .chart .bar:focus-visible .hit { fill: var(--ink); fill-opacity: 0.06; }
+.chart .bar:focus-visible { outline: none; }
+.ticks { position: absolute; left: 0; top: 0; width: 1.75rem; height: 200px; }
+.tick, .dates span { position: absolute; font-size: 0.75rem; color: var(--ink-3); line-height: 1; }
+.tick { right: 0; transform: translateY(-50%); }
+.dates { position: relative; height: 1.4rem; margin-top: 0.35rem; }
+.dates span { top: 0; transform: translateX(-50%); white-space: nowrap; }
+.tip { position: fixed; z-index: 10; max-width: 22rem; padding: 0.45rem 0.65rem; border-radius: 4px; background: var(--ink); color: var(--paper); font-size: 0.8rem; line-height: 1.4; white-space: pre-line; pointer-events: none; }
+
+/* Stories: each epic is a panel with a header band, stories are rows on it, and an
+   open story's acceptance criteria sit in a recessed list. Type shrinks a step per level. */
+.stories-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 0.5rem 2rem; margin-bottom: 1rem; }
+.stories-head .total { margin: 0; font-weight: 700; }
+.marks { margin: 0; }
+.marks li { display: inline-flex; align-items: center; gap: 0.4em; }
+.box { display: block; width: 1rem; height: 1rem; flex: none; }
+.tree { display: grid; gap: 1.25rem; }
+.tree summary { list-style: none; cursor: pointer; }
+.tree summary::-webkit-details-marker { display: none; }
+.chev { display: block; width: 1rem; height: 1rem; flex: none; color: var(--ink-3); transition: transform 140ms ease-out; }
+details[open] > summary > .chev { transform: rotate(90deg); }
+@media (prefers-reduced-motion: reduce) { .chev { transition: none; } }
+.goto { display: inline-flex; align-items: center; justify-content: center; width: 1.75rem; height: 1.75rem; flex: none; border-radius: 4px; color: var(--ink-3); text-decoration: none; }
+.goto svg { width: 1.05rem; height: 1.05rem; }
+a.goto:hover { color: var(--ink); background: color-mix(in srgb, var(--ink) 9%, transparent); }
+
+.epic, .group { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; }
+.group-head { display: grid; grid-template-columns: 1rem minmax(0, 1fr) auto 1.75rem; align-items: center; gap: 0.85rem; padding: 0.9rem 1rem 0.9rem 1.1rem; background: var(--band); }
+.epic[open] > .group-head, .group[open] > .group-head { border-bottom: 1px solid var(--rule-strong); }
+.group-name { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 0.6rem; min-width: 0; }
+.group-name .level { color: var(--ink-3); font-size: 0.9rem; }
+.group-name .key { font-size: 1.1rem; }
+.group-name .title { font-size: 1.333rem; font-weight: 700; line-height: 1.2; }
+.group .group-name .title { font-weight: 400; font-style: italic; }
+.progress { display: flex; align-items: center; gap: 0.75rem; color: var(--ink-2); font-size: 0.85rem; white-space: nowrap; }
+.segments { display: flex; gap: 3px; width: 6.5rem; }
+.segments i { flex: 1; height: 0.55rem; border-radius: 2px; }
+.segments i[data-verdict="accepted"] { background: var(--passed); }
+.segments i[data-verdict="not-accepted"] { background: var(--failed); }
+.segments i[data-verdict="incomplete"] { box-shadow: inset 0 0 0 1.5px var(--skipped); }
+
+.story-list > .story + .story { border-top: 1px solid var(--rule); }
+.story-row { display: grid; grid-template-columns: 1rem minmax(0, 1fr) 7.5rem 8.25rem 1.75rem; align-items: center; gap: 0.85rem; padding: 0.75rem 1rem 0.75rem 1.1rem; }
+.story-row:hover { background: color-mix(in srgb, var(--ink) 3%, transparent); }
+.story-name { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 0.55rem; min-width: 0; }
+.story-name .key { font-size: 0.95rem; }
+.story-name .title { font-weight: 700; }
+.story-name .reason { flex-basis: 100%; color: var(--ink-2); font-size: 0.8rem; }
+.boxes { display: flex; flex-wrap: wrap; gap: 3px; }
+.pill { justify-self: start; padding: 0.2rem 0.75rem; border-radius: 999px; font-size: 0.8rem; font-weight: 700; white-space: nowrap; background: color-mix(in srgb, var(--passed) 16%, var(--panel)); }
+.pill[data-verdict="not-accepted"] { background: color-mix(in srgb, var(--failed) 16%, var(--panel)); }
+.pill[data-verdict="incomplete"] { background: transparent; box-shadow: inset 0 0 0 1px var(--skipped); color: var(--ink-2); }
+
+.acs { list-style: none; margin: 0 1rem 1rem 3rem; padding: 0; background: var(--well); border: 1px solid var(--rule); border-radius: 6px; }
+.ac + .ac { border-top: 1px solid var(--rule); }
+.ac-row { display: grid; grid-template-columns: 1rem 2.6rem minmax(0, 1fr) 7.25rem 1.75rem; align-items: start; gap: 0.6rem; padding: 0.5rem 0.6rem 0.5rem 0.75rem; font-size: 0.889rem; line-height: 1.45; }
+.ac-row > .chev { margin-top: 0.2rem; }
+.ac-row > .goto { margin-top: -0.2rem; }
+.ac-id { font-weight: 700; color: var(--ink-2); }
+.ac-status { display: inline-flex; align-items: center; gap: 0.4em; padding-top: 0.12rem; color: var(--ink-2); font-size: 0.8rem; white-space: nowrap; }
+.ac-detail { padding: 0 0.75rem 0.65rem 5.75rem; font-size: 0.8rem; color: var(--ink-3); }
+.ac-note { margin: 0; color: var(--ink-2); }
+.tests { margin: 0; padding: 0; list-style: none; }
+.test-state { font-weight: 700; color: var(--ink-2); }
+
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+th { padding: 0.6rem 1rem; background: var(--band); border-bottom: 1px solid var(--rule-strong); color: var(--ink-2); font-weight: 700; text-align: left; white-space: nowrap; }
+td { padding: 0.7rem 1rem; border-bottom: 1px solid var(--rule); vertical-align: top; white-space: nowrap; }
+td.wrap { width: 100%; min-width: 14rem; white-space: normal; }
+tbody tr:last-child td { border-bottom: 0; }
+td em { color: var(--ink-2); }
+.branch { font-weight: 700; }
+footer { margin-top: 4.5rem; padding-top: 1rem; border-top: 1px solid var(--rule); color: var(--ink-3); font-size: 0.8rem; }
+</style>
+</head>
+<body>
+<div class="page">
+<header class="masthead">
+<h1>JAALS test results</h1>
+<p>Updated <time datetime="2026-10-29T16:12:01.575Z">Oct 29, 2026, 4:12 PM UTC</time></p>
+</header>
+<main>
+<section id="latest" class="latest" data-outcome="passed">
+<h2 class="verdict"><svg class="glyph" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="var(--passed)"/><path d="M5.6 10.4l3 3 5.8-6.6" fill="none" stroke="var(--on-mark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Main is passing.</span></h2>
+<p>All 502 tests that ran passed on the latest run.</p>
+<p>Commit <a href="https://github.com/antshep-umich/si526-team/commit/044c240112070eb9a1d5ec84516dd9b30909e138">044c240</a>, <em>Merge pull request #10 from antshep-umich/Sprint2_Dev</em>, tested <time datetime="2026-10-29T16:11:28.645Z">Oct 29, 2026, 4:11 PM UTC</time> in 17.4 s.</p>
+<p class="links"><a href="reports/main/40909029131-1/index.html" data-search="">Open the full report</a><a href="https://github.com/antshep-umich/si526-team/actions/runs/40909029131">See the workflow run</a></p>
+
+</section>
+<section id="chart">
+<h2>Tests on main, run by run</h2>
+<p class="intro">Each bar is one run on main, oldest on the left. Select a bar to open its report.</p>
+<div class="panel chart-panel">
+<ul class="legend">
+<li><span class="swatch passed"></span>Passed</li>
+<li><span class="swatch failed"></span>Failed</li>
+<li><span class="swatch skipped"></span>Skipped</li>
+</ul>
+<div class="chart">
+<div class="ticks" aria-hidden="true"><span class="tick" style="top:200px">0</span><span class="tick" style="top:136px">200</span><span class="tick" style="top:72px">400</span><span class="tick" style="top:8px">600</span></div>
+<svg viewBox="0 0 1000 200" preserveAspectRatio="none" role="img" aria-label="Passed, failed and skipped tests for the last 1 runs on main. The history table below has the same numbers.">
+<line class="grid" x1="0" x2="1000" y1="200" y2="200"/><line class="grid" x1="0" x2="1000" y1="136" y2="136"/><line class="grid" x1="0" x2="1000" y1="72" y2="72"/><line class="grid" x1="0" x2="1000" y1="8" y2="8"/>
+<a class="bar" data-run="40909029131-1" data-time="2026-10-29T16:11:28.645Z" data-tip="502 passed, 0 failed, 0 skipped
+044c240 Merge pull request #10 from antshep-umich/Sprint2_Dev" href="reports/main/40909029131-1/index.html" data-search="" aria-label="Report for Oct 29, 2026, 4:11 PM UTC"><path class="passed" d="M961,200V43.360000000000014Q961,39.360000000000014 965,39.360000000000014H985Q989,39.360000000000014 989,43.360000000000014V200Z"/><rect class="hit" x="950" y="0" width="50" height="200"><title>Oct 29, 2026, 4:11 PM UTC
+502 passed, 0 failed, 0 skipped
+044c240 Merge pull request #10 from antshep-umich/Sprint2_Dev</title></rect></a>
+</svg>
+<div class="dates" aria-hidden="true"><span style="left:97.5%">Oct 29</span></div>
+</div>
+</div>
+</section>
+<section id="stories"><h2>Stories</h2><p class="empty">No stories have acceptance criteria yet. Add a file to <code>acceptance/</code> for each Jira story and tag its tests; <code>acceptance/README.md</code> explains how.</p></section>
+<section id="branches">
+<h2>Branches in progress</h2>
+<p class="intro">The latest push to each branch. A branch drops off this list when it's deleted.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Branch</th><th scope="col">Result</th><th scope="col">Tests</th><th scope="col">Last commit</th><th scope="col">Tested</th><th scope="col">Report</th></tr></thead><tbody>
+<tr><td><span class="branch">sprint2-test-dashboard</span></td><td><span class="status"><svg class="glyph" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="var(--passed)"/><path d="M5.6 10.4l3 3 5.8-6.6" fill="none" stroke="var(--on-mark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Passed</span></span></td><td>337 of 337 passed</td><td class="wrap"><a href="https://github.com/antshep-umich/si526-team/commit/9fc62cacd36e28d0c728532484e2532a11791c2b">9fc62ca</a> <em>Document the tests workflow and the test dashboard</em></td><td><time datetime="2026-10-28T15:55:17.774Z">Oct 28, 2026, 3:55 PM UTC</time></td><td><a href="reports/branches/sprint2-test-dashboard-1eff795c/40720726040-1/index.html" data-search="">Open report</a></td></tr>
+</tbody></table></div>
+</section>
+<section id="merged"><h2>Merged branches</h2><p class="empty">No pull requests have merged since the dashboard started.</p></section>
+<section id="history">
+<h2>History of main</h2>
+<p class="intro">Every run on main, newest first. Full reports are kept for the newest 30.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Tested</th><th scope="col">Commit</th><th scope="col">Result</th><th scope="col">Tests</th><th scope="col">Time</th><th scope="col">Report</th></tr></thead><tbody>
+<tr><td><time datetime="2026-10-29T16:11:28.645Z">Oct 29, 2026, 4:11 PM UTC</time></td><td class="wrap"><a href="https://github.com/antshep-umich/si526-team/commit/044c240112070eb9a1d5ec84516dd9b30909e138">044c240</a> <em>Merge pull request #10 from antshep-umich/Sprint2_Dev</em></td><td><span class="status"><svg class="glyph" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="var(--passed)"/><path d="M5.6 10.4l3 3 5.8-6.6" fill="none" stroke="var(--on-mark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Passed</span></span></td><td>502 of 502 passed</td><td>17.4 s</td><td><a href="reports/main/40909029131-1/index.html" data-search="">Open report</a></td></tr>
+</tbody></table></div>
+</section>
+</main>
+<footer>
+<p>The Tests workflow updates this page after each push. Tests run on every branch; acceptance criteria come from the files in <code>acceptance/</code>.</p>
+</footer>
+</div>
+<div class="tip" hidden></div>
+<script>
+(() => {
+  // Vitest's HTML report keeps its search in local storage under this key (Vitest 5).
+  // Links with data-search set it just before the report opens: "tag:SCRUM-3" shows
+  // that story's tests, "" clears it. If Vitest renames the key, the links still open
+  // the report, just unfiltered.
+  const FILTER_KEY = "vitest-ui_task-tree-filter";
+  const remember = (event) => {
+    const a = event.target.closest && event.target.closest("a[data-search]");
+    if (!a) return;
+    try {
+      let saved = {};
+      try { saved = JSON.parse(localStorage.getItem(FILTER_KEY) || "{}") || {}; } catch {}
+      localStorage.setItem(FILTER_KEY, JSON.stringify({
+        ...saved,
+        failed: false, success: false, skipped: false, slow: false, onlyTests: false,
+        search: a.dataset.search,
+        project: "__vitest_ui_all_projects__",
+      }));
+    } catch {}
+  };
+  document.addEventListener("click", remember);
+  document.addEventListener("auxclick", remember);
+
+  const format = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });
+  const local = (iso) => { const d = new Date(iso); return isNaN(d) ? "" : format.format(d); };
+  for (const t of document.querySelectorAll("time[datetime]")) { const text = local(t.getAttribute("datetime")); if (text) t.textContent = text; }
+  const tip = document.querySelector(".tip");
+  for (const title of document.querySelectorAll(".chart title")) title.remove();
+  const show = (bar, x, y) => {
+    tip.textContent = local(bar.dataset.time) + "\n" + bar.dataset.tip;
+    tip.hidden = false;
+    tip.style.left = Math.max(8, Math.min(x + 12, innerWidth - tip.offsetWidth - 8)) + "px";
+    tip.style.top = (y - tip.offsetHeight - 12 < 8 ? y + 18 : y - tip.offsetHeight - 12) + "px";
+  };
+  const hide = () => { tip.hidden = true; };
+  for (const bar of document.querySelectorAll(".chart .bar")) {
+    bar.addEventListener("pointermove", (e) => show(bar, e.clientX, e.clientY));
+    bar.addEventListener("pointerleave", hide);
+    bar.addEventListener("focus", () => { const r = bar.getBoundingClientRect(); show(bar, r.left + r.width / 2, r.top + 40); });
+    bar.addEventListener("blur", hide);
+  }
+})();
+</script>
+</body>
+</html>

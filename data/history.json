@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "updatedAt": "2026-10-29T16:12:01.575Z",
+  "main": [
+    {
+      "summary": {
+        "meta": {
+          "runId": "40909029131-1",
+          "runUrl": "https://github.com/antshep-umich/si526-team/actions/runs/40909029131",
+          "repoUrl": "https://github.com/antshep-umich/si526-team",
+          "kind": "main",
+          "branch": "main",
+          "sha": "044c240112070eb9a1d5ec84516dd9b30909e138",
+          "message": "Merge pull request #10 from antshep-umich/Sprint2_Dev",
+          "pr": null
+        },
+        "startedAt": "2026-10-29T16:11:28.645Z",
+        "durationMs": 17389,
+        "outcome": "passed",
+        "totals": {
+          "total": 502,
+          "passed": 502,
+          "failed": 0,
+          "skipped": 0
+        },
+        "stories": [],
+        "problems": []
+      },
+      "report": "reports/main/40909029131-1"
+    }
+  ],
+  "branches": [
+    {
+      "summary": {
+        "meta": {
+          "runId": "40720726040-1",
+          "runUrl": "https://github.com/antshep-umich/si526-team/actions/runs/40720726040",
+          "repoUrl": "https://github.com/antshep-umich/si526-team",
+          "kind": "branch",
+          "branch": "sprint2-test-dashboard",
+          "sha": "9fc62cacd36e28d0c728532484e2532a11791c2b",
+          "message": "Document the tests workflow and the test dashboard",
+          "pr": null
+        },
+        "startedAt": "2026-10-28T15:55:17.774Z",
+        "durationMs": 13341,
+        "outcome": "passed",
+        "totals": {
+          "total": 337,
+          "passed": 337,
+          "failed": 0,
+          "skipped": 0
+        },
+        "stories": [],
+        "problems": []
+      },
+      "report": "reports/branches/sprint2-test-dashboard-1eff795c/40720726040-1"
+    }
+  ],
+  "merged": []
+}
