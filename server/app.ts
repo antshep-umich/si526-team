@@ -3,6 +3,7 @@ import { authHandler, betterAuthSession } from "./auth.js";
 import { handleError, notFound } from "./middleware/errors.js";
 import { requireJsonBody } from "./middleware/json.js";
 import { requireUser, type SessionResolver } from "./middleware/session.js";
+import { choresRouter } from "./routes/chores.js";
 import { healthRouter } from "./routes/health.js";
 import { householdsRouter } from "./routes/households.js";
 import { passwordResetRouter } from "./routes/passwordReset.js";
@@ -34,12 +35,9 @@ export function createApp(options: AppOptions = {}) {
   app.use(express.json());
   app.use("/api", healthRouter);
   app.use("/api/password-reset", requireJsonBody, passwordResetRouter);
-  app.use(
-    "/api/households",
-    requireUser(options.getSessionUser ?? betterAuthSession),
-    requireJsonBody,
-    householdsRouter,
-  );
+  const signedIn = requireUser(options.getSessionUser ?? betterAuthSession);
+  app.use("/api/households", signedIn, requireJsonBody, householdsRouter);
+  app.use("/api/chores", signedIn, requireJsonBody, choresRouter);
 
   app.use(notFound);
   app.use(handleError);

@@ -3,7 +3,8 @@ import { resetPassword } from "../api/passwordReset.ts";
 import Button from "../components/Button.tsx";
 import TextField from "../components/TextField.tsx";
 import TextLink from "../components/TextLink.tsx";
-import { MIN_PASSWORD, NETWORK_MESSAGE } from "./authErrors.ts";
+import { passwordMeetsRules } from "../../shared/accounts.ts";
+import { AUTH_MESSAGES, NETWORK_MESSAGE } from "./authErrors.ts";
 import Screen, { Actions, FormError, Intro } from "./Screen.tsx";
 
 // STAND-IN, not designed in Figma yet: "Forgot your password?" asks for the
@@ -36,10 +37,9 @@ export default function ForgotPassword({ initialEmail = "", onDone, onBack }: Fo
   }
 
   async function handlePassword() {
-    if (password.length < MIN_PASSWORD) {
-      return setError({ field: "password", message: `Use at least ${MIN_PASSWORD} characters.` });
-    }
-    if (confirm !== password) return setError({ field: "confirm", message: "The passwords don't match." });
+    // The same password rules as Sign up (SCRUM-2).
+    if (!passwordMeetsRules(password)) return setError({ field: "password", message: AUTH_MESSAGES.passwordRules });
+    if (confirm !== password) return setError({ field: "confirm", message: AUTH_MESSAGES.passwordsDiffer });
 
     setError(null);
     setSubmitting(true);
@@ -51,8 +51,8 @@ export default function ForgotPassword({ initialEmail = "", onDone, onBack }: Fo
       setStep("email");
       return setError({ field: "email", message: "No account uses that email." });
     }
-    if (result.code === "PASSWORD_LENGTH") {
-      return setError({ field: "password", message: `Use at least ${MIN_PASSWORD} characters.` });
+    if (result.code === "PASSWORD_INVALID") {
+      return setError({ field: "password", message: AUTH_MESSAGES.passwordRules });
     }
     setError({
       field: "form",

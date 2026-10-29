@@ -32,6 +32,10 @@
   cursor: pointer;
 }
 
+.checkbox:disabled {
+  cursor: progress;
+}
+
 .checkbox:focus-visible {
   outline: 2px solid var(--color-action-focus-ring);
   outline-offset: -2px;
@@ -72,7 +76,12 @@
   color: var(--color-overdue-line);
 }
 
+/* Done and Late (Status4): muted text, and the name is struck through. */
 .done .name,
 .done .details {
   color: var(--color-text-muted);
+}
+
+.done .name {
+  text-decoration: line-through;
 }

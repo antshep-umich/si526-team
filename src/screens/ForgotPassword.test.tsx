@@ -53,13 +53,15 @@ describe("ForgotPassword (stand-in)", () => {
     renderForgot();
     await continueWith("ana@example.com");
 
-    await setPassword("short");
-    expect(screen.getByLabelText("New password")).toHaveAccessibleDescription("Use at least 8 characters.");
+    await setPassword("no-numbers-here");
+    expect(screen.getByLabelText("New password")).toHaveAccessibleDescription(
+      "Password must be at least 8 characters long and include 1 number.",
+    );
 
     await userEvent.clear(screen.getByLabelText("New password"));
     await userEvent.clear(screen.getByLabelText("Confirm new password"));
     await setPassword("new-password-1", "new-password-2");
-    expect(screen.getByLabelText("Confirm new password")).toHaveAccessibleDescription("The passwords don't match.");
+    expect(screen.getByLabelText("Confirm new password")).toHaveAccessibleDescription("Passwords do not match.");
 
     expect(resetPassword).not.toHaveBeenCalled();
   });

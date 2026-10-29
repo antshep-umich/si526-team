@@ -33,10 +33,42 @@
   padding: 0 13.5px;
 }
 
-/* Not in Figma yet: keyboard focus uses the button's focus ring until UX designs one. */
+/* Figma: State=Focused (454:1625): a 2px focus-ring border with a 2px gap. */
 .input:focus-visible {
   outline: 2px solid var(--color-action-focus-ring);
   outline-offset: 2px;
+}
+
+/* Figma: Input Box, Type=Password (454:1697): a show/hide eye inside the field. */
+.control {
+  position: relative;
+  width: 100%;
+}
+
+.control .input {
+  padding-right: 48px;
+}
+
+.reveal {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+
+.reveal:focus-visible {
+  outline: 2px solid var(--color-action-focus-ring);
+  outline-offset: 0;
 }
 
 .error {

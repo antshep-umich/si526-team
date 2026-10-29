@@ -28,6 +28,11 @@ p {
   margin: 0;
 }
 
+/* `hidden` always hides, even on elements whose class sets display (flex lists, for one). */
+[hidden] {
+  display: none !important;
+}
+
 button,
 input,
 textarea,

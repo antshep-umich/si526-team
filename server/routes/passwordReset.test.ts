@@ -53,14 +53,15 @@ describe("POST /api/password-reset", () => {
   });
 
   it.each([
-    ["too short", "short"],
-    ["too long", "x".repeat(129)],
+    ["too short", "short1"],
+    ["too long", "x1".repeat(65)],
+    ["without a number", "no-numbers-here"],
     ["missing", undefined],
   ])("rejects a password that is %s with 422", async (_label, newPassword) => {
     const res = await reset({ email: "ana@example.com", newPassword });
 
     expect(res.status).toBe(422);
-    expect(res.body.error.code).toBe("PASSWORD_LENGTH");
+    expect(res.body.error.code).toBe("PASSWORD_INVALID");
     expect(ctx.internalAdapter.updatePassword).not.toHaveBeenCalled();
   });
 

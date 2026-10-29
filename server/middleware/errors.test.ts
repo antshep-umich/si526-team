@@ -28,7 +28,11 @@ describe("handleError", () => {
 
   it.each([
     ["VALIDATION_ERROR", 422],
-    ["PASSWORD_LENGTH", 422],
+    ["PASSWORD_INVALID", 422],
+    ["DUE_DATE_IN_PAST", 422],
+    ["ASSIGNEE_NOT_IN_HOUSEHOLD", 422],
+    ["NOT_ASSIGNEE", 403],
+    ["CHORE_NOT_FOUND", 404],
     ["INVITE_CODE_NOT_FOUND", 422],
     ["ACCOUNT_NOT_FOUND", 422],
     ["FORBIDDEN", 403],

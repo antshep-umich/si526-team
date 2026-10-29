@@ -4,30 +4,45 @@ import { describe, expect, it, vi } from "vitest";
 import ChoreCard from "./ChoreCard.tsx";
 
 describe("ChoreCard", () => {
-  it("shows a pending chore with an unchecked checkbox and no chip", () => {
+  it("shows a to-do chore with an unchecked checkbox and no chip", () => {
     render(<ChoreCard name="Clean bathroom" details="You · due today" status="pending" onToggle={() => {}} />);
 
     expect(screen.getByText("Clean bathroom")).toBeInTheDocument();
     expect(screen.getByText("You · due today")).toBeInTheDocument();
     expect(screen.getByRole("checkbox", { name: "Mark Clean bathroom done" })).not.toBeChecked();
-    expect(screen.queryByText("Overdue")).not.toBeInTheDocument();
-    expect(screen.queryByText("Done")).not.toBeInTheDocument();
+    for (const chip of ["Overdue", "Done", "Late", "To do"]) {
+      expect(screen.queryByText(chip)).not.toBeInTheDocument();
+    }
   });
 
   it("shows an overdue chore with the overdue chip", () => {
     const { container } = render(
-      <ChoreCard name="Take out trash" details="Riley · due Monday" status="overdue" onToggle={() => {}} />,
+      <ChoreCard name="Take out trash" details="Sam · due Mon, Oct 5" status="overdue" onToggle={() => {}} />,
     );
 
     expect(screen.getByText("Overdue")).toHaveClass("chip", "overdue");
     expect(container.firstChild).toHaveClass("overdue");
   });
 
-  it("shows a done chore as checked, with the Done chip and an undo label", () => {
-    render(<ChoreCard name="Wash dishes" details="Jordan · done 9:40 AM" status="done" onToggle={() => {}} />);
+  it("shows a done chore as checked and struck through, with the Done chip and an undo label", () => {
+    const { container } = render(
+      <ChoreCard name="Wash dishes" details="You · done today · due today" status="done" onToggle={() => {}} />,
+    );
 
     expect(screen.getByRole("checkbox", { name: "Mark Wash dishes not done" })).toBeChecked();
     expect(screen.getByText("Done")).toHaveClass("success");
+    expect(container.firstChild).toHaveClass("done");
+  });
+
+  it("shows a chore done after its due date with the Late chip (Figma Status4)", () => {
+    const { container } = render(
+      <ChoreCard name="Buy dish soap" details="You · done today · due Fri, Oct 9" status="late" onToggle={() => {}} />,
+    );
+
+    expect(screen.getByRole("checkbox", { name: "Mark Buy dish soap not done" })).toBeChecked();
+    expect(screen.getByText("Late")).toHaveClass("chip", "late");
+    expect(screen.queryByText("Done")).not.toBeInTheDocument();
+    expect(container.firstChild).toHaveClass("done");
   });
 
   it("calls onToggle when the checkbox is tapped", async () => {
@@ -39,8 +54,15 @@ describe("ChoreCard", () => {
     expect(onToggle).toHaveBeenCalledTimes(1);
   });
 
-  it("is display-only without onToggle", () => {
-    render(<ChoreCard name="Clean bathroom" details="You · due today" status="pending" />);
+  it("has no checkbox without onToggle (someone else's chore, SCRUM-8)", () => {
+    render(<ChoreCard name="Vacuum living room" details="Alex · due tomorrow" status="pending" />);
+
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+    expect(screen.getByText("Vacuum living room")).toBeInTheDocument();
+  });
+
+  it("turns the checkbox off while a change is saving", () => {
+    render(<ChoreCard name="Clean bathroom" details="You · due today" status="done" onToggle={() => {}} busy />);
 
     expect(screen.getByRole("checkbox")).toBeDisabled();
   });

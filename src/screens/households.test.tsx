@@ -111,9 +111,7 @@ describe("JoinHousehold", () => {
 
     await join("");
 
-    expect(screen.getByLabelText("Invite code")).toHaveAccessibleDescription(
-      "Enter the invite code from your housemate.",
-    );
+    expect(screen.getByLabelText("Invite code")).toHaveAccessibleDescription("Enter an invite code.");
     expect(joinHousehold).not.toHaveBeenCalled();
   });
 
@@ -129,7 +127,7 @@ describe("JoinHousehold", () => {
   });
 
   it.each([
-    ["INVITE_CODE_NOT_FOUND", "No household has that code. Check it with your housemate and try again."],
+    ["INVITE_CODE_NOT_FOUND", "We couldn't find a household with that code. Check with your housemate and try again."],
     ["ALREADY_IN_HOUSEHOLD", "You're already in a different household."],
   ])("shows %s on the field", async (code, message) => {
     joinHousehold.mockResolvedValue({ ok: false, code });
@@ -140,13 +138,13 @@ describe("JoinHousehold", () => {
     expect(screen.getByLabelText("Invite code")).toHaveAccessibleDescription(message);
   });
 
-  it("shows a network failure under the button", async () => {
+  it("shows any other failure as a server error under the button (SCRUM-32)", async () => {
     joinHousehold.mockResolvedValue({ ok: false, code: "NETWORK_ERROR" });
     render(<JoinHousehold onJoined={() => {}} onBack={() => {}} />);
 
     await join("ZZZZZZZZ");
 
-    expect(screen.getByRole("alert")).toHaveTextContent("Couldn't reach the server");
+    expect(screen.getByRole("alert")).toHaveTextContent("Something went wrong. Please try again.");
   });
 });
 

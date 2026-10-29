@@ -32,17 +32,48 @@ describe("SignUp", () => {
   });
 
   it.each([
-    ["no name", { ...valid, name: "" }, "Name", "Enter your name."],
-    ["no email", { ...valid, email: "" }, "Email", "Enter your email."],
-    ["a short password", { ...valid, password: "short", confirm: "short" }, "Password", "Use at least 8 characters."],
-    ["passwords that differ", { ...valid, confirm: "correct-horse-2" }, "Confirm password", "The passwords don't match."],
-  ])("catches %s before calling the server", async (_label, values, field, message) => {
+    ["no name", { ...valid, name: "" }, "Name", "Name is required."],
+    ["a name over 30 characters", { ...valid, name: "x".repeat(31) }, "Name", "Name must be 30 characters or fewer."],
+    ["no email", { ...valid, email: "" }, "Email", "Email is required."],
+    ["an email without a domain", { ...valid, email: "ana@example" }, "Email", "Enter a valid email address."],
+    ["no password", { ...valid, password: "", confirm: "" }, "Password", "Password is required."],
+    [
+      "a short password",
+      { ...valid, password: "short1", confirm: "short1" },
+      "Password",
+      "Password must be at least 8 characters long and include 1 number.",
+    ],
+    [
+      "a password without a number",
+      { ...valid, password: "correct-horse", confirm: "correct-horse" },
+      "Password",
+      "Password must be at least 8 characters long and include 1 number.",
+    ],
+    ["passwords that differ", { ...valid, confirm: "correct-horse-2" }, "Confirm password", "Passwords do not match."],
+  ])("catches %s before calling the server (SCRUM-2)", async (_label, values, field, message) => {
     render(<SignUp onLogIn={() => {}} />);
 
     await fill(values);
 
     expect(screen.getByLabelText(field)).toHaveAccessibleDescription(message);
     expect(signUp).not.toHaveBeenCalled();
+  });
+
+  it("shows every error at once, keeps Name and Email, and clears both passwords", async () => {
+    render(<SignUp onLogIn={() => {}} />);
+
+    await fill({ name: "x".repeat(31), email: "ana@", password: "short", confirm: "other" });
+
+    expect(screen.getByLabelText("Name")).toHaveAccessibleDescription("Name must be 30 characters or fewer.");
+    expect(screen.getByLabelText("Email")).toHaveAccessibleDescription("Enter a valid email address.");
+    expect(screen.getByLabelText("Password")).toHaveAccessibleDescription(
+      "Password must be at least 8 characters long and include 1 number.",
+    );
+    expect(screen.getByLabelText("Confirm password")).toHaveAccessibleDescription("Passwords do not match.");
+    expect(screen.getByLabelText("Name")).toHaveValue("x".repeat(31));
+    expect(screen.getByLabelText("Email")).toHaveValue("ana@");
+    expect(screen.getByLabelText("Password")).toHaveValue("");
+    expect(screen.getByLabelText("Confirm password")).toHaveValue("");
   });
 
   it("creates the account with a trimmed name and email", async () => {
@@ -53,15 +84,39 @@ describe("SignUp", () => {
     expect(signUp).toHaveBeenCalledWith({ name: "Ana Lopez", email: "ana@example.com", password: "correct-horse-1" });
   });
 
-  it("points to Log in when the email already has an account", async () => {
+  it("points to Log in when the email already has an account, and clears the passwords", async () => {
     signUp.mockResolvedValue({ data: null, error: { code: "USER_ALREADY_EXISTS", status: 422 } });
     render(<SignUp onLogIn={() => {}} />);
 
     await fill(valid);
 
     expect(screen.getByLabelText("Email")).toHaveAccessibleDescription(
-      "An account already uses this email. Log in instead.",
+      "An account with this email already exists. Use a different email or Log in instead.",
     );
+    expect(screen.getByLabelText("Password")).toHaveValue("");
+  });
+
+  it("shows the server's own rule check on the password field", async () => {
+    signUp.mockResolvedValue({ data: null, error: { code: "PASSWORD_INVALID", status: 400 } });
+    render(<SignUp onLogIn={() => {}} />);
+
+    await fill(valid);
+
+    expect(screen.getByLabelText("Password")).toHaveAccessibleDescription(
+      "Password must be at least 8 characters long and include 1 number.",
+    );
+  });
+
+  it("shows a server error as a banner above the form, keeping the passwords", async () => {
+    signUp.mockResolvedValue({ data: null, error: { status: 500, message: "Internal Server Error" } });
+    render(<SignUp onLogIn={() => {}} />);
+
+    await fill(valid);
+
+    const banner = screen.getByRole("alert");
+    expect(banner).toHaveTextContent("Something went wrong. Please try again.");
+    expect(banner.compareDocumentPosition(screen.getByLabelText("Name"))).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(screen.getByLabelText("Password")).toHaveValue("correct-horse-1");
   });
 
   it("links back to Log in", async () => {

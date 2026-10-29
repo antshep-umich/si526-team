@@ -32,8 +32,8 @@ describe("OverdueBanner", () => {
 });
 
 describe("ProgressCard", () => {
-  it("shows the count, the status and a progress bar screen readers can read", () => {
-    render(<ProgressCard done={5} total={8} status="On track" />);
+  it("shows the count, On track and a progress bar screen readers can read", () => {
+    render(<ProgressCard done={5} total={8} />);
 
     expect(screen.getByText("5 of 8 chores done")).toBeInTheDocument();
     expect(screen.getByText("On track")).toBeInTheDocument();
@@ -44,7 +44,6 @@ describe("ProgressCard", () => {
   });
 
   it.each([
-    [0, 0, "0%"],
     [9, 8, "100%"],
     [-1, 8, "0%"],
   ])("keeps the bar between empty and full (%i of %i → %s)", (done, total, width) => {
@@ -53,10 +52,29 @@ describe("ProgressCard", () => {
     expect(screen.getByRole("progressbar").firstElementChild).toHaveStyle({ width });
   });
 
-  it("leaves the status out when there isn't one", () => {
-    const { container } = render(<ProgressCard done={1} total={2} />);
+  it("says Complete! when everything due is done", () => {
+    render(<ProgressCard done={8} total={8} late={1} />);
 
+    expect(screen.getByText("8 of 8 chores done")).toBeInTheDocument();
+    expect(screen.getByText("Complete!")).toBeInTheDocument();
+  });
+
+  it("counts late chores and shows them as a yellow segment over the green fill", () => {
+    render(<ProgressCard done={3} total={8} late={1} />);
+
+    expect(screen.getByText("1 Late")).toHaveClass("status", "lateStatus");
+    const [fill, lateFill] = [...screen.getByRole("progressbar").children];
+    expect(fill).toHaveStyle({ width: "37.5%" });
+    expect(lateFill).toHaveClass("lateFill");
+    expect(lateFill).toHaveStyle({ width: "12.5%" });
+  });
+
+  it("says No Chores Yet, with no status and an empty bar, when nothing is due", () => {
+    const { container } = render(<ProgressCard done={0} total={0} />);
+
+    expect(screen.getByText("No Chores Yet")).toBeInTheDocument();
     expect(container.querySelectorAll("p")).toHaveLength(1);
+    expect(screen.getByRole("progressbar")).toBeEmptyDOMElement();
   });
 });
 

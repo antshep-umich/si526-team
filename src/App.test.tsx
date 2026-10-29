@@ -1,25 +1,35 @@
 // Which screen App shows, from the session and the household (src/App.tsx).
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Household } from "./api/households.ts";
 import App from "./App.tsx";
 
-const { useSession, signOut, getCurrentHousehold, createHousehold, joinHousehold, resetPassword } = vi.hoisted(
-  () => ({
-    useSession: vi.fn(),
-    signOut: vi.fn(),
-    getCurrentHousehold: vi.fn(),
-    createHousehold: vi.fn(),
-    joinHousehold: vi.fn(),
-    resetPassword: vi.fn(),
-  }),
-);
+const {
+  useSession,
+  signOut,
+  getCurrentHousehold,
+  createHousehold,
+  joinHousehold,
+  resetPassword,
+  listChores,
+  createChore,
+} = vi.hoisted(() => ({
+  useSession: vi.fn(),
+  signOut: vi.fn(),
+  getCurrentHousehold: vi.fn(),
+  createHousehold: vi.fn(),
+  joinHousehold: vi.fn(),
+  resetPassword: vi.fn(),
+  listChores: vi.fn(),
+  createChore: vi.fn(),
+}));
 vi.mock("./auth.ts", () => ({
   authClient: { useSession, signOut, signIn: { email: vi.fn() }, signUp: { email: vi.fn() } },
 }));
 vi.mock("./api/households.ts", () => ({ getCurrentHousehold, createHousehold, joinHousehold }));
 vi.mock("./api/passwordReset.ts", () => ({ resetPassword }));
+vi.mock("./api/chores.ts", () => ({ listChores, createChore, completeChore: vi.fn(), undoChore: vi.fn() }));
 
 const household: Household = {
   id: "h1",
@@ -37,6 +47,7 @@ beforeEach(() => {
   for (const mock of [useSession, signOut, getCurrentHousehold, createHousehold, joinHousehold, resetPassword]) {
     mock.mockReset();
   }
+  listChores.mockResolvedValue({ ok: true, chores: [] });
 });
 
 describe("App when signed out", () => {
@@ -145,6 +156,39 @@ describe("App when signed in", () => {
     await userEvent.click(screen.getByRole("button", { name: "Try again" }));
 
     expect(await screen.findByRole("heading", { name: "Maple St House" })).toBeInTheDocument();
+  });
+
+  it("opens Add chore from the chore list and comes back after saving or cancelling", async () => {
+    getCurrentHousehold.mockResolvedValue({ ok: true, household });
+    createChore.mockResolvedValue({ ok: true, chore: {} });
+    render(<App />);
+
+    await userEvent.click(await screen.findByRole("button", { name: "Add chore" }));
+    expect(screen.getByRole("heading", { name: "Add chore" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(await screen.findByRole("heading", { name: "Maple St House" })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Add chore" }));
+    await userEvent.type(screen.getByLabelText("Chore name"), "Mop kitchen");
+    await userEvent.click(screen.getByRole("combobox", { name: "Assigned to" }));
+    await userEvent.click(screen.getByRole("option", { name: "You" }));
+    fireEvent.change(screen.getByLabelText("Due date"), { target: { value: "2999-01-01" } });
+    await userEvent.click(screen.getByRole("button", { name: "Add chore" }));
+
+    expect(createChore).toHaveBeenCalledTimes(1);
+    expect(await screen.findByRole("heading", { name: "Maple St House" })).toBeInTheDocument();
+  });
+
+  it("forgets the Mine filter on log out", async () => {
+    getCurrentHousehold.mockResolvedValue({ ok: true, household });
+    render(<App />);
+
+    await userEvent.click(await screen.findByRole("radio", { name: "Mine" }));
+    expect(sessionStorage.getItem("jaals.choreFilter")).toBe("mine");
+    await userEvent.click(screen.getByRole("button", { name: "Menu" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "Log out" }));
+
+    expect(sessionStorage.getItem("jaals.choreFilter")).toBeNull();
   });
 
   it("logs out from the Home menu", async () => {

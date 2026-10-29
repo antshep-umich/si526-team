@@ -156,16 +156,18 @@ In scope:
 
 1. Sign up, log in and log out (email and password).
 2. Create a household, or join one with an invite code.
-3. Add a chore, with an optional assignee and an optional due date.
-4. View the household's chore list, showing who it's assigned to, when it's due and whether it's done.
-5. Mark a chore complete, and undo that.
-6. Edit or delete a chore.
+3. Add a chore with a name, an assignee and a due date (today or later), plus optional notes. **Built** (SCRUM-6).
+4. View the household's chore list, showing who it's assigned to, when it's due and whether it's done, with an All / Mine filter and this week's progress. **Built** (SCRUM-7), except tapping a row to expand it, which has no design yet.
+5. Mark a chore complete, and undo that. Only the chore's assignee can. **Built** (SCRUM-8).
+6. Edit or delete a chore. Not built: no screens are designed yet.
+
+Where the stories, Figma and the build disagree, the README's "Conflicts to resolve" section lists each case, the decision and what's built.
 
 Out of scope for the MVP: email of any kind, password reset by email, recurring chores, automatic assignment, availability, notifications and multiple households per user.
 
 ---
 
-## 5. Data model (draft)
+## 5. Data model
 
 Better Auth reads and writes its own tables: `user`, `session`, `account` and `verification`. They're defined in `prisma/schema.prisma`, generated with `npx auth@latest generate`, so Prisma migrations create them like any other table. User ids are text, not uuid. Passwords are stored hashed, in `account.password`. Our tables:
 
@@ -186,36 +188,38 @@ Better Auth reads and writes its own tables: `user`, `session`, `account` and `v
 | joinedAt | timestamp | |
 | | | unique on `userId` in the MVP (one household per user) |
 
-**Chore**
+**Chore** (migration `20261029032115_add_chores`)
 | Field | Type | Notes |
 |---|---|---|
 | id | uuid (PK) | |
-| householdId | FK → Household | every query filters on this |
-| title | text | required |
-| notes | text, nullable | |
-| assigneeId | FK → user, nullable | null means unassigned |
-| dueDate | date, nullable | |
-| createdById | FK → user | |
+| householdId | FK → Household | every query filters on this; deleting the household deletes its chores |
+| name | varchar(60) | required (SCRUM-6) |
+| notes | varchar(200), nullable | |
+| assigneeId | FK → user, nullable | required when the chore is made; null only if that account is deleted later |
+| dueDate | date | required; a calendar day with no time |
+| completedAt | timestamp, nullable | set when the assignee marks it done; cleared on undo |
+| completedById | FK → user, nullable | who marked it done (always the assignee today) |
+| createdById | FK → user, nullable | null if that account is deleted later |
 | createdAt / updatedAt | timestamp | |
+| | | indexes on (householdId, dueDate) and (householdId, completedAt) |
 
-**ChoreCompletion**
-| Field | Type | Notes |
+**Status isn't stored.** It's worked out from the dates, in the phone's own time zone (`src/chores.ts`):
+
+| Status | Rule | Shown as |
 |---|---|---|
-| id | uuid (PK) | |
-| choreId | FK → Chore | |
-| completedById | FK → user | |
-| completedAt | timestamp | |
+| To do | not done, due today or later | no chip |
+| Overdue | not done, due date has passed | Overdue chip, yellow card |
+| Done | done on or before the due date | Done chip |
+| Late | done after the due date | Late chip |
 
-**Why completions are a separate table** instead of a single `isDone` flag on the chore:
-
-- It keeps a history of who did what and when. That is the evidence our research needs, since we plan to measure completion before and after people start using the app.
-- It supports recurring chores later without changing the schema.
-
-In the MVP a chore counts as "done" if it has a completion record. Undoing a completion deletes that record.
+**Completion lives on the chore**, not in a separate completions table (the earlier draft). One
+chore has at most one completion, so two columns are simpler, and the team agreed we can migrate
+later. A `ChoreCompletion` table is the likely change when recurring chores, or a history of who did
+what for the research, are needed.
 
 ---
 
-## 6. API (draft)
+## 6. API
 
 Every route except `/api/auth/*` and `/api/health` requires a session. **Authorization rule:** every chore and household query is limited to the household the current user belongs to. A user should never be able to read or change another household's data by guessing an ID.
 
@@ -229,12 +233,22 @@ Every route except `/api/auth/*` and `/api/health` requires a session. **Authori
 | POST | `/api/households/join` | join a household with `{ inviteCode }` |
 | GET | `/api/households/current` | household details and members |
 | POST | `/api/households/current/invite-code` | regenerate the invite code (owner only) |
-| GET | `/api/chores` | list the household's chores, including completion status |
-| POST | `/api/chores` | create a chore |
-| PATCH | `/api/chores/:id` | edit a chore |
-| DELETE | `/api/chores/:id` | delete a chore |
-| POST | `/api/chores/:id/complete` | mark complete |
-| DELETE | `/api/chores/:id/complete` | undo completion |
+| GET | `/api/chores?since=YYYY-MM-DD` | the household's chores: every open one, plus those done or due since `since` (the app sends the Monday of this week). Without `since`, the last 8 days |
+| POST | `/api/chores` | add a chore: `{ name, assigneeId, dueDate, notes? }` |
+| GET | `/api/chores/:id` | one chore |
+| POST | `/api/chores/:id/complete` | mark it done (assignee only; repeating it changes nothing) |
+| DELETE | `/api/chores/:id/complete` | undo it (assignee only) |
+| PATCH | `/api/chores/:id` | edit a chore. **Not built** (no design yet) |
+| DELETE | `/api/chores/:id` | delete a chore. **Not built** (no design yet) |
+
+`GET /api/me` isn't built; `GET /api/households/current` and Better Auth's session cover it.
+
+**Chore rules** (`server/services/chores.ts`, messages from SCRUM-6):
+
+- Name 1–60 characters, notes up to 200, the assignee must be in your household, and the due date can't be in the past.
+- "The past" depends on the phone's time zone, which the server doesn't know. The app checks it exactly ("today or later" on the phone). The server only refuses dates before **yesterday in UTC**, which no time zone's "today" can be.
+- Chores are only ever looked up inside the current user's household; another household's chore id answers 404 `CHORE_NOT_FOUND`, the same as a made-up one.
+- Every chore response has the same shape: `ChoreResponse` in `shared/chores.ts` (people as `{ userId, name }`, `dueDate` as `"YYYY-MM-DD"`).
 
 Responses are JSON. Errors use the format `{ "error": { "code": "...", "message": "..." } }` with the matching HTTP status code. The frontend reacts to the error `code`, not the status.
 
@@ -249,6 +263,8 @@ Named in `shared/httpStatus.ts` (`HttpStatus.CREATED` rather than `201`) and use
 | `POST /api/households` | **201 Created**, with `Location: /api/households/current` |
 | `POST /api/households/join` | **201 Created** with `Location` when it adds the user; **200 OK** when they were already in that household (a repeat tap) |
 | `GET /api/households/current`, `POST …/invite-code`, `GET /api/health` | **200 OK** |
+| `POST /api/chores` | **201 Created**, with `Location: /api/chores/<id>` |
+| `GET /api/chores`, `GET /api/chores/:id`, `POST` and `DELETE /api/chores/:id/complete` | **200 OK**, with the chore (or `{ chores }`) |
 | `POST /api/password-reset` | **204 No Content** |
 
 **Errors** (the same on every endpoint)
@@ -257,13 +273,13 @@ Named in `shared/httpStatus.ts` (`HttpStatus.CREATED` rather than `201`) and use
 |---|---|---|
 | **400 Bad Request** | The request itself is malformed | `INVALID_JSON`, `BAD_REQUEST` |
 | **401 Unauthorized** | Nobody is signed in. Checked before anything else about the request | `UNAUTHENTICATED` |
-| **403 Forbidden** | Signed in, but not allowed (for example, a member changing the invite code) | `FORBIDDEN` |
-| **404 Not Found** | The URL names something that doesn't exist: an unknown route, or "your household" when you have none | `NOT_FOUND`, `NO_HOUSEHOLD` |
+| **403 Forbidden** | Signed in, but not allowed (for example, a member changing the invite code, or marking someone else's chore done) | `FORBIDDEN`, `NOT_ASSIGNEE` |
+| **404 Not Found** | The URL names something that doesn't exist: an unknown route, "your household" when you have none, or a chore that isn't in your household | `NOT_FOUND`, `NO_HOUSEHOLD`, `CHORE_NOT_FOUND` |
 | **405 Method Not Allowed** | The path exists, but not with this method. The `Allow` header lists the methods it takes | `METHOD_NOT_ALLOWED` |
 | **409 Conflict** | The request clashes with the current state | `ALREADY_IN_HOUSEHOLD` |
 | **413 Content Too Large** | The body is over the size limit | `PAYLOAD_TOO_LARGE` |
 | **415 Unsupported Media Type** | A body that isn't JSON | `UNSUPPORTED_MEDIA_TYPE` |
-| **422 Unprocessable Content** | Well-formed JSON whose values break a rule, including values that point at nothing (an unknown invite code or email) | `VALIDATION_ERROR`, `PASSWORD_LENGTH`, `INVITE_CODE_NOT_FOUND`, `ACCOUNT_NOT_FOUND` |
+| **422 Unprocessable Content** | Well-formed JSON whose values break a rule, including values that point at nothing (an unknown invite code or email) | `VALIDATION_ERROR`, `PASSWORD_INVALID`, `INVITE_CODE_NOT_FOUND`, `ACCOUNT_NOT_FOUND`, `DUE_DATE_IN_PAST`, `ASSIGNEE_NOT_IN_HOUSEHOLD` |
 | **429 Too Many Requests** | Too many sign-ins or sign-ups (Better Auth's limit) | (Better Auth's own body) |
 | **500 Internal Server Error** | A bug or an unexpected failure; details go to the server log, never the response | `INTERNAL_ERROR` |
 | **503 Service Unavailable** | `GET /api/health` couldn't reach the database | `DATABASE_UNAVAILABLE` |
@@ -355,7 +371,7 @@ Email is not needed for the MVP. When a later cycle needs it (reminders, passwor
 ## 11. Open questions
 
 - One household per user for the MVP? This spec assumes yes; the Membership table allows more later.
-- Should anyone in a household be able to edit or delete any chore, or only its creator and the household owner? This needs UX and PM input.
+- Should anyone in a household be able to edit or delete any chore, or only its creator and the household owner? This needs UX and PM input. (Decided for marking done: only the assignee.)
 - Recurring chores: are they needed in cycle 1? Discovery research should decide.
 
 ---

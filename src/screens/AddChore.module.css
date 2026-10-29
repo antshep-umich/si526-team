@@ -1,0 +1,44 @@
+/* Figma "Home - Add Chore (refined)" (462:393): 56px from the top, 24px from the
+   sides, 28px between the title, the form and the buttons. */
+.page {
+  width: 100%;
+  max-width: 402px;
+  margin: 0 auto;
+  padding: 56px 24px 24px;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.titles {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.overline {
+  font: var(--type-overline);
+  letter-spacing: var(--tracking-overline);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.title {
+  font: var(--type-screen-title); /* serif bold 28/34 */
+  color: var(--color-text-default);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}

@@ -35,7 +35,7 @@ describe("accounts", () => {
     await logOut(page);
 
     await logIn(page, email, "not-the-password");
-    expect(await fieldError(page, "Password")).toBe("That email and password don't match.");
+    await page.getByRole("alert").getByText("Email or password is incorrect.").waitFor();
 
     await logIn(page, email);
     await expectHeading(page, "E2E Account House");
@@ -57,10 +57,12 @@ describe("accounts", () => {
     await second.page.getByLabel("Password", { exact: true }).fill("e2e-password-1");
     await second.page.getByLabel("Confirm password", { exact: true }).fill("e2e-password-2");
     await second.page.getByRole("button", { name: "Create account" }).click();
-    expect(await fieldError(second.page, "Confirm password")).toBe("The passwords don't match.");
+    expect(await fieldError(second.page, "Confirm password")).toBe("Passwords do not match.");
 
     await signUp(second.page, "E2E Second", email);
-    expect(await fieldError(second.page, "Email")).toBe("An account already uses this email. Log in instead.");
+    expect(await fieldError(second.page, "Email")).toBe(
+      "An account with this email already exists. Use a different email or Log in instead.",
+    );
 
     await second.context.close();
     await context.close();

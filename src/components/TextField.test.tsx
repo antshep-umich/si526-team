@@ -32,6 +32,25 @@ describe("TextField", () => {
     expect(input).toHaveAccessibleDescription("Give the chore a name first.");
   });
 
+  it("lets a password be shown and hidden with the eye button (Figma Input Box, Type=Password)", async () => {
+    render(<TextField label="Password" type="password" defaultValue="secret-1" />);
+    const input = screen.getByLabelText("Password");
+
+    expect(input).toHaveAttribute("type", "password");
+    await userEvent.click(screen.getByRole("button", { name: "Show password" }));
+    expect(input).toHaveAttribute("type", "text");
+    expect(screen.getByRole("button", { name: "Hide password" })).toHaveAttribute("aria-pressed", "true");
+
+    await userEvent.click(screen.getByRole("button", { name: "Hide password" }));
+    expect(input).toHaveAttribute("type", "password");
+  });
+
+  it("has no eye button on other fields", () => {
+    render(<TextField label="Email" type="email" />);
+
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+  });
+
   it("gives each field its own id, so two fields with the same label don't collide", () => {
     render(
       <>

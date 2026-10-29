@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { getCurrentHousehold, type Household } from "./api/households.ts";
 import { authClient } from "./auth.ts";
+import AddChore from "./screens/AddChore.tsx";
 import ChooseHousehold from "./screens/ChooseHousehold.tsx";
 import CreateHousehold from "./screens/CreateHousehold.tsx";
 import ForgotPassword from "./screens/ForgotPassword.tsx";
-import Home from "./screens/Home.tsx";
+import Home, { forgetChoreFilter } from "./screens/Home.tsx";
 import HouseholdCreated from "./screens/HouseholdCreated.tsx";
 import JoinHousehold from "./screens/JoinHousehold.tsx";
 import LogIn from "./screens/LogIn.tsx";
@@ -68,6 +69,7 @@ type HouseholdState =
 function SignedIn({ userId }: { userId: string }) {
   const [state, setState] = useState<HouseholdState>({ status: "loading" });
   const [screen, setScreen] = useState<"choose" | "create" | "join">("choose");
+  const [addingChore, setAddingChore] = useState(false);
   const [justCreated, setJustCreated] = useState<Household | null>(null);
   const [attempt, setAttempt] = useState(0);
 
@@ -83,7 +85,10 @@ function SignedIn({ userId }: { userId: string }) {
     };
   }, [attempt]);
 
-  const logOut = () => authClient.signOut();
+  const logOut = () => {
+    forgetChoreFilter();
+    return authClient.signOut();
+  };
 
   if (justCreated) {
     return (
@@ -123,7 +128,26 @@ function SignedIn({ userId }: { userId: string }) {
     );
   }
 
-  if (state.status === "ready") return <Home household={state.household} onLogOut={logOut} />;
+  if (state.status === "ready") {
+    if (addingChore) {
+      return (
+        <AddChore
+          household={state.household}
+          userId={userId}
+          onAdded={() => setAddingChore(false)}
+          onCancel={() => setAddingChore(false)}
+        />
+      );
+    }
+    return (
+      <Home
+        household={state.household}
+        userId={userId}
+        onAddChore={() => setAddingChore(true)}
+        onLogOut={logOut}
+      />
+    );
+  }
 
   if (screen === "create") {
     return <CreateHousehold onCreated={setJustCreated} onBack={() => setScreen("choose")} />;

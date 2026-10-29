@@ -5,13 +5,15 @@ save you from exploring the codebase. Deeper detail lives in `TECH_SPEC.md` (§ 
 `TECH_DEBT.md` and `README.md`. **If you change anything this file describes, update it in the
 same commit.**
 
-_Last updated: 2026-10-28 (test dashboard added); before that 2026-10-20, on `Sprint2_Dev` (commit `9b2abde` and later)._
+_Last updated: 2026-10-28 (chores: SCRUM-6, 7 and 8; SCRUM-2, 3 and 32 messages aligned with the stories), on `Sprint2_Dev`._
 
 ## The project
 
 A shared chore tracker for people who live together (SI 526, Team JAALS: Jennifer, Shivani,
 Ankun, Anthony, Louise). People sign up, create or join a **household** with an invite code,
-and (next) add chores, see the household's chore list and mark chores done.
+add chores, see the household's chore list and mark their own chores done.
+
+- **Requirements:** the Jira stories, exported to `JAALS Stories.txt` one folder **above** the repo (not in git). Where they disagree with Figma or the build, the decision is recorded in README "Conflicts to resolve". If you find a new disagreement, raise it with the user rather than picking a side.
 
 - **Mobile web only** for now (designed at 402×874, the iPhone 17 frame). iOS/Android may come later, which is why the API is a plain JSON API.
 - **Light and dark mode follow the device setting.** There is no in-app switch (the `/components` dev page has one).
@@ -59,10 +61,13 @@ server/                 Express API (layers below)
   architecture.test.ts  enforces the layer rules
 shared/                 imported by both server and frontend
   api.ts                API response types, apiError(), validation (parseHouseholdName, normalizeInviteCode)
+  chores.ts             ChoreResponse and friends, parseChoreName/parseChoreNotes, isIsoDate
+  accounts.ts           sign-up rules (name ≤ 30, password ≥ 8 with a number), used by the screens and the server
   httpStatus.ts         HttpStatus.CREATED etc. Use these, never bare numbers
 src/                    React app
   App.tsx               which screen to show (session + household state machine)
-  screens/              one file per Figma screen, plus Screen.tsx (shared layout)
+  screens/              one file per Figma screen, plus Screen.tsx (shared layout); Home.tsx is the chore list
+  chores.ts, dates.ts   chore status/sorting/weekly progress, and "YYYY-MM-DD" dates in the phone's time zone
   components/           design-system components (from Figma), each with a .module.css
   styles/               tokens.css (colors, type), fonts.css, base.css
   api/                  fetch helpers that never throw: return { ok: true, … } | { ok: false, code }
@@ -118,19 +123,22 @@ A request goes through six layers in order. **Each layer may only use the layers
 
 ### Data (TECH_SPEC §5, §7)
 
-- Tables: `Household` (uuid id, name, unique `inviteCode`), `Membership` (unique `userId` = one household per user for now; role `owner` | `member`), plus Better Auth's `user`, `session`, `account`, `verification`. Planned next: `Chore`, `ChoreCompletion`.
+- Tables: `Household` (uuid id, name, unique `inviteCode`), `Membership` (unique `userId` = one household per user for now; role `owner` | `member`), `Chore` (name, notes, assignee, date-only `dueDate`, `completedAt`/`completedById`, creator), plus Better Auth's `user`, `session`, `account`, `verification`.
+- **Chore status is derived, never stored** (`src/chores.ts`): to do (no chip), overdue (not done, past due), done, late (done after the due date). "Today" is the **phone's** date; the server can't know it, so it only rejects due dates before yesterday in UTC and the app enforces "today or later". Weeks run Monday–Sunday: the progress card counts chores due this week, the Done section lists chores done this week, the to-do list shows every open chore.
+- Only a chore's **assignee** can mark it done or undo it (403 `NOT_ASSIGNEE`); others see no checkbox. Chores are looked up inside the membership's household only (404 `CHORE_NOT_FOUND` otherwise).
 - Invite codes: 8 characters from `ABCDEFGHJKMNPQRSTUVWXYZ23456789` (`services/inviteCode.ts`). Users can type them in any case with spaces or hyphens.
 - Neon branches: `main` = production, `dev` = local development (`.env`), and one throwaway `preview/<git-branch>` per Vercel preview. Vercel builds run `prisma migrate deploy`, so a migration in a pull request runs on that pull request's preview database only.
 
 ## Frontend (TECH_SPEC §3, README "Design system")
 
-- **No router.** `src/App.tsx` picks the screen: signed out → Log in / Sign up / Forgot password; signed in without a household → Your household / Create / Join; just created → Household Created!; otherwise → Home.
+- **No router.** `src/App.tsx` picks the screen: signed out → Log in / Sign up / Forgot password; signed in without a household → Your household / Create / Join; just created → Household Created!; otherwise → Home (the chore list), which opens Add chore.
+- **Copy comes from the stories.** Error and empty-state messages are the Jira stories' exact words (auth ones in `src/screens/authErrors.ts` `AUTH_MESSAGES`). The current user is always **"You"** (not "Me"). Forms show every error at once.
 - **Screens** use `Screen` (`src/screens/Screen.tsx`): 402px max width, 24px sides, 60px top, 40px between items (`tight` = 24px). `Actions` groups a full-width button with the link under it. Errors go on the field they belong to (`TextField error=…`); others go in `FormError`.
 - **API helpers** (`src/api/`) never throw: `{ ok: true, household } | { ok: false, code }`. `NETWORK_ERROR` when the server can't be reached. Screens map codes to their own wording.
 - **Design system** comes from the Figma file `rTlKUmhGVqZ9wXJUehed8i` ("App Design": pages Colors & Fonts `15:3`, Components `15:2`, Mock up (Sprint 2) `287:49`).
   - Colors and type **only** via tokens in `src/styles/tokens.css` (`var(--color-action-primary)`, `font: var(--type-body)`). Never hard-code a color or font. Token names mirror the Figma variables.
   - Fonts: Libron (serif, committed in `src/assets/fonts/libron`) and Atkinson Hyperlegible Next (sans, npm `@fontsource`).
-  - Reuse `src/components/` (Button, TextField, Chip, ChoreCard, TabBar, …) before writing new markup. Each component has a `.module.css`; keep sizes exactly as in Figma.
+  - Reuse `src/components/` (Button, TextField with the password eye, TextArea, PickerField, DateField, Chip, ChoreCard, ProgressCard, TabFilter, DoneSection, TabBar, …) before writing new markup. Each component has a `.module.css`; keep sizes exactly as in Figma.
   - Icons have their colors baked in, so each has a light and a dark SVG (`src/assets/icons/{light,dark}`), shown by `ThemedIcon`. A new icon needs both files.
   - Check visual work on `/components.html` (theme switch + "Show sizes").
 - Accessibility is tested: label every input, give icon buttons an `aria-label`, use real buttons.
@@ -139,7 +147,7 @@ A request goes through six layers in order. **Each layer may only use the layers
 
 | Project | Files | Notes |
 |---|---|---|
-| `server` | `server/**/*.test.ts`, `shared/**/*.test.ts` | Route tests use `createApp({ getSessionUser })` with an `x-test-user` header, and fake models via `vi.mock("../models/households.js", () => import("../test/fakeModels.js"))` (same for memberships). `fakeModels.ts` is typed against the real models. |
+| `server` | `server/**/*.test.ts`, `shared/**/*.test.ts` | Route tests use `createApp({ getSessionUser })` with an `x-test-user` header, and fake models via `vi.mock("../models/households.js", () => import("../test/fakeModels.js"))` (same for memberships and chores). `fakeModels.ts` is typed against the real models. Chore tests fix the clock with `vi.useFakeTimers({ toFake: ["Date"] })`. |
 | `web` | `src/**/*.test.{ts,tsx}` | jsdom + Testing Library. Mock `../auth.ts` and `../api/*.ts` with `vi.hoisted` + `vi.mock`. CSS Module class names are unhashed in tests (`toHaveClass("primary")`). |
 | `scripts` | `scripts/**/*.test.ts` | The test dashboard's own scripts (TECH_SPEC §15). Node, run directly with type stripping in CI, so `.ts` imports and erasable syntax only. |
 | `e2e` | `e2e/*.e2e.test.ts` | Real Chromium at 402×874. Locally it reuses or starts `npm run dev` and deletes its `@e2e.test` accounts afterwards. `E2E_BASE_URL=<url>` targets a deployment, with sign-ins paced for the rate limit. |
@@ -167,17 +175,18 @@ A request goes through six layers in order. **Each layer may only use the layers
 - The team develops on Windows: PowerShell and Git Bash. CRLF warnings from git are harmless.
 - Some contributors have two GitHub accounts. A 403 on push usually means the wrong one is active (`gh auth switch`, then `gh auth setup-git`).
 
-## Current state (2026-10-20)
+## Current state (2026-10-28)
 
-**Done:** Feasibility spikes 1–3 (Vercel + Express + Prisma deploy, Better Auth, teammate deploys) · design tokens and all Figma components · Sprint 2 screens (SCRUM-2 Sign Up, SCRUM-3 Log in/Log out, SCRUM-4 Create a Household, SCRUM-5 Join a Household) + stand-in Forgot password · household API with member names · six-layer server · status codes · unit, component and e2e tests in CI.
+**Done:** Feasibility spikes 1–3 (Vercel + Express + Prisma deploy, Better Auth, teammate deploys) · design tokens and all Figma components · Sprint 2 screens (SCRUM-2 Sign Up, SCRUM-3 Log in/Log out, SCRUM-4 Create a Household, SCRUM-32 Join a Household) + stand-in Forgot password · household API with member names · six-layer server · status codes · unit, component and e2e tests in CI · test dashboard · **chores**: the `Chore` table, `/api/chores`, the chore list ("Home - Chores (All)") and Add chore ("Home - Add Chore (refined)") screens (SCRUM-6, 7, 8) · sign-up, log-in and join messages and rules aligned with SCRUM-2, 3 and 32.
 
 **Next (MVP, TECH_SPEC §4):**
-1. Chores: add, list, mark done/undo, edit/delete. Data model in §5 (`Chore`, `ChoreCompletion`), endpoints in §6. Build it with the six layers; scope every query with `requireHousehold`. `ChoreCard`, `ProgressCard`, `OverdueBanner` and `TabBar` already exist.
-2. Gaps found while building Sprint 2:
-   - The invite code is only shown on Household Created!. There is no way to see it again (suggest an item in the Home menu).
+1. The team reviews README "Conflicts to resolve" (stories vs. Figma vs. build, Figma design issues, placeholder names). Several rows wait on UX designs: a card without a checkbox, the expanded chore row, toasts ("Chore added.", "Marked done. Undo"), empty/loading/error states.
+2. Edit and delete chores (no screens designed yet; who may do it is TECH_SPEC §11).
+3. Gaps found while building Sprint 2:
+   - The invite code is only shown on Household Created!, and in Add chore's hint while you're the only member. There is no other way to see it again (suggest an item in the Home menu).
    - "Your household" has no Log out.
    - Invite codes are 8 characters, but Figma shows 6.
-3. Undesigned states (pressed, loading, disabled, empty states, toasts) are listed for UX in the Figma frame "UX Please Read". Code standing in for them has a `Not in Figma yet` or `Not designed yet` comment; search for those before redesigning.
+4. Undesigned states (pressed, loading, disabled, empty states, toasts) are listed for UX in the Figma frame "UX Please Read". Code standing in for them has a `Not in Figma yet` or `Not designed yet` comment; search for those before redesigning.
 
 **Known problems:** TECH_DEBT.md (#2 dev without .env, #4 health route tests don't reset their mocks, #5 404 message echoes the URL, #6 rate limit per instance, #7 stand-in password reset).
 

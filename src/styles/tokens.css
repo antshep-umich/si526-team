@@ -22,6 +22,7 @@
   --color-text-muted: #6b5547;
   --color-action-primary: #a8472f;
   --color-action-on-primary: #ffffff;
+  --color-action-primary-disabled: rgb(168 71 47 / 50%);
   --color-action-focus-ring: #a8472f;
   --color-success-default: #46703f;
   --color-success-on-success: #ffffff;
@@ -71,6 +72,8 @@
     --color-text-muted: #bfaf9e;
     --color-action-primary: #e0876a;
     --color-action-on-primary: #1c1612;
+    /* Not in Figma's dark mode yet: dark primary at 50%, like light mode. */
+    --color-action-primary-disabled: rgb(224 135 106 / 50%);
     --color-action-focus-ring: #e0876a;
     --color-success-default: #8fbf82;
     --color-success-on-success: #1c1612;
@@ -98,6 +101,7 @@
   --color-text-muted: #bfaf9e;
   --color-action-primary: #e0876a;
   --color-action-on-primary: #1c1612;
+  --color-action-primary-disabled: rgb(224 135 106 / 50%);
   --color-action-focus-ring: #e0876a;
   --color-success-default: #8fbf82;
   --color-success-on-success: #1c1612;

@@ -38,7 +38,7 @@ describe("forgot password", () => {
     await expectHeading(signedUp.page, "Log in");
 
     await logIn(page, email, PASSWORD);
-    expect(await fieldError(page, "Password")).toBe("That email and password don't match.");
+    await page.getByRole("alert").getByText("Email or password is incorrect.").waitFor();
     await logIn(page, email, "e2e-new-password-1");
     await expectHeading(page, "Your household");
 

@@ -58,13 +58,17 @@ describe("components demo page", () => {
     await expectHeading(page, "Components");
 
     for (const section of [
-      "Buttons · default, outline, keyboard focus",
+      "Buttons · default, outline, keyboard focus, disabled",
       "Chips",
       "Overdue banner",
-      "Progress",
-      "Chore cards · overdue, pending, done",
+      "Progress · on track, complete, late, empty",
+      "Tab filter",
+      "Done section · tap to open and close",
+      "Chore cards · overdue, pending, done, late, someone else’s",
       "Note",
-      "Text fields · default, blocking error",
+      "Text fields · default, blocking error, password",
+      "Picker fields · housemate, date",
+      "Text area",
       "Avatars",
       "Tab bar",
       "Colors",

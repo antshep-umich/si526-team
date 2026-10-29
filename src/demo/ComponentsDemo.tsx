@@ -3,11 +3,17 @@ import Avatar from "../components/Avatar.tsx";
 import Button from "../components/Button.tsx";
 import ChoreCard, { type ChoreStatus } from "../components/ChoreCard.tsx";
 import Chip from "../components/Chip.tsx";
+import DateField from "../components/DateField.tsx";
+import DoneSection from "../components/DoneSection.tsx";
 import NoteCard from "../components/NoteCard.tsx";
 import OverdueBanner from "../components/OverdueBanner.tsx";
+import PickerField from "../components/PickerField.tsx";
 import ProgressCard from "../components/ProgressCard.tsx";
 import TabBar, { type TabId } from "../components/TabBar.tsx";
+import TabFilter from "../components/TabFilter.tsx";
+import TextArea from "../components/TextArea.tsx";
 import TextField from "../components/TextField.tsx";
+import { today } from "../dates.ts";
 import styles from "./ComponentsDemo.module.css";
 import Measured from "./Measured.tsx";
 
@@ -40,6 +46,7 @@ const COLOR_TOKENS = [
   "text-muted",
   "action-primary",
   "action-on-primary",
+  "action-primary-disabled",
   "action-focus-ring",
   "success-default",
   "success-on-success",
@@ -82,12 +89,18 @@ export default function ComponentsDemo() {
   const [theme, setTheme] = useState<Theme>(readTheme);
   const [showSizes, setShowSizes] = useState(false);
   const [chores, setChores] = useState<{ name: string; details: string; status: ChoreStatus }[]>([
-    { name: "Take out trash", details: "Overdue · Riley · due Monday", status: "overdue" },
+    { name: "Take out trash", details: "You · due Mon, Oct 5", status: "overdue" },
     { name: "Clean bathroom", details: "You · due today", status: "pending" },
-    { name: "Wash dishes", details: "Jordan · done 9:40 AM", status: "done" },
+    { name: "Wash dishes", details: "You · done today · due today", status: "done" },
+    { name: "Buy dish soap", details: "You · done today · due Fri, Oct 9", status: "late" },
   ]);
   const [choreName, setChoreName] = useState("Mop kitchen");
   const [tab, setTab] = useState<TabId>("chores");
+  const [filter, setFilter] = useState<"all" | "mine">("all");
+  const [doneOpen, setDoneOpen] = useState(false);
+  const [assignee, setAssignee] = useState<string | null>(null);
+  const [dueDate, setDueDate] = useState("");
+  const [notes, setNotes] = useState("");
 
   useEffect(() => {
     const root = document.documentElement;
@@ -104,12 +117,14 @@ export default function ComponentsDemo() {
   function toggleChore(index: number) {
     setChores((list) =>
       list.map((chore, i) =>
-        i === index ? { ...chore, status: chore.status === "done" ? "pending" : "done" } : chore,
+        i === index
+          ? { ...chore, status: chore.status === "done" || chore.status === "late" ? "pending" : "done" }
+          : chore,
       ),
     );
   }
 
-  const doneCount = chores.filter((c) => c.status === "done").length;
+  const doneCount = chores.filter((c) => c.status === "done" || c.status === "late").length;
 
   return (
     <main className={styles.page}>
@@ -140,7 +155,7 @@ export default function ComponentsDemo() {
         </div>
       </header>
 
-      <Section title="Buttons · default, outline, keyboard focus">
+      <Section title="Buttons · default, outline, keyboard focus, disabled">
         <div className={styles.row}>
           <Measured show={showSizes}>
             <Button>Add chore</Button>
@@ -150,6 +165,9 @@ export default function ComponentsDemo() {
           </Measured>
           <Measured show={showSizes}>
             <Button data-force-focus="">Add chore</Button>
+          </Measured>
+          <Measured show={showSizes}>
+            <Button disabled>Add chore</Button>
           </Measured>
         </div>
         <p className={styles.hint}>
@@ -175,6 +193,9 @@ export default function ComponentsDemo() {
           <Measured show={showSizes}>
             <Chip tone="success">Done</Chip>
           </Measured>
+          <Measured show={showSizes}>
+            <Chip tone="late">Late</Chip>
+          </Measured>
         </div>
       </Section>
 
@@ -188,19 +209,59 @@ export default function ComponentsDemo() {
         </Measured>
       </Section>
 
-      <Section title="Progress">
+      <Section title="Progress · on track, complete, late, empty">
+        <div className={styles.cards}>
+          <Measured show={showSizes} block>
+            <ProgressCard done={5} total={8} />
+          </Measured>
+          <Measured show={showSizes} block>
+            <ProgressCard done={8} total={8} />
+          </Measured>
+          <Measured show={showSizes} block>
+            <ProgressCard done={3} total={8} late={1} />
+          </Measured>
+          <Measured show={showSizes} block>
+            <ProgressCard done={0} total={0} />
+          </Measured>
+        </div>
+        <p className={styles.hint}>
+          The “1 Late” text is overdue/fill on white, as designed (low contrast; see the README’s design issues).
+        </p>
+      </Section>
+
+      <Section title="Tab filter">
         <Measured show={showSizes} block>
-          <ProgressCard done={5} total={8} status="On track" />
+          <TabFilter
+            label="Show chores"
+            options={[
+              { id: "all", label: "All" },
+              { id: "mine", label: "Mine" },
+            ]}
+            selected={filter}
+            onSelect={setFilter}
+          />
         </Measured>
       </Section>
 
-      <Section title="Chore cards · overdue, pending, done">
+      <Section title="Done section · tap to open and close">
+        <Measured show={showSizes} block>
+          <DoneSection count={2} expanded={doneOpen} onToggle={() => setDoneOpen(!doneOpen)} controls="demo-done" />
+        </Measured>
+        <p id="demo-done" className={styles.hint} hidden={!doneOpen}>
+          The done chores show here on the chore list.
+        </p>
+      </Section>
+
+      <Section title="Chore cards · overdue, pending, done, late, someone else’s">
         <div className={styles.cards}>
           {chores.map((chore, i) => (
             <Measured key={chore.name} show={showSizes} block>
               <ChoreCard {...chore} onToggle={() => toggleChore(i)} />
             </Measured>
           ))}
+          <Measured show={showSizes} block>
+            <ChoreCard name="Vacuum living room" details="Alex · due tomorrow" status="pending" />
+          </Measured>
         </div>
         <p className={styles.hint}>
           Tap a checkbox to mark a chore done or not done. {doneCount} of {chores.length} done.
@@ -213,15 +274,63 @@ export default function ComponentsDemo() {
         </Measured>
       </Section>
 
-      <Section title="Text fields · default, blocking error">
+      <Section title="Text fields · default, blocking error, password">
         <div className={styles.cards}>
           <Measured show={showSizes} block>
             <TextField label="Text field" value={choreName} onChange={(e) => setChoreName(e.target.value)} />
           </Measured>
           <Measured show={showSizes} block>
-            <TextField label="Text field (error)" placeholder="Chore name" error="Give the chore a name first." />
+            <TextField label="Text field (error)" placeholder="Chore name" error="Chore name is required." />
+          </Measured>
+          <Measured show={showSizes} block>
+            <TextField label="Password" type="password" defaultValue="hunter22" />
           </Measured>
         </div>
+        <p className={styles.hint}>Tab into a field to see the focus ring. The eye shows and hides the password.</p>
+      </Section>
+
+      <Section title="Picker fields · housemate, date">
+        <div className={styles.cards}>
+          <Measured show={showSizes} block>
+            <PickerField
+              label="Assigned to"
+              placeholder="Select a housemate"
+              options={[
+                { value: "me", label: "You" },
+                { value: "jenna", label: "Jenna White" },
+                { value: "robert", label: "Robert Mann" },
+              ]}
+              value={assignee}
+              onChange={setAssignee}
+            />
+          </Measured>
+          <Measured show={showSizes} block>
+            <DateField label="Due date" placeholder="Pick a date" value={dueDate} min={today()} onChange={setDueDate} />
+          </Measured>
+          <Measured show={showSizes} block>
+            <PickerField
+              label="Assigned to (error)"
+              placeholder="Select a housemate"
+              options={[{ value: "me", label: "You" }]}
+              value={null}
+              onChange={() => {}}
+              error="Choose who this chore is assigned to."
+              hint="Invite housemates with code K7Q2MXAB to assign chores to them."
+            />
+          </Measured>
+        </div>
+        <p className={styles.hint}>Tap the housemate field to open its list. The date opens the phone’s date picker.</p>
+      </Section>
+
+      <Section title="Text area">
+        <Measured show={showSizes} block>
+          <TextArea
+            label="Notes (optional)"
+            placeholder="Add any details…"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+          />
+        </Measured>
       </Section>
 
       <Section title="Avatars">

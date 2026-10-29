@@ -18,6 +18,7 @@ model Household {
   createdAt  DateTime @default(now())
 
   memberships Membership[]
+  chores      Chore[]
 }
 
 enum MembershipRole {
@@ -38,21 +39,52 @@ model Membership {
   @@index([householdId])
 }
 
+// A chore in a household (TECH_SPEC section 5). Status is worked out, not stored:
+// done = completedAt is set; overdue = not done and dueDate is before today;
+// late = completed after its due date. "Today" is the phone's own date, which is
+// why dueDate is a date without a time.
+model Chore {
+  id            String    @id @default(uuid()) @db.Uuid
+  householdId   String    @db.Uuid
+  name          String    @db.VarChar(60)
+  notes         String?   @db.VarChar(200)
+  // Required by the app; becomes null only if that account is deleted.
+  assigneeId    String?
+  dueDate       DateTime  @db.Date
+  completedAt   DateTime?
+  completedById String?
+  createdById   String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  assignee    User?     @relation("ChoreAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  completedBy User?     @relation("ChoreCompletedBy", fields: [completedById], references: [id], onDelete: SetNull)
+  createdBy   User?     @relation("ChoreCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([householdId, dueDate])
+  @@index([householdId, completedAt])
+}
+
 // Better Auth's tables, generated with `npx auth@latest generate` (Better Auth 1.7.10).
 // Better Auth reads and writes these itself. If an upgrade changes them, regenerate
-// and compare rather than editing by hand.
+// and compare rather than editing by hand. (The relation lists on User, such as
+// choresAssigned, are ours: Prisma-only, they add no columns.)
 
 model User {
-  id            String      @id
-  name          String
-  email         String
-  emailVerified Boolean     @default(false)
-  image         String?
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  sessions      Session[]
-  accounts      Account[]
-  membership    Membership? // Membership[] once a user can be in more than one household
+  id              String      @id
+  name            String
+  email           String
+  emailVerified   Boolean     @default(false)
+  image           String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  sessions        Session[]
+  accounts        Account[]
+  membership      Membership? // Membership[] once a user can be in more than one household
+  choresAssigned  Chore[]     @relation("ChoreAssignee")
+  choresCompleted Chore[]     @relation("ChoreCompletedBy")
+  choresCreated   Chore[]     @relation("ChoreCreatedBy")
 
   @@unique([email])
   @@map("user")

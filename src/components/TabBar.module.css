@@ -30,6 +30,11 @@
   color: var(--color-action-primary);
 }
 
+/* A tab without a screen yet looks as designed but can't be used. */
+.tab[aria-disabled="true"] {
+  cursor: default;
+}
+
 .tab:focus-visible {
   outline: 2px solid var(--color-action-focus-ring);
   outline-offset: -2px;

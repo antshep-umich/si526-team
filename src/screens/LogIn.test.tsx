@@ -33,14 +33,15 @@ describe("LogIn", () => {
     expect(screen.getByRole("button", { name: "Forgot your password?" })).toBeInTheDocument();
   });
 
-  it("asks for the email, then the password, before calling the server", async () => {
+  it("asks for the email and the password before calling the server (SCRUM-3)", async () => {
     renderLogIn();
 
     await fillAndSubmit("", "");
-    expect(screen.getByLabelText("Email")).toHaveAccessibleDescription("Enter your email.");
+    expect(screen.getByLabelText("Email")).toHaveAccessibleDescription("Email is required.");
+    expect(screen.getByLabelText("Password")).toHaveAccessibleDescription("Password is required.");
 
     await fillAndSubmit("ana@example.com", "");
-    expect(screen.getByLabelText("Password")).toHaveAccessibleDescription("Enter your password.");
+    expect(screen.getByLabelText("Email")).not.toHaveAttribute("aria-invalid");
     expect(signIn).not.toHaveBeenCalled();
   });
 
@@ -52,22 +53,23 @@ describe("LogIn", () => {
     expect(signIn).toHaveBeenCalledWith({ email: "ana@example.com", password: "correct-horse-1" });
   });
 
-  it("shows a wrong password on the password field", async () => {
+  it("says the email or password is wrong without saying which", async () => {
     signIn.mockResolvedValue({ data: null, error: { code: "INVALID_EMAIL_OR_PASSWORD", status: 401 } });
     renderLogIn();
 
     await fillAndSubmit("ana@example.com", "wrong-password");
 
-    expect(screen.getByLabelText("Password")).toHaveAccessibleDescription("That email and password don't match.");
+    expect(screen.getByRole("alert")).toHaveTextContent("Email or password is incorrect.");
+    expect(screen.getByLabelText("Password")).not.toHaveAttribute("aria-invalid");
   });
 
-  it("shows a network failure under the button", async () => {
+  it("shows a failure to reach the server as a server error, under the button", async () => {
     signIn.mockRejectedValue(new TypeError("Failed to fetch"));
     renderLogIn();
 
     await fillAndSubmit("ana@example.com", "correct-horse-1");
 
-    expect(screen.getByRole("alert")).toHaveTextContent("Couldn't reach the server");
+    expect(screen.getByRole("alert")).toHaveTextContent("Something went wrong. Please try again.");
   });
 
   it("disables the form while signing in", async () => {

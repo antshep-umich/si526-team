@@ -3,18 +3,34 @@ import styles from "./ProgressCard.module.css";
 type ProgressCardProps = {
   done: number;
   total: number;
-  /** Short status on the right, for example "On track". */
-  status?: string;
+  /** How many of the done chores were finished after their due date. */
+  late?: number;
 };
 
-export default function ProgressCard({ done, total, status }: ProgressCardProps) {
-  const percent = total > 0 ? Math.min(100, Math.max(0, (done / total) * 100)) : 0;
-  const summary = `${done} of ${total} chores done`;
+const percentOf = (part: number, total: number) =>
+  total > 0 ? Math.min(100, Math.max(0, (part / total) * 100)) : 0;
+
+/**
+ * Figma: Components / Progress card, in four states: Empty ("No Chores Yet"),
+ * Complete ("Complete!"), Late ("1 Late", with a yellow segment for the late
+ * chores) and On track.
+ */
+export default function ProgressCard({ done, total, late = 0 }: ProgressCardProps) {
+  const empty = total <= 0;
+  const summary = empty ? "No Chores Yet" : `${done} of ${total} chores done`;
+  const status = empty
+    ? null
+    : done >= total
+      ? { text: "Complete!", className: styles.status }
+      : late > 0
+        ? { text: `${late} Late`, className: `${styles.status} ${styles.lateStatus}` }
+        : { text: "On track", className: styles.status };
+
   return (
     <div className={styles.card}>
       <div className={styles.summary}>
         <p className={styles.count}>{summary}</p>
-        {status && <p className={styles.status}>{status}</p>}
+        {status && <p className={status.className}>{status.text}</p>}
       </div>
       <div
         className={styles.track}
@@ -24,7 +40,10 @@ export default function ProgressCard({ done, total, status }: ProgressCardProps)
         aria-valuemax={total}
         aria-valuenow={done}
       >
-        <div className={styles.fill} style={{ width: `${percent}%` }} />
+        {!empty && <div className={styles.fill} style={{ width: `${percentOf(done, total)}%` }} />}
+        {!empty && late > 0 && (
+          <div className={styles.lateFill} style={{ width: `${percentOf(late, total)}%` }} />
+        )}
       </div>
     </div>
   );

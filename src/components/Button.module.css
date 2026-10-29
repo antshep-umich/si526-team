@@ -27,15 +27,23 @@
   width: 100%;
 }
 
-/* "Focus shows the 2px keyboard focus ring with a 3px gap." Radius 15 = 12 + 3. */
+/* Keyboard focus: a 2px ring with a 2px gap (the Figma component; its description still says 3px). */
 .button:focus-visible,
 .button[data-force-focus] {
   outline: 2px solid var(--color-action-focus-ring);
-  outline-offset: 3px;
+  outline-offset: 2px;
 }
 
-/* Not in Figma yet: a placeholder until UX designs a disabled state. */
 .button:disabled {
-  opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* Figma: Type=Primary, State=Disabled (426:1505). */
+.primary:disabled {
+  background: var(--color-action-primary-disabled);
+}
+
+/* Not in Figma yet: outline buttons have no disabled state, so they fade. */
+.outline:disabled {
+  opacity: 0.5;
 }

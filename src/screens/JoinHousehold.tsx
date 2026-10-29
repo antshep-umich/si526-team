@@ -5,18 +5,16 @@ import TextField from "../components/TextField.tsx";
 import TextLink from "../components/TextLink.tsx";
 import Screen, { Actions, FormError } from "./Screen.tsx";
 
-// SCRUM-5 Join a Household (Figma "iPhone 17 - 4").
+// SCRUM-32 Joining a Household (Figma "iPhone 17 - 4"), worded as in the story.
 
 const FIELD_ERRORS: Record<string, string> = {
-  VALIDATION_ERROR: "Enter the invite code from your housemate.",
-  INVITE_CODE_NOT_FOUND: "No household has that code. Check it with your housemate and try again.",
+  VALIDATION_ERROR: "Enter an invite code.",
+  INVITE_CODE_NOT_FOUND: "We couldn't find a household with that code. Check with your housemate and try again.",
+  // Not in the story: someone already in a household can't join a second one.
   ALREADY_IN_HOUSEHOLD: "You're already in a different household.",
 };
-const FORM_ERRORS: Record<string, string> = {
-  NETWORK_ERROR: "Couldn't reach the server. Check your connection and try again.",
-  UNAUTHENTICATED: "You need to be signed in to join a household.",
-};
-const FALLBACK_ERROR = "Something went wrong. Please try again.";
+// SCRUM-32 calls every other failure a server error.
+const SERVER_ERROR = "Something went wrong. Please try again.";
 
 type JoinHouseholdProps = {
   onJoined: (household: Household) => void;
@@ -39,11 +37,7 @@ export default function JoinHousehold({ onJoined, onBack }: JoinHouseholdProps) 
 
     if (result.ok) return onJoined(result.household);
     const fieldMessage = FIELD_ERRORS[result.code];
-    setError(
-      fieldMessage
-        ? { onField: true, message: fieldMessage }
-        : { onField: false, message: FORM_ERRORS[result.code] ?? FALLBACK_ERROR },
-    );
+    setError(fieldMessage ? { onField: true, message: fieldMessage } : { onField: false, message: SERVER_ERROR });
   }
 
   return (

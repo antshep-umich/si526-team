@@ -47,14 +47,18 @@ describe("resetPassword", () => {
     expect(accounts.passwordLengthLimits).not.toHaveBeenCalled();
   });
 
-  it.each([7, 129])("rejects a %i-character password using the sign-up limits", async (length) => {
-    expect(await codeOf(() => resetPassword("ana@example.com", "x".repeat(length)))).toBe("PASSWORD_LENGTH");
+  it.each([
+    ["7 characters", "abcdef1"],
+    ["129 characters", "1" + "x".repeat(128)],
+    ["no number", "no-numbers-here"],
+  ])("rejects a password with %s (SCRUM-2 rules)", async (_label, password) => {
+    expect(await codeOf(() => resetPassword("ana@example.com", password))).toBe("PASSWORD_INVALID");
     expect(accounts.setPassword).not.toHaveBeenCalled();
   });
 
   it("accepts passwords of exactly the minimum and maximum length", async () => {
-    await resetPassword("ana@example.com", "x".repeat(8));
-    await resetPassword("ana@example.com", "x".repeat(128));
+    await resetPassword("ana@example.com", "abcdefg1");
+    await resetPassword("ana@example.com", "1" + "x".repeat(127));
 
     expect(accounts.setPassword).toHaveBeenCalledTimes(2);
   });

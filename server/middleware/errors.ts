@@ -13,12 +13,17 @@ const STATUS_BY_CODE: Record<ServiceErrorCode, HttpStatus> = {
   // Well-formed JSON whose values break a rule, including values that point at
   // nothing (an unknown invite code or email): the endpoint exists, the input doesn't fit.
   VALIDATION_ERROR: HttpStatus.UNPROCESSABLE_CONTENT,
-  PASSWORD_LENGTH: HttpStatus.UNPROCESSABLE_CONTENT,
+  PASSWORD_INVALID: HttpStatus.UNPROCESSABLE_CONTENT,
   INVITE_CODE_NOT_FOUND: HttpStatus.UNPROCESSABLE_CONTENT,
   ACCOUNT_NOT_FOUND: HttpStatus.UNPROCESSABLE_CONTENT,
+  DUE_DATE_IN_PAST: HttpStatus.UNPROCESSABLE_CONTENT,
+  ASSIGNEE_NOT_IN_HOUSEHOLD: HttpStatus.UNPROCESSABLE_CONTENT,
   FORBIDDEN: HttpStatus.FORBIDDEN,
-  // The URL names "your household", and there isn't one.
+  // Only the assignee can mark a chore done or undo it (SCRUM-8).
+  NOT_ASSIGNEE: HttpStatus.FORBIDDEN,
+  // The URL names "your household" or one of its chores, and there isn't one.
   NO_HOUSEHOLD: HttpStatus.NOT_FOUND,
+  CHORE_NOT_FOUND: HttpStatus.NOT_FOUND,
   ALREADY_IN_HOUSEHOLD: HttpStatus.CONFLICT,
 };
 

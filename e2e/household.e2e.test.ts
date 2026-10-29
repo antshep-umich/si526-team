@@ -39,7 +39,7 @@ describe("households", () => {
     await mate.page.getByLabel("Invite code").fill("ZZZZZZZZ");
     await mate.page.getByRole("button", { name: "Join", exact: true }).click();
     expect(await fieldError(mate.page, "Invite code")).toBe(
-      "No household has that code. Check it with your housemate and try again.",
+      "We couldn't find a household with that code. Check with your housemate and try again.",
     );
 
     const typedLoosely = `${inviteCode.slice(0, 4).toLowerCase()}-${inviteCode.slice(4).toLowerCase()}`;

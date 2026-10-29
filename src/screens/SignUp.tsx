@@ -1,46 +1,69 @@
 import { useState } from "react";
+import { passwordMeetsRules, USER_NAME_MAX_LENGTH } from "../../shared/accounts.ts";
 import { authClient } from "../auth.ts";
 import Button from "../components/Button.tsx";
 import TextField from "../components/TextField.tsx";
 import TextLink from "../components/TextLink.tsx";
-import { describeAuthError, MIN_PASSWORD, NETWORK_MESSAGE, type Field } from "./authErrors.ts";
+import { AUTH_MESSAGES, describeAuthError, looksLikeEmail, type Field } from "./authErrors.ts";
 import Screen, { Actions, FormError } from "./Screen.tsx";
 
 // SCRUM-2 Sign Up (Figma "iPhone 17 - 1").
+
+type Errors = Partial<Record<Field, string>>;
+
+/** Every problem at once (SCRUM-2), checked before anything is sent. */
+function validate(name: string, email: string, password: string, confirm: string): Errors {
+  const errors: Errors = {};
+  if (!name.trim()) errors.name = AUTH_MESSAGES.nameRequired;
+  else if (name.trim().length > USER_NAME_MAX_LENGTH) errors.name = AUTH_MESSAGES.nameTooLong;
+  if (!email.trim()) errors.email = AUTH_MESSAGES.emailRequired;
+  else if (!looksLikeEmail(email)) errors.email = AUTH_MESSAGES.emailInvalid;
+  if (!password) errors.password = AUTH_MESSAGES.passwordRequired;
+  else if (!passwordMeetsRules(password)) errors.password = AUTH_MESSAGES.passwordRules;
+  if (confirm !== password) errors.confirm = AUTH_MESSAGES.passwordsDiffer;
+  return errors;
+}
 
 export default function SignUp({ onLogIn }: { onLogIn: () => void }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
-  const [error, setError] = useState<{ field: Field; message: string } | null>(null);
+  const [errors, setErrors] = useState<Errors>({});
   const [submitting, setSubmitting] = useState(false);
 
-  async function handleSubmit() {
-    // Catch obvious mistakes before calling the server
-    if (!name.trim()) return setError({ field: "name", message: "Enter your name." });
-    if (!email.trim()) return setError({ field: "email", message: "Enter your email." });
-    if (password.length < MIN_PASSWORD) {
-      return setError({ field: "password", message: `Use at least ${MIN_PASSWORD} characters.` });
-    }
-    if (confirm !== password) return setError({ field: "confirm", message: "The passwords don't match." });
+  // SCRUM-2: after any invalid field, Name and Email keep their values and both
+  // password fields are cleared.
+  function showFieldErrors(found: Errors) {
+    setErrors(found);
+    setPassword("");
+    setConfirm("");
+  }
 
-    setError(null);
+  async function handleSubmit() {
+    const found = validate(name, email, password, confirm);
+    if (Object.keys(found).length > 0) return showFieldErrors(found);
+
+    setErrors({});
     setSubmitting(true);
     try {
       // On success the session cookie is set and App switches to the signed-in screens.
       const { error } = await authClient.signUp.email({ name: name.trim(), email: email.trim(), password });
-      if (error) setError(describeAuthError(error));
+      if (error) {
+        const { field, message } = describeAuthError(error);
+        if (field === "form") setErrors({ form: message });
+        else showFieldErrors({ [field]: message });
+      }
     } catch {
-      setError({ field: "form", message: NETWORK_MESSAGE });
+      setErrors({ form: AUTH_MESSAGES.serverError });
     }
     setSubmitting(false);
   }
 
-  const fieldError = (field: Field) => (error?.field === field ? error.message : null);
-
   return (
     <Screen title="Create Account" onSubmit={handleSubmit}>
+      {/* SCRUM-2: a server error shows as a banner above the form. */}
+      <FormError message={errors.form ?? null} />
       <TextField
         label="Name"
         autoComplete="name"
@@ -48,7 +71,7 @@ export default function SignUp({ onLogIn }: { onLogIn: () => void }) {
         value={name}
         onChange={(e) => setName(e.target.value)}
         disabled={submitting}
-        error={fieldError("name")}
+        error={errors.name}
       />
       <TextField
         label="Email"
@@ -58,7 +81,7 @@ export default function SignUp({ onLogIn }: { onLogIn: () => void }) {
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         disabled={submitting}
-        error={fieldError("email")}
+        error={errors.email}
       />
       <TextField
         label="Password"
@@ -68,7 +91,7 @@ export default function SignUp({ onLogIn }: { onLogIn: () => void }) {
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         disabled={submitting}
-        error={fieldError("password")}
+        error={errors.password}
       />
       <TextField
         label="Confirm password"
@@ -78,13 +101,12 @@ export default function SignUp({ onLogIn }: { onLogIn: () => void }) {
         value={confirm}
         onChange={(e) => setConfirm(e.target.value)}
         disabled={submitting}
-        error={fieldError("confirm")}
+        error={errors.confirm}
       />
       <Actions>
         <Button type="submit" fullWidth disabled={submitting}>
           {submitting ? "Creating account…" : "Create account"}
         </Button>
-        <FormError message={fieldError("form")} />
         <TextLink onClick={onLogIn}>Already have an account? Log in</TextLink>
       </Actions>
     </Screen>

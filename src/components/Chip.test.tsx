@@ -9,6 +9,12 @@ describe("Chip", () => {
     expect(screen.getByText("Overdue")).toHaveClass("chip", "overdue");
   });
 
+  it("shows its label in the late style (done after the due date)", () => {
+    render(<Chip tone="late">Late</Chip>);
+
+    expect(screen.getByText("Late")).toHaveClass("chip", "late");
+  });
+
   it("shows its label in the success style (Done, Owner)", () => {
     render(<Chip tone="success">Owner</Chip>);
 

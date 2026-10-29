@@ -1,0 +1,136 @@
+/* Figma: Components / Picker field (454:2772). Styled like Text field. */
+.picker {
+  width: 100%;
+}
+
+.trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  height: 48px;
+  padding: 0 14px;
+  overflow: hidden;
+  border: 1.5px solid var(--color-border-input);
+  border-radius: 12px;
+  background: var(--color-surface-card);
+  color: var(--color-text-default);
+  font: var(--type-body); /* 400 15/22 */
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.placeholder {
+  color: var(--color-text-muted);
+}
+
+.trigger:focus-visible {
+  outline: 2px solid var(--color-action-focus-ring);
+  outline-offset: 2px;
+}
+
+.trigger[aria-invalid="true"] {
+  border: 2px solid var(--color-error-border);
+  padding: 0 13.5px;
+}
+
+/* Open (Variant2): the field squares off at the bottom with a 3px rule over the list. */
+.open .trigger {
+  border-bottom-width: 3px;
+  border-radius: 12px 12px 0 0;
+}
+
+/* Figma turns the down chevron 180° for "up"; the exported file isn't turned. */
+.up {
+  transform: rotate(180deg);
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.option {
+  padding: 14px;
+  border: 1.5px solid var(--color-border-input);
+  border-top: none;
+  background: var(--color-surface-card);
+  color: var(--color-text-muted);
+  font: var(--type-body);
+  cursor: pointer;
+}
+
+.option:last-child {
+  border-radius: 0 0 12px 12px;
+}
+
+/* Not in Figma yet: the picked option and the keyboard highlight. */
+.option[aria-selected="true"] {
+  color: var(--color-text-default);
+  font-weight: 700;
+}
+
+.active {
+  outline: 2px solid var(--color-action-focus-ring);
+  outline-offset: -2px;
+}
+
+.hint {
+  font: var(--type-meta); /* 400 13/18 */
+  color: var(--color-text-muted);
+}
+
+/* Due date: a native date input dressed as the picker, so the phone shows its own calendar.
+   The input's text is hidden; .dateText shows "Pick a date" or the date instead. */
+.dateControl {
+  position: relative;
+  width: 100%;
+}
+
+.dateInput {
+  appearance: none;
+  color: transparent;
+}
+
+.dateInput::-webkit-datetime-edit,
+.dateInput::-webkit-date-and-time-value {
+  opacity: 0;
+}
+
+/* Desktop Chrome's own calendar button covers the whole field, so a click anywhere opens it. */
+.dateInput::-webkit-calendar-picker-indicator {
+  position: absolute;
+  inset: 0;
+  width: auto;
+  height: auto;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.dateText,
+.dateIcon {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.dateText {
+  left: 15.5px;
+  right: 44px;
+  overflow: hidden;
+  color: var(--color-text-default);
+  font: var(--type-body);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dateIcon {
+  right: 15.5px;
+}
+
+.dateText.datePlaceholder {
+  color: var(--color-text-muted);
+}

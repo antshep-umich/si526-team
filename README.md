@@ -17,10 +17,14 @@ phone's light or dark setting.
 
 - Sign up, log in and log out
 - Create a household and get an invite code, or join one with a code
+- **Chores:** add a chore (name, who it's for, due date, notes), see the household's chore list
+  with All / Mine, this week's progress, and the chores done this week; the person a chore is
+  assigned to can mark it done or undo it
 - A stand-in "Forgot your password?" (it doesn't send email yet; see TECH_DEBT #7)
 - The full design system from Figma: colors, fonts and components, viewable at `/components`
 
-**Next up:** chores (add, list, mark done, edit and delete). See TECH_SPEC section 4.
+**Next up:** editing and deleting chores, and the states still waiting on designs (see
+[Conflicts to resolve](#conflicts-to-resolve)). See TECH_SPEC section 4.
 
 ## Tech stack
 
@@ -140,6 +144,10 @@ All responses are JSON. Errors always look like this:
 | `POST /api/households/join` | Join a household with an invite code |
 | `GET /api/households/current` | Your household and its members |
 | `POST /api/households/current/invite-code` | Make a new invite code (owner only) |
+| `GET /api/chores?since=YYYY-MM-DD` | Your household's open chores, plus those done or due since that date |
+| `POST /api/chores` | Add a chore (`name`, `assigneeId`, `dueDate`, optional `notes`) |
+| `GET /api/chores/:id` | One chore |
+| `POST /api/chores/:id/complete`, `DELETE …/complete` | Mark a chore done, or undo it (its assignee only) |
 | `POST /api/password-reset` | Stand-in password reset |
 | `GET /api/health` | Checks the API and database are up |
 
@@ -149,7 +157,8 @@ Status numbers in code use named constants from `shared/httpStatus.ts`.
 
 ### The frontend
 
-- **Screens** (`src/screens/`) match the Figma Sprint 2 mockups. There's no router yet; `App.tsx` picks the screen from whether you're signed in and whether you're in a household.
+- **Screens** (`src/screens/`) match the Figma mockups. There's no router yet; `App.tsx` picks the screen from whether you're signed in and whether you're in a household. Home is the chore list; Add chore opens from it.
+- **Chore logic** (`src/chores.ts`, `src/dates.ts`): a chore's status (to do, overdue, done, late) isn't stored; it's worked out from its dates, using the phone's own date. Weeks run Monday to Sunday.
 - **Components** (`src/components/`) are the Figma components, each with its own CSS Module.
 - **Styles** come only from design tokens in `src/styles/tokens.css`, named after the Figma variables (for example `--color-action-primary`). Don't hard-code colors or fonts.
 
@@ -228,7 +237,7 @@ All tests use [Vitest](https://vitest.dev), split into four groups:
 | `server` | the API through Express, services, models, middleware, and the layer rules | Node, with in-memory stand-ins instead of a database |
 | `web` | components, screens, `App.tsx`'s screen flow, and the API helpers | a simulated browser (jsdom) with React Testing Library |
 | `scripts` | the scripts that build the test dashboard (`scripts/test-report/`) | Node |
-| `e2e` | the real app in a real browser: sign up, log in and out, create and join a household, password reset, light and dark mode | Chromium (Playwright), against a running app and database |
+| `e2e` | the real app in a real browser: sign up, log in and out, create and join a household, add chores and mark them done, password reset, light and dark mode | Chromium (Playwright), against a running app and database |
 
 ```
 npm test             # server + web + scripts
@@ -257,6 +266,62 @@ story's criteria are listed in `acceptance/<KEY>.json`. The dashboard shows whic
 **Writing tests:** put test files next to the code they test (`Button.tsx` → `Button.test.tsx`).
 Find elements the way a person would, by role and visible text, such as
 `getByRole("button", { name: "Log in" })`, not by class names.
+
+## Conflicts to resolve
+
+Places where the Jira stories (`JAALS Stories.txt`), the Figma file and the build disagree, with
+what we decided and what's built. **For the team to review together:** when a row is settled,
+update the story or Figma to match and delete the row.
+
+**Build status** says what the app does today: **Built** (done, matches the decision), **Built
+(placeholder)** (works, but needs a design), or **Not built**.
+
+### Stories vs. design vs. build
+
+| # | Story | Topic | Story says | Figma or build had | Decision | Build status | Follow-up |
+|---|---|---|---|---|---|---|---|
+| 1 | SCRUM-7 | Chore statuses | 3 statuses: To do, Overdue, Done | Figma adds **Late**: done, but after the due date (Late chip, "1 Late" on the progress card) | Keep Late (UX added it) | Built | Add Late to the story |
+| 2 | SCRUM-8 | Other people's chores | Only the assignee gets a checkbox; others see none | Every Figma card has a checkbox; there's no card without one | Follow the story | Built (placeholder): an empty space where the checkbox would be | UX: design the card without a checkbox |
+| 3 | SCRUM-6, SCRUM-7 | The current user's name | "Me" | Figma: "You · due today" | **"You"** everywhere, including the Assigned to list: addressing the assignee directly does more to make them feel responsible | Built | Change "Me" to "You" in the stories |
+| 4 | SCRUM-7 | To do label | Every status has a text label | Figma: to-do chores have no chip | No chip means "to do"; chips are for emphasis | Built | Update the story |
+| 5 | SCRUM-7, SCRUM-8 | Done chores' dates | Done chores show the date they were completed, next to the due date | Figma's done cards show only the due date ("Sam · due Mon, Oct 5") | Show both | Built: "You · done today · due Mon, Oct 5" | Update the Figma done cards |
+| 6 | SCRUM-7 | Time span | All the household's chores; Done section shows them all | Figma's progress card ("5 of 8 chores done") has no time span | **Weekly**, Monday to Sunday | Built: the progress card counts chores due this week; the Done section lists chores done this week; the to-do list shows every open chore | Update the stories |
+| 7 | SCRUM-6 | Save button | "Save" | Figma: "Add chore" | "Add chore" | Built | Update the story |
+| 8 | SCRUM-7 | Tapping a chore | The row expands to show notes, who created it and when | No design for an expanded row | Wait for a design | Not built (the API already returns notes, creator and created date) | UX: design the expanded row |
+| 9 | SCRUM-6, SCRUM-8, SCRUM-32 | Pop-up messages | "Chore added." · "Marked done. Undo" for 5 seconds · "You joined [Household name]." | No design for these messages | Wait for a design | Not built. Undo still works: untick the chore in the Done section | UX: design the message |
+| 10 | SCRUM-3 | Logging in | Log in with **Name** and password; "Name is required.", "Name or password is incorrect." | The build logs in with email | Keep email | Built, with the story's messages reworded for email: "Email is required.", "Password is required.", "Email or password is incorrect.", "Something went wrong. Please try again." | Change the story to email |
+| 11 | SCRUM-2 | Sign-up rules | Name 30 characters or fewer; password 8+ characters with a number; all errors at once; Name and Email kept and both passwords cleared; the story's exact messages; server errors in a banner above the form | The build checked only password length, one error at a time, in its own words | Make the build follow the story | Built. The server checks the same rules (Better Auth sign-up hook), and Forgot password uses the same password rule | None |
+| 12 | SCRUM-32 | Join messages | "Enter an invite code." · "We couldn't find a household with that code. Check with your housemate and try again." · "Something went wrong. Please try again." | The build had its own wording | Make the build follow the story | Built (the "You joined…" message is row 9) | None |
+| 13 | SCRUM-7 | Progress card when chores are overdue | Not covered | Figma has On track, Complete!, Late and Empty, but no state for falling behind | None yet | Built (placeholder): says "On track" even with overdue chores | UX: is there a "behind" state? |
+| 14 | SCRUM-7 | Progress card under Mine | Not covered | Not designed | None yet | Built (placeholder): always counts the whole household | Team: should Mine show only your chores? |
+| 15 | SCRUM-7 | Empty, loading and error states | "No chores yet. Add the first one." with an Add chore button · "Nothing assigned to you right now." · a loading indicator · "Couldn't load chores." with Try again | Not designed | Use the story's words | Built (placeholder): plain centered text. The empty state uses the Add chore button that's always at the top instead of a second one | UX: design these states |
+| 16 | SCRUM-8 | Saving fails | "Couldn't update this chore. Please try again." and the checkbox goes back | No design for where the message goes | Use the story's words | Built (placeholder): red text above the list | UX: design it (could be the same as row 9) |
+| 17 | SCRUM-6 | Only one member | Hint under Assigned to: "Invite housemates with code [code] to assign chores to them." | Not in Figma | Use the story's words | Built (placeholder): muted text under the field | UX: check the hint's style |
+| 18 | SCRUM-7 | Date words | "Today," "Tomorrow" | Figma: lowercase mid-line ("You · due today") | Follow Figma | Built | None |
+| 19 | SCRUM-6 | Picking a due date | "Date picker, today or later" | Figma has the field (calendar icon) but no calendar | Use the phone's own date picker | Built: dates before today can't be picked | None |
+| 20 | — | Schedule and House tabs | No stories yet | Figma's tab bar has them, with no screens behind them | Show them as designed | Built (placeholder): visible but do nothing | Stories and screens for these tabs |
+
+### Design issues in Figma
+
+| # | Where in Figma | Issue | Decision | Build status |
+|---|---|---|---|---|
+| D1 | Progress card, `Property 1=Late` (455:1748) | The "1 Late" text is overdue/fill (#F5C451) on white: about **1.6:1** contrast. Text this size needs 4.5:1 (WCAG AA). overdue/line (#8A5A00) would be about 5.9:1 | Build it as designed for now | Built as designed |
+| D2 | Several components (see the next table) | Placeholder variant names ("Status4", "Variant2") | Rename in Figma | Built with the meanings below |
+| D3 | Button description (148:503) | Says the focus ring has a **3px** gap; the Focus variants draw **2px** | Follow the variants | Built: 2px |
+| D4 | Tab Filter, Done section, Picker field, Text area, the new Progress card states, the Late chip, and the menu, chevron, calendar and eye icons | No dark-mode version | Derive dark mode from the dark color tokens; recolor the icons to the dark token values | Built (derived) |
+| D5 | `action/primary-disabled` color | No dark-mode value | Dark primary (#E0876A) at 50%, like light mode | Built (derived) |
+| D6 | Button, Type=Outline | No Disabled state | None yet | Built (placeholder): faded to 50% |
+| D7 | Home - Add Chore (refined) (462:393) | The Chore name field is fixed at 320px; the other fields fill the width (354px) | Build it full width like the others | Built: full width |
+| D8 | `icon/chevron/up` | Exports as a down chevron (it's turned 180° on the canvas) | Turn it in code | Built |
+| D9 | Picker field, open (454:2773) | No style for the chosen option or the keyboard highlight | None yet | Built (placeholder): chosen option bold; keyboard highlight uses the focus ring |
+
+**Placeholder names in Figma** and what they are:
+
+| Component | Placeholder name | What it is | Suggested name | In code |
+|---|---|---|---|---|
+| Chore card (148:538) | `Status=Status4` (454:2714) | Done after the due date: struck-through name, Late chip | `Status=Late` | `ChoreCard status="late"` |
+| Done section (collapsed) (426:344) | `Property 1=Variant2` (426:345) | The section opened (chevron up) | `State=Open` (and rename the set "Done section") | `DoneSection expanded` |
+| Picker field (454:2772) | `Property 1=Variant2` (454:2773) | The field opened, listing the options | `State=Open` | `PickerField`, while its list is open |
 
 ## Troubleshooting
 

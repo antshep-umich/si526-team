@@ -1,4 +1,5 @@
 import { deleteAllSessions, findPasswordAccountByEmail, passwordLengthLimits, setPassword } from "../models/accounts.js";
+import { passwordMeetsRules } from "../../shared/accounts.js";
 import { ServiceError } from "./errors.js";
 
 // STAND-IN for "Forgot your password?" until the app can send email (TECH_SPEC
@@ -11,10 +12,13 @@ export async function resetPassword(email: string, newPassword: string): Promise
   const cleanEmail = email.trim().toLowerCase();
   if (!cleanEmail) throw new ServiceError("VALIDATION_ERROR", "Enter your email");
 
-  // Same length rules as sign-up.
+  // Same rules as sign-up: SCRUM-2's (8+ characters, 1 number) within Better Auth's limits.
   const { min, max } = await passwordLengthLimits();
-  if (newPassword.length < min || newPassword.length > max) {
-    throw new ServiceError("PASSWORD_LENGTH", `Passwords need ${min} to ${max} characters`);
+  if (newPassword.length < min || newPassword.length > max || !passwordMeetsRules(newPassword)) {
+    throw new ServiceError(
+      "PASSWORD_INVALID",
+      "Password must be at least 8 characters long and include 1 number.",
+    );
   }
 
   const account = await findPasswordAccountByEmail(cleanEmail);

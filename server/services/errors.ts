@@ -4,12 +4,16 @@
 
 export type ServiceErrorCode =
   | "VALIDATION_ERROR"
-  | "PASSWORD_LENGTH"
+  | "PASSWORD_INVALID"
   | "FORBIDDEN"
   | "NO_HOUSEHOLD"
   | "INVITE_CODE_NOT_FOUND"
   | "ACCOUNT_NOT_FOUND"
-  | "ALREADY_IN_HOUSEHOLD";
+  | "ALREADY_IN_HOUSEHOLD"
+  | "CHORE_NOT_FOUND"
+  | "DUE_DATE_IN_PAST"
+  | "ASSIGNEE_NOT_IN_HOUSEHOLD"
+  | "NOT_ASSIGNEE";
 
 export class ServiceError extends Error {
   readonly code: ServiceErrorCode;
