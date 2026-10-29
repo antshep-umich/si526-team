@@ -1,0 +1,42 @@
+/* Figma: Components / Tab bar (148:578). 81px tall. */
+.bar {
+  display: flex;
+  align-items: flex-start;
+  width: 100%;
+  height: 81px;
+  padding: 8px 8px 16px;
+  border-top: 1px solid var(--color-border-default);
+  background: var(--color-surface-tab-bar);
+}
+
+.tab {
+  display: flex;
+  flex: 1 0 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 1px;
+  padding: 6px 0;
+  overflow: hidden;
+  border: none;
+  background: none;
+  color: var(--color-text-muted);
+  font: var(--type-tab-label);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.active {
+  color: var(--color-action-primary);
+}
+
+/* A tab without a screen yet looks as designed but can't be used. */
+.tab[aria-disabled="true"] {
+  cursor: default;
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--color-action-focus-ring);
+  outline-offset: -2px;
+  border-radius: 8px;
+}

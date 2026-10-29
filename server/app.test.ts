@@ -35,4 +35,12 @@ describe("createApp", () => {
       error: { code: "PAYLOAD_TOO_LARGE", message: "Request body is too large" },
     });
   });
+
+  it("answers a wrong method on the health check with 405 and Allow: GET, HEAD", async () => {
+    const res = await request(createApp()).post("/api/health");
+
+    expect(res.status).toBe(405);
+    expect(res.headers.allow).toBe("GET, HEAD");
+    expect(res.body.error.code).toBe("METHOD_NOT_ALLOWED");
+  });
 });

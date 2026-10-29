@@ -1,110 +1,15 @@
 import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp } from "../app.js";
-import type { SessionResolver } from "../session.js";
+import type { SessionResolver } from "../middleware/session.js";
+import { db } from "../test/fakeModels.js";
 
-// An in-memory stand-in for the two tables these routes use. It enforces the same
-// unique rules as the database (invite code; one household per user) and fails
-// the same way Prisma does (error code P2002).
-const { db, getPrisma } = vi.hoisted(() => {
-  interface HouseholdRow {
-    id: string;
-    name: string;
-    inviteCode: string;
-    createdAt: Date;
-  }
-  interface MembershipRow {
-    userId: string;
-    householdId: string;
-    role: "owner" | "member";
-    joinedAt: Date;
-  }
-  const uniqueViolation = () => Object.assign(new Error("Unique constraint failed"), { code: "P2002" });
-
-  const db = {
-    households: [] as HouseholdRow[],
-    memberships: [] as MembershipRow[],
-    clock: 0,
-    /** Makes the next N household writes fail as if the invite code were taken. */
-    codeCollisions: 0,
-    reset() {
-      db.households = [];
-      db.memberships = [];
-      db.clock = 0;
-      db.codeCollisions = 0;
-    },
-    now: () => new Date(Date.UTC(2026, 9, 8, 12, 0, db.clock++)),
-    addMembership(userId: string, householdId: string, role: "owner" | "member") {
-      if (db.memberships.some((m) => m.userId === userId)) throw uniqueViolation();
-      const row = { userId, householdId, role, joinedAt: db.now() };
-      db.memberships.push(row);
-      return row;
-    },
-    checkCode(inviteCode: string, exceptId?: string) {
-      if (db.codeCollisions > 0) {
-        db.codeCollisions--;
-        throw uniqueViolation();
-      }
-      if (db.households.some((h) => h.inviteCode === inviteCode && h.id !== exceptId)) {
-        throw uniqueViolation();
-      }
-    },
-  };
-
-  const prisma = {
-    membership: {
-      findUnique: async ({ where }: { where: { userId: string } }) =>
-        db.memberships.find((m) => m.userId === where.userId) ?? null,
-      create: async ({ data }: { data: Omit<MembershipRow, "joinedAt"> }) =>
-        db.addMembership(data.userId, data.householdId, data.role),
-    },
-    household: {
-      create: async ({
-        data,
-      }: {
-        data: {
-          name: string;
-          inviteCode: string;
-          memberships: { create: { userId: string; role: "owner" | "member" } };
-        };
-      }) => {
-        const owner = data.memberships.create;
-        if (db.memberships.some((m) => m.userId === owner.userId)) throw uniqueViolation();
-        db.checkCode(data.inviteCode);
-        const row = {
-          id: `00000000-0000-4000-8000-${String(db.households.length + 1).padStart(12, "0")}`,
-          name: data.name,
-          inviteCode: data.inviteCode,
-          createdAt: db.now(),
-        };
-        db.households.push(row);
-        db.addMembership(owner.userId, row.id, owner.role);
-        return row;
-      },
-      findUnique: async ({ where }: { where: { inviteCode: string } }) =>
-        db.households.find((h) => h.inviteCode === where.inviteCode) ?? null,
-      findUniqueOrThrow: async ({ where }: { where: { id: string } }) => {
-        const row = db.households.find((h) => h.id === where.id);
-        if (!row) throw new Error("No Household found");
-        return {
-          ...row,
-          memberships: db.memberships
-            .filter((m) => m.householdId === row.id)
-            .sort((a, b) => a.joinedAt.getTime() - b.joinedAt.getTime()),
-        };
-      },
-      update: async ({ where, data }: { where: { id: string }; data: { inviteCode: string } }) => {
-        const row = db.households.find((h) => h.id === where.id);
-        if (!row) throw new Error("No Household found");
-        db.checkCode(data.inviteCode, row.id);
-        row.inviteCode = data.inviteCode;
-        return row;
-      },
-    },
-  };
-  return { db, getPrisma: vi.fn(() => prisma) };
-});
-vi.mock("../db.js", () => ({ getPrisma }));
+// In-memory models (server/test/fakeModels.ts) stand in for the database.
+vi.mock("../models/households.js", () => import("../test/fakeModels.js"));
+vi.mock("../models/memberships.js", () => import("../test/fakeModels.js"));
+// Better Auth (used when the app has no test session resolver) needs a client object,
+// but never queries it here: a request without a session cookie stops before that.
+vi.mock("../db.js", () => ({ getPrisma: () => ({}) }));
 
 // Tests sign in by sending an x-test-user header.
 const session: SessionResolver = (req) => {
@@ -152,10 +57,11 @@ describe("POST /api/households", () => {
     const res = await as("ana").post("/api/households", { name: "  Packard St House  " });
 
     expect(res.status).toBe(201);
+    expect(res.headers.location).toBe("/api/households/current");
     expect(res.body).toMatchObject({
       name: "Packard St House",
       role: "owner",
-      members: [{ userId: "ana", role: "owner" }],
+      members: [{ userId: "ana", name: "Ana Test", role: "owner" }],
     });
     expect(res.body.inviteCode).toMatch(/^[A-HJKMNP-Z2-9]{8}$/);
     expect(db.memberships).toHaveLength(1);
@@ -166,18 +72,19 @@ describe("POST /api/households", () => {
     ["blank", { name: "   " }],
     ["too long", { name: "x".repeat(61) }],
     ["not text", { name: 42 }],
-  ])("rejects a %s name", async (_label, body) => {
+  ])("rejects a %s name with 422", async (_label, body) => {
     const res = await as("ana").post("/api/households", body);
 
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(422);
     expect(res.body.error.code).toBe("VALIDATION_ERROR");
     expect(db.households).toHaveLength(0);
   });
 
-  it("rejects a request with no body", async () => {
+  it("rejects a request with no body with 422", async () => {
     const res = await as("ana").post("/api/households");
 
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(422);
+    expect(res.body.error.code).toBe("VALIDATION_ERROR");
   });
 
   it("refuses a second household for the same user", async () => {
@@ -212,18 +119,19 @@ describe("POST /api/households", () => {
 });
 
 describe("POST /api/households/join", () => {
-  it("adds the user as a member", async () => {
+  it("adds the user as a member: 201 with a Location header", async () => {
     const { id, inviteCode } = await createHousehold("ana");
 
     const res = await as("ben").post("/api/households/join", { inviteCode });
 
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(201);
+    expect(res.headers.location).toBe("/api/households/current");
     expect(res.body).toMatchObject({
       id,
       role: "member",
       members: [
-        { userId: "ana", role: "owner" },
-        { userId: "ben", role: "member" },
+        { userId: "ana", name: "Ana Test", role: "owner" },
+        { userId: "ben", name: "Ben Test", role: "member" },
       ],
     });
   });
@@ -234,15 +142,15 @@ describe("POST /api/households/join", () => {
 
     const res = await as("ben").post("/api/households/join", { inviteCode: typed });
 
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(201);
   });
 
-  it("answers 404 for a code no household has", async () => {
+  it("answers 422 for a code no household has", async () => {
     await createHousehold("ana");
 
     const res = await as("ben").post("/api/households/join", { inviteCode: "ZZZZZZZZ" });
 
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(422);
     expect(res.body.error.code).toBe("INVITE_CODE_NOT_FOUND");
     expect(db.memberships).toHaveLength(1);
   });
@@ -251,20 +159,21 @@ describe("POST /api/households/join", () => {
     ["missing", {}],
     ["empty", { inviteCode: " - " }],
     ["not text", { inviteCode: ["ABCDEFGH"] }],
-  ])("rejects a %s code", async (_label, body) => {
+  ])("rejects a %s code with 422", async (_label, body) => {
     const res = await as("ben").post("/api/households/join", body);
 
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(422);
     expect(res.body.error.code).toBe("VALIDATION_ERROR");
   });
 
-  it("succeeds without a duplicate when the user is already in that household", async () => {
+  it("answers 200 (not 201) without a duplicate when the user is already in that household", async () => {
     const { inviteCode } = await createHousehold("ana");
     await as("ben").post("/api/households/join", { inviteCode });
 
     const res = await as("ben").post("/api/households/join", { inviteCode });
 
     expect(res.status).toBe(200);
+    expect(res.headers.location).toBeUndefined();
     expect(res.body.members).toHaveLength(2);
   });
 
@@ -311,10 +220,10 @@ describe("POST /api/households/current/invite-code", () => {
 
     expect(res.status).toBe(200);
     expect(res.body.inviteCode).not.toBe(oldCode);
-    expect((await as("ben").post("/api/households/join", { inviteCode: oldCode })).status).toBe(404);
+    expect((await as("ben").post("/api/households/join", { inviteCode: oldCode })).status).toBe(422);
     expect(
       (await as("ben").post("/api/households/join", { inviteCode: res.body.inviteCode })).status,
-    ).toBe(200);
+    ).toBe(201);
   });
 
   it("refuses a member who isn't the owner", async () => {
@@ -332,5 +241,38 @@ describe("POST /api/households/current/invite-code", () => {
     const res = await as("ben").post("/api/households/current/invite-code");
 
     expect(res.status).toBe(404);
+  });
+});
+
+describe("HTTP details", () => {
+  it.each([
+    ["get", "/api/households", "POST"],
+    ["get", "/api/households/join", "POST"],
+    ["delete", "/api/households/current", "GET, HEAD"],
+    ["get", "/api/households/current/invite-code", "POST"],
+  ] as const)("answers %s %s with 405 and Allow: %s", async (method, path, allow) => {
+    const res = await request(app)[method](path).set("x-test-user", "ana");
+
+    expect(res.status).toBe(405);
+    expect(res.headers.allow).toBe(allow);
+    expect(res.body.error.code).toBe("METHOD_NOT_ALLOWED");
+  });
+
+  it("answers a body that isn't JSON with 415", async () => {
+    const res = await request(app)
+      .post("/api/households")
+      .set("x-test-user", "ana")
+      .set("Content-Type", "text/plain")
+      .send("name=Maple St House");
+
+    expect(res.status).toBe(415);
+    expect(res.body.error.code).toBe("UNSUPPORTED_MEDIA_TYPE");
+    expect(db.households).toHaveLength(0);
+  });
+
+  it("checks the session before the body format (401 before 415)", async () => {
+    const res = await request(app).post("/api/households").set("Content-Type", "text/plain").send("x");
+
+    expect(res.status).toBe(401);
   });
 });

@@ -1,0 +1,60 @@
+/*
+ * Shared layout for the Sprint 2 screens (Figma "Mock up (Sprint 2)", iPhone 17 frames):
+ * content 24px from the sides and 60px from the top, 40px between items.
+ */
+.page {
+  width: 100%;
+  max-width: 402px; /* the Figma frame width; centered on wider screens */
+  margin: 0 auto;
+  padding: 60px 24px 40px;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.tight {
+  gap: 24px; /* "Household Created!" uses 24px */
+}
+
+.title {
+  font: var(--type-section-title); /* serif bold 20/26 */
+  color: var(--color-text-default);
+}
+
+.intro {
+  font: var(--type-body);
+  color: var(--color-text-muted);
+}
+
+/* Main button plus the link or second button under it. */
+.actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+/*
+ * Not in Figma yet (placeholder): errors that don't belong to one field, such as
+ * "can't reach the server". Same look as a text field's error message.
+ */
+.formError {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font: var(--type-field-label);
+  color: var(--color-error-text);
+  text-align: center;
+}
+
+/* Not in Figma yet (placeholder): app-level loading. */
+.loading {
+  padding-top: 120px;
+  font: var(--type-body);
+  color: var(--color-text-muted);
+  text-align: center;
+}

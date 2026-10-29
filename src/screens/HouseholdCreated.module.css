@@ -1,0 +1,66 @@
+/* Figma "iPhone 17 - 6" (Household Created!) */
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 20px;
+  border: 1.5px solid var(--color-border-default);
+  border-radius: 12px;
+  background: var(--color-surface-card);
+}
+
+.overline {
+  font: var(--type-overline);
+  letter-spacing: var(--tracking-overline);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+/* No text style in Figma for this: Atkinson Bold 34px, 8px tracking. */
+.code {
+  font: 700 34px/normal var(--font-sans);
+  letter-spacing: 8px;
+  color: var(--color-text-default);
+  white-space: nowrap;
+  user-select: all; /* one tap selects the whole code if copying fails */
+}
+
+.hint {
+  font: var(--type-meta);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.members {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.membersLabel {
+  font: var(--type-field-label);
+  color: var(--color-text-default);
+}
+
+.memberList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.member {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 14px 16px;
+  border: 1.5px solid var(--color-border-default);
+  border-radius: 12px;
+  background: var(--color-surface-card);
+  font: var(--type-body);
+  color: var(--color-text-default);
+}

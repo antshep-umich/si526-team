@@ -1,0 +1,116 @@
+/*
+ * Design tokens from Figma (App Design file, "Colors & Fonts" page).
+ * Names follow the Figma variables: color/light/surface/card -> --color-surface-card.
+ * Change values in Figma first, then here, so the two stay in step.
+ *
+ * Light or dark mode follows the device's system setting. <html data-theme="light|dark">
+ * overrides it; only the components demo page sets that (for its theme switch).
+ */
+
+:root {
+  color-scheme: light;
+
+  /* Light mode ("cream base") */
+  --color-background-top: #f6f0e6;
+  --color-background-bottom: #f6f0e6;
+  --color-surface-card: #ffffff;
+  --color-surface-tab-bar: #ffffff;
+  --color-border-default: #e7ddcc;
+  --color-border-input: #958370;
+  --color-progress-track: #efe6d6;
+  --color-text-default: #3b2a20;
+  --color-text-muted: #6b5547;
+  --color-action-primary: #a8472f;
+  --color-action-on-primary: #ffffff;
+  --color-action-primary-disabled: rgb(168 71 47 / 50%);
+  --color-action-focus-ring: #a8472f;
+  --color-success-default: #46703f;
+  --color-success-on-success: #ffffff;
+  --color-success-chip: #e4ecdf;
+  --color-success-chip-text: #3f6b3a;
+  --color-overdue-fill: #f5c451;
+  --color-overdue-on-fill: #3b2a20;
+  --color-overdue-tint: #fff4d6;
+  --color-overdue-line: #8a5a00;
+  --color-error-border: #d7191f;
+  --color-error-text: #b3121a;
+
+  /* Fonts (font/serif, font/sans) */
+  --font-serif: "Libron", Georgia, "Times New Roman", serif;
+  --font-sans: "Atkinson Hyperlegible Next", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* Text styles from the "Type – Light / Dark" frames: weight size/line-height family */
+  --type-screen-title: 700 28px/34px var(--font-serif);
+  --type-section-title: 700 20px/26px var(--font-serif);
+  --type-chore-name: 700 17px/22px var(--font-serif);
+  --type-reading: 400 16px/24px var(--font-serif);
+  --type-note: italic 400 16px/24px var(--font-serif);
+  --type-body: 400 15px/22px var(--font-sans);
+  --type-button: 600 15px/20px var(--font-sans);
+  --type-small: 400 14px/20px var(--font-sans);
+  --type-field-label: 700 13px/18px var(--font-sans);
+  --type-meta: 400 13px/18px var(--font-sans);
+  --type-chip: 700 12px/16px var(--font-sans);
+  --type-tab-label: 600 12px/16px var(--font-sans);
+  /* Overline also needs letter-spacing: var(--tracking-overline) and text-transform: uppercase */
+  --type-overline: 700 12px/16px var(--font-sans);
+  --tracking-overline: 0.08em; /* 8%, 0.96px at 12px */
+}
+
+/* Dark mode ("charcoal to espresso"). Keep both blocks identical. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --color-background-top: #151515;
+    --color-background-bottom: #1c1612;
+    --color-surface-card: rgb(255 240 225 / 6%);
+    --color-surface-tab-bar: #1c1612;
+    --color-border-default: rgb(255 240 225 / 10%);
+    --color-border-input: rgb(255 240 225 / 45%);
+    --color-progress-track: rgb(255 240 225 / 12%);
+    --color-text-default: #f3ebdd;
+    --color-text-muted: #bfaf9e;
+    --color-action-primary: #e0876a;
+    --color-action-on-primary: #1c1612;
+    /* Not in Figma's dark mode yet: dark primary at 50%, like light mode. */
+    --color-action-primary-disabled: rgb(224 135 106 / 50%);
+    --color-action-focus-ring: #e0876a;
+    --color-success-default: #8fbf82;
+    --color-success-on-success: #1c1612;
+    --color-success-chip: rgb(143 191 130 / 16%);
+    --color-success-chip-text: #8fbf82;
+    --color-overdue-fill: #f5c451;
+    --color-overdue-on-fill: #1c1612;
+    --color-overdue-tint: rgb(245 196 81 / 14%);
+    --color-overdue-line: #f5c451;
+    --color-error-border: #ff4d4d;
+    --color-error-text: #ff4d4d;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-background-top: #151515;
+  --color-background-bottom: #1c1612;
+  --color-surface-card: rgb(255 240 225 / 6%);
+  --color-surface-tab-bar: #1c1612;
+  --color-border-default: rgb(255 240 225 / 10%);
+  --color-border-input: rgb(255 240 225 / 45%);
+  --color-progress-track: rgb(255 240 225 / 12%);
+  --color-text-default: #f3ebdd;
+  --color-text-muted: #bfaf9e;
+  --color-action-primary: #e0876a;
+  --color-action-on-primary: #1c1612;
+  --color-action-primary-disabled: rgb(224 135 106 / 50%);
+  --color-action-focus-ring: #e0876a;
+  --color-success-default: #8fbf82;
+  --color-success-on-success: #1c1612;
+  --color-success-chip: rgb(143 191 130 / 16%);
+  --color-success-chip-text: #8fbf82;
+  --color-overdue-fill: #f5c451;
+  --color-overdue-on-fill: #1c1612;
+  --color-overdue-tint: rgb(245 196 81 / 14%);
+  --color-overdue-line: #f5c451;
+  --color-error-border: #ff4d4d;
+  --color-error-text: #ff4d4d;
+}

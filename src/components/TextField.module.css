@@ -1,0 +1,80 @@
+/* Figma: Components / Text field (148:523) */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.label {
+  font: var(--type-field-label);
+  color: var(--color-text-default);
+}
+
+.input {
+  width: 100%;
+  height: 48px;
+  padding: 0 14px;
+  border: 1.5px solid var(--color-border-input);
+  border-radius: 12px;
+  background: var(--color-surface-card);
+  color: var(--color-text-default);
+  font: var(--type-body);
+}
+
+.input::placeholder {
+  color: var(--color-text-muted);
+  opacity: 1;
+}
+
+/* Blocking error: 2px error border. Padding drops by 0.5px so the text doesn't shift. */
+.input[aria-invalid="true"] {
+  border: 2px solid var(--color-error-border);
+  padding: 0 13.5px;
+}
+
+/* Figma: State=Focused (454:1625): a 2px focus-ring border with a 2px gap. */
+.input:focus-visible {
+  outline: 2px solid var(--color-action-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Figma: Input Box, Type=Password (454:1697): a show/hide eye inside the field. */
+.control {
+  position: relative;
+  width: 100%;
+}
+
+.control .input {
+  padding-right: 48px;
+}
+
+.reveal {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+
+.reveal:focus-visible {
+  outline: 2px solid var(--color-action-focus-ring);
+  outline-offset: 0;
+}
+
+.error {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font: var(--type-field-label); /* 700 13/18 */
+  color: var(--color-error-text);
+}

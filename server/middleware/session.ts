@@ -1,5 +1,6 @@
 import type { Request, RequestHandler, Response } from "express";
-import { sendError } from "./http.js";
+import { HttpStatus } from "../../shared/httpStatus.js";
+import { sendError } from "./errors.js";
 
 /** The signed-in user, as far as our routes care. */
 export interface SessionUser {
@@ -8,20 +9,16 @@ export interface SessionUser {
 
 /**
  * Works out who is making a request, or null if nobody is signed in.
- * Spike 2 supplies the real one (Better Auth's getSession); tests and
- * server/dev.ts supply stand-ins.
+ * The app uses Better Auth's session cookie (server/auth.ts); tests supply stand-ins.
  */
 export type SessionResolver = (req: Request) => SessionUser | null | Promise<SessionUser | null>;
-
-/** The default until Better Auth is wired in: every protected route answers 401. */
-export const noSession: SessionResolver = () => null;
 
 /** Rejects requests with no session; otherwise stores the user for `currentUser`. */
 export function requireUser(resolve: SessionResolver): RequestHandler {
   return async (req, res, next) => {
     const user = await resolve(req);
     if (!user) {
-      sendError(res, 401, "UNAUTHENTICATED", "Sign in to continue");
+      sendError(res, HttpStatus.UNAUTHORIZED, "UNAUTHENTICATED", "Sign in to continue");
       return;
     }
     res.locals.user = user;

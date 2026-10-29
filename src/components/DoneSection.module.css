@@ -1,0 +1,25 @@
+/* Figma: Components / Done section (collapsed) (426:344). 44px tall. */
+.section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 12px 12px 12px 16px;
+  border: none;
+  border-radius: 12px;
+  background: var(--color-progress-track);
+  color: var(--color-text-default);
+  font: var(--type-button); /* 600 15/20 */
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.section:focus-visible {
+  outline: 2px solid var(--color-action-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Figma turns the down chevron 180° for "up"; the exported file isn't turned. */
+.up {
+  transform: rotate(180deg);
+}

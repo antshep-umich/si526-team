@@ -1,0 +1,40 @@
+/* Figma: Components / Tab Filter (426:277). 46px tall. */
+.filter {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  width: 100%;
+  height: 46px;
+  padding: 4px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--color-progress-track);
+}
+
+/* The 1px border is transparent until selected, so both segments are 38px tall. */
+.segment {
+  display: flex;
+  flex: 1 0 0;
+  align-items: center;
+  justify-content: center;
+  min-width: 1px;
+  padding: 8px 0;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: none;
+  color: var(--color-text-muted);
+  font: var(--type-button); /* 600 15/20 */
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.selected {
+  border-color: var(--color-border-default);
+  background: var(--color-surface-card);
+  color: var(--color-text-default);
+}
+
+.segment:focus-visible {
+  outline: 2px solid var(--color-action-focus-ring);
+  outline-offset: -2px;
+}

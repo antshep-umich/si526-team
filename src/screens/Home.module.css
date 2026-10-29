@@ -1,0 +1,109 @@
+/*
+ * Figma "Home - Chores (All)" (423:104): content 56px from the top, 24px from the
+ * sides, 26px between items, and the tab bar fixed to the bottom. The header menu
+ * comes from "Home - Menu open" (SCRUM-3); Log out is the primary Button in both
+ * modes (team decision, 2026-10-17).
+ */
+.screen {
+  min-height: 100dvh;
+}
+
+/* The bottom padding keeps the last card clear of the 81px tab bar. */
+.page {
+  width: 100%;
+  max-width: 402px;
+  margin: 0 auto;
+  padding: 56px 24px calc(81px + 24px);
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+
+.header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.title {
+  min-width: 0;
+  overflow-wrap: break-word;
+  font: var(--type-screen-title); /* serif bold 28/34 */
+  color: var(--color-text-default);
+}
+
+/* 24×24 icon as drawn; the button around it is 44×44 so it's easy to tap. */
+.menuButton {
+  display: flex;
+  flex-shrink: 0;
+  margin: -10px;
+  padding: 10px;
+  border: none;
+  border-radius: 12px;
+  background: none;
+  cursor: pointer;
+}
+
+.menuButton:focus-visible {
+  outline: 2px solid var(--color-action-focus-ring);
+  outline-offset: -2px;
+}
+
+/* Opens 9px below the title row, right-aligned with the icon. */
+.menu {
+  position: absolute;
+  top: calc(100% + 9px);
+  right: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px; /* the Button's radius, so the shadow follows it */
+  box-shadow: 0 4px 16px rgb(0 0 0 / 12%);
+}
+
+/* Chore list: cards 10px apart. */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Not in Figma yet (placeholders): empty, loading and error messages. */
+.message {
+  font: var(--type-body);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.failed {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.toggleError {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font: var(--type-field-label);
+  color: var(--color-error-text);
+  text-align: center;
+}
+
+.tabBar {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 5;
+  width: 100%;
+  max-width: 402px;
+  margin: 0 auto;
+}

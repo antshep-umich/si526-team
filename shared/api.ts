@@ -20,6 +20,8 @@ export type MembershipRole = "owner" | "member";
 
 export interface HouseholdMember {
   userId: string;
+  /** The name they signed up with. Housemates see names only, never emails. */
+  name: string;
   role: MembershipRole;
   /** ISO 8601 timestamp. */
   joinedAt: string;

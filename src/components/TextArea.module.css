@@ -1,0 +1,13 @@
+/* Figma: Text area (462:225): the Text field's box, 96px tall, padding 12/14.
+   The "textarea" element selector outranks TextField's .input rules whatever the CSS order. */
+textarea.textarea {
+  display: block;
+  height: 96px;
+  padding: 12px 14px;
+  resize: none;
+}
+
+/* Keep the text in place when the 2px error border replaces the 1.5px one. */
+textarea.textarea[aria-invalid="true"] {
+  padding: 11.5px 13.5px;
+}

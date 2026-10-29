@@ -1,0 +1,37 @@
+/* Atkinson Hyperlegible Next (font/sans): self-hosted from npm, in the weights the text styles use. */
+@import "@fontsource/atkinson-hyperlegible-next/400.css";
+@import "@fontsource/atkinson-hyperlegible-next/600.css";
+@import "@fontsource/atkinson-hyperlegible-next/700.css";
+
+/* Libron (font/serif): committed in src/assets/fonts/libron (see the README there). */
+@font-face {
+  font-family: "Libron";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../assets/fonts/libron/Libron-Regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Libron";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../assets/fonts/libron/Libron-Italic.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Libron";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../assets/fonts/libron/Libron-Bold.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Libron";
+  font-style: italic;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../assets/fonts/libron/Libron-BoldItalic.woff2") format("woff2");
+}
