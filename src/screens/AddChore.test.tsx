@@ -213,3 +213,70 @@ describe("AddChore", () => {
     expect(createChore).not.toHaveBeenCalled();
   });
 });
+
+describe("AddChore acceptance criteria", { tags: ["SCRUM-6"] }, () => {
+  /** Fills every required field except the ones named, then saves. */
+  async function saveWithout(...missing: ("name" | "assignee" | "dueDate")[]) {
+    renderAddChore();
+    if (!missing.includes("name")) await userEvent.type(screen.getByLabelText("Chore name"), "Mop kitchen");
+    if (!missing.includes("assignee")) await pick("Ben Ito");
+    if (!missing.includes("dueDate")) setDueDate("2026-10-30");
+    await submit();
+  }
+
+  it('AC2: "Assigned to" opens a dropdown listing every housemate in the household', async () => {
+    renderAddChore();
+
+    await userEvent.click(screen.getByRole("combobox", { name: "Assigned to" }));
+
+    expect(screen.getByRole("listbox", { name: "Assigned to" })).toBeVisible();
+    // Both members: the user (shown as "You") and Ben.
+    expect(screen.getAllByRole("option").map((o) => o.textContent)).toEqual(["You", "Ben Ito"]);
+  });
+
+  it('AC3: "Due date" opens a date picker', async () => {
+    const showPicker = vi.fn();
+    Object.defineProperty(HTMLInputElement.prototype, "showPicker", { value: showPicker, configurable: true });
+    try {
+      renderAddChore();
+
+      await userEvent.click(screen.getByLabelText("Due date"));
+
+      expect(screen.getByLabelText("Due date")).toHaveAttribute("type", "date");
+      expect(showPicker).toHaveBeenCalledTimes(1);
+    } finally {
+      delete (HTMLInputElement.prototype as { showPicker?: unknown }).showPicker;
+    }
+  });
+
+  it('AC6: says "Chore name is required." when the name is empty', async () => {
+    await saveWithout("name");
+
+    expect(screen.getByLabelText("Chore name")).toHaveAccessibleDescription("Chore name is required.");
+    expect(createChore).not.toHaveBeenCalled();
+  });
+
+  it('AC7: says "Choose who this chore is assigned to." when no housemate is selected', async () => {
+    await saveWithout("assignee");
+
+    expect(screen.getByRole("combobox", { name: "Assigned to" })).toHaveAccessibleDescription(
+      "Choose who this chore is assigned to.",
+    );
+    expect(createChore).not.toHaveBeenCalled();
+  });
+
+  it('AC8: says "Choose a due date." when no due date is selected', async () => {
+    await saveWithout("dueDate");
+
+    expect(screen.getByLabelText("Due date")).toHaveAccessibleDescription("Choose a due date.");
+    expect(createChore).not.toHaveBeenCalled();
+  });
+
+  it("AC9: says \"Couldn't save this chore. Please try again.\" on a server error", async () => {
+    createChore.mockResolvedValue({ ok: false, code: "INTERNAL_ERROR" });
+
+    await saveWithout();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Couldn't save this chore. Please try again.");
+  });
+});

@@ -1,0 +1,53 @@
+{
+  "story": "SCRUM-3",
+  "title": "Log in & Log out",
+  "epic": { "key": "SCRUM-9", "title": "Account/Household Setup" },
+  "criteria": [
+    {
+      "id": "AC1",
+      "text": "The Log in screen has 2 fields: Email and Password. Both are required.",
+      "verify": "test",
+      "note": "Corrected to email (team decision: log in with email, not name). Jira still says Name."
+    },
+    {
+      "id": "AC2",
+      "text": "User Action: Clicks “Log in” with a valid email and password. Expected System Behavior: If the user belongs to a household, the Chore List opens. If not, the “Your household” screen opens.",
+      "verify": "test",
+      "note": "Corrected to email (team decision: log in with email, not name). Jira still says name."
+    },
+    {
+      "id": "AC3",
+      "text": "User Action: Refreshes the page while logged in. Expected System Behavior: The user stays logged in.",
+      "verify": "manual",
+      "note": "Shown end to end by e2e/account.e2e.test.ts (“keeps people signed in across a reload”), which runs against every preview deployment. The session cookie needs a real browser and server."
+    },
+    {
+      "id": "AC4",
+      "text": "User Action: Clicks “Forgot your password?” Expected System Behavior: The password reset flow opens. (Reset flow will be detailed in a later story.)",
+      "verify": "test"
+    },
+    {
+      "id": "AC5",
+      "text": "User Action: Clicks “Log out” in the header menu. Expected System Behavior: The session ends and the Log in screen opens.",
+      "verify": "test"
+    },
+    {
+      "id": "AC6",
+      "text": "Error Condition: Email is empty. Message: “Email is required.”",
+      "verify": "test",
+      "note": "Corrected to email (team decision: log in with email, not name). Jira still says “Name is required.”"
+    },
+    { "id": "AC7", "text": "Error Condition: Password is empty. Message: “Password is required.”", "verify": "test" },
+    {
+      "id": "AC8",
+      "text": "Error Condition: Email and password do not match an account. Message: “Email or password is incorrect.” (does not say which one, for security)",
+      "verify": "test",
+      "note": "Corrected to email (team decision: log in with email, not name). Jira still says “Name or password is incorrect.”"
+    },
+    {
+      "id": "AC9",
+      "text": "Error Condition: Server error. Message: “Something went wrong. Please try again.”",
+      "verify": "test"
+    }
+  ]
+}

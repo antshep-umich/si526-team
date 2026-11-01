@@ -23,29 +23,23 @@ beforeEach(() => {
   signIn.mockResolvedValue({ data: {}, error: null });
 });
 
-describe("LogIn", () => {
-  it("shows the Figma fields and links", () => {
+// SCRUM-3 logs in with email, not name (team decision; the AC file has the corrected text).
+describe("LogIn acceptance criteria", { tags: ["SCRUM-3"] }, () => {
+  it("AC1: has two fields, Email and Password, both required", async () => {
     renderLogIn();
 
     expect(screen.getByRole("heading", { name: "Log in" })).toBeInTheDocument();
-    expect(screen.getByLabelText("Email")).toHaveAttribute("placeholder", "xxx@example.com");
+    expect(screen.getByLabelText("Email")).toHaveAttribute("type", "email");
     expect(screen.getByLabelText("Password")).toHaveAttribute("type", "password");
-    expect(screen.getByRole("button", { name: "Forgot your password?" })).toBeInTheDocument();
-  });
-
-  it("asks for the email and the password before calling the server (SCRUM-3)", async () => {
-    renderLogIn();
+    expect(screen.getAllByRole("textbox")).toHaveLength(1); // the password field isn't a textbox
 
     await fillAndSubmit("", "");
-    expect(screen.getByLabelText("Email")).toHaveAccessibleDescription("Email is required.");
-    expect(screen.getByLabelText("Password")).toHaveAccessibleDescription("Password is required.");
-
-    await fillAndSubmit("ana@example.com", "");
-    expect(screen.getByLabelText("Email")).not.toHaveAttribute("aria-invalid");
+    expect(screen.getByLabelText("Email")).toHaveAttribute("aria-invalid", "true");
+    expect(screen.getByLabelText("Password")).toHaveAttribute("aria-invalid", "true");
     expect(signIn).not.toHaveBeenCalled();
   });
 
-  it("signs in with the trimmed email", async () => {
+  it("AC2: logs in with the email and password", async () => {
     renderLogIn();
 
     await fillAndSubmit("  ana@example.com ", "correct-horse-1");
@@ -53,14 +47,51 @@ describe("LogIn", () => {
     expect(signIn).toHaveBeenCalledWith({ email: "ana@example.com", password: "correct-horse-1" });
   });
 
-  it("says the email or password is wrong without saying which", async () => {
+  it('AC6: says "Email is required." when Email is empty', async () => {
+    renderLogIn();
+
+    await fillAndSubmit("", "correct-horse-1");
+
+    expect(screen.getByLabelText("Email")).toHaveAccessibleDescription("Email is required.");
+    expect(signIn).not.toHaveBeenCalled();
+  });
+
+  it('AC7: says "Password is required." when Password is empty', async () => {
+    renderLogIn();
+
+    await fillAndSubmit("ana@example.com", "");
+
+    expect(screen.getByLabelText("Password")).toHaveAccessibleDescription("Password is required.");
+    expect(signIn).not.toHaveBeenCalled();
+  });
+
+  it("AC8: says the email or password is incorrect without saying which", async () => {
     signIn.mockResolvedValue({ data: null, error: { code: "INVALID_EMAIL_OR_PASSWORD", status: 401 } });
     renderLogIn();
 
     await fillAndSubmit("ana@example.com", "wrong-password");
 
     expect(screen.getByRole("alert")).toHaveTextContent("Email or password is incorrect.");
+    expect(screen.getByLabelText("Email")).not.toHaveAttribute("aria-invalid");
     expect(screen.getByLabelText("Password")).not.toHaveAttribute("aria-invalid");
+  });
+
+  it('AC9: says "Something went wrong. Please try again." on a server error', async () => {
+    signIn.mockResolvedValue({ data: null, error: { status: 500, message: "Internal Server Error" } });
+    renderLogIn();
+
+    await fillAndSubmit("ana@example.com", "correct-horse-1");
+
+    expect(screen.getByRole("alert")).toHaveTextContent("Something went wrong. Please try again.");
+  });
+});
+
+describe("LogIn", () => {
+  it("shows the Figma placeholder and the Forgot password link", () => {
+    renderLogIn();
+
+    expect(screen.getByLabelText("Email")).toHaveAttribute("placeholder", "xxx@example.com");
+    expect(screen.getByRole("button", { name: "Forgot your password?" })).toBeInTheDocument();
   });
 
   it("shows a failure to reach the server as a server error, under the button", async () => {

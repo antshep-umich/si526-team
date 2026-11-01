@@ -1,0 +1,66 @@
+{
+  "story": "SCRUM-2",
+  "title": "Sign Up",
+  "epic": { "key": "SCRUM-9", "title": "Account/Household Setup" },
+  "criteria": [
+    {
+      "id": "AC1",
+      "text": "The Create Account screen has 4 fields: Name, Email, Password, Confirm password. All are required.",
+      "verify": "test"
+    },
+    {
+      "id": "AC2",
+      "text": "Name is 30 characters or fewer. Password is at least 8 characters and includes at least 1 number.",
+      "verify": "test"
+    },
+    {
+      "id": "AC3",
+      "text": "User Action: Clicks “Create account” with valid information. Expected System Behavior: The account is created, the user is logged in, and the “Your household” screen opens.",
+      "verify": "manual",
+      "note": "Shown end to end by e2e/account.e2e.test.ts (“signs up, logs out from the menu…”), which runs against every preview deployment. Creating a real account and session needs the database, which unit tests don't have."
+    },
+    {
+      "id": "AC4",
+      "text": "User Action: Clicks “Create account” with any invalid fields. Expected System Behavior: All applicable errors show at once, inline under each field. Name and Email keep their values; both password fields are cleared.",
+      "verify": "test"
+    },
+    {
+      "id": "AC5",
+      "text": "User Action: Clicks “Already have an account? Log in.” Expected System Behavior: The Log in screen opens.",
+      "verify": "test"
+    },
+    { "id": "AC6", "text": "Error Condition: Name is empty. Message: “Name is required.”", "verify": "test" },
+    {
+      "id": "AC7",
+      "text": "Error Condition: Name is over 30 characters. Message: “Name must be 30 characters or fewer.”",
+      "verify": "test"
+    },
+    { "id": "AC8", "text": "Error Condition: Email is empty. Message: “Email is required.”", "verify": "test" },
+    {
+      "id": "AC9",
+      "text": "Error Condition: Email format is invalid. Message: “Enter a valid email address.”",
+      "verify": "test"
+    },
+    {
+      "id": "AC10",
+      "text": "Error Condition: Email is already registered. Message: “An account with this email already exists. Use a different email or Log in instead.”",
+      "verify": "test"
+    },
+    { "id": "AC11", "text": "Error Condition: Password is empty. Message: “Password is required.”", "verify": "test" },
+    {
+      "id": "AC12",
+      "text": "Error Condition: Password does not meet requirements. Message: “Password must be at least 8 characters long and include 1 number.”",
+      "verify": "test"
+    },
+    {
+      "id": "AC13",
+      "text": "Error Condition: Passwords do not match. Message: “Passwords do not match.”",
+      "verify": "test"
+    },
+    {
+      "id": "AC14",
+      "text": "Error Condition: Server error. Message: “Something went wrong. Please try again.” (banner above the form)",
+      "verify": "test"
+    }
+  ]
+}

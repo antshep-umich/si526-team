@@ -1,4 +1,4 @@
-// ChooseHousehold, CreateHousehold, JoinHousehold and HouseholdCreated (SCRUM-4 and SCRUM-5).
+// ChooseHousehold, CreateHousehold, JoinHousehold and HouseholdCreated (SCRUM-4 and SCRUM-32).
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -106,14 +106,6 @@ describe("JoinHousehold", () => {
     await userEvent.click(screen.getByRole("button", { name: "Join" }));
   }
 
-  it("asks for a code before calling the server", async () => {
-    render(<JoinHousehold onJoined={() => {}} onBack={() => {}} />);
-
-    await join("");
-
-    expect(screen.getByLabelText("Invite code")).toHaveAccessibleDescription("Enter an invite code.");
-    expect(joinHousehold).not.toHaveBeenCalled();
-  });
 
   it("sends the code as typed (the server tidies it) and hands the household on", async () => {
     joinHousehold.mockResolvedValue({ ok: true, household });
@@ -126,25 +118,47 @@ describe("JoinHousehold", () => {
     expect(onJoined).toHaveBeenCalledWith(household);
   });
 
-  it.each([
-    ["INVITE_CODE_NOT_FOUND", "We couldn't find a household with that code. Check with your housemate and try again."],
-    ["ALREADY_IN_HOUSEHOLD", "You're already in a different household."],
-  ])("shows %s on the field", async (code, message) => {
-    joinHousehold.mockResolvedValue({ ok: false, code });
+  it("explains that someone already in a household can't join another", async () => {
+    joinHousehold.mockResolvedValue({ ok: false, code: "ALREADY_IN_HOUSEHOLD" });
     render(<JoinHousehold onJoined={() => {}} onBack={() => {}} />);
 
     await join("ZZZZZZZZ");
 
-    expect(screen.getByLabelText("Invite code")).toHaveAccessibleDescription(message);
+    expect(screen.getByLabelText("Invite code")).toHaveAccessibleDescription("You're already in a different household.");
   });
 
-  it("shows any other failure as a server error under the button (SCRUM-32)", async () => {
-    joinHousehold.mockResolvedValue({ ok: false, code: "NETWORK_ERROR" });
-    render(<JoinHousehold onJoined={() => {}} onBack={() => {}} />);
+  describe("acceptance criteria", { tags: ["SCRUM-32"] }, () => {
+    it('AC5: says "Enter an invite code." when the code is empty', async () => {
+      render(<JoinHousehold onJoined={() => {}} onBack={() => {}} />);
 
-    await join("ZZZZZZZZ");
+      await join("");
 
-    expect(screen.getByRole("alert")).toHaveTextContent("Something went wrong. Please try again.");
+      expect(screen.getByLabelText("Invite code")).toHaveAccessibleDescription("Enter an invite code.");
+      expect(joinHousehold).not.toHaveBeenCalled();
+    });
+
+    it("AC6: says it couldn't find a household when the code matches none", async () => {
+      joinHousehold.mockResolvedValue({ ok: false, code: "INVITE_CODE_NOT_FOUND" });
+      render(<JoinHousehold onJoined={() => {}} onBack={() => {}} />);
+
+      await join("ZZZZZZZZ");
+
+      expect(screen.getByLabelText("Invite code")).toHaveAccessibleDescription(
+        "We couldn't find a household with that code. Check with your housemate and try again.",
+      );
+    });
+
+    it.each([
+      ["a server error", { ok: false, code: "INTERNAL_ERROR" }],
+      ["no connection", { ok: false, code: "NETWORK_ERROR" }],
+    ])('AC7: says "Something went wrong. Please try again." for %s', async (_label, result) => {
+      joinHousehold.mockResolvedValue(result);
+      render(<JoinHousehold onJoined={() => {}} onBack={() => {}} />);
+
+      await join("ZZZZZZZZ");
+
+      expect(screen.getByRole("alert")).toHaveTextContent("Something went wrong. Please try again.");
+    });
   });
 });
 

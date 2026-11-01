@@ -22,22 +22,23 @@ describe("Better Auth wiring", () => {
   });
 });
 
-describe("sign-up rules (SCRUM-2)", () => {
+// SCRUM-2 AC2: the server enforces the sign-up rules too, not just the screen.
+describe("sign-up rules", { tags: ["SCRUM-2"] }, () => {
   it.each([
     ["an empty name", { name: "  ", password: "password1" }, "NAME_INVALID"],
     ["a 31-character name", { name: "x".repeat(31), password: "password1" }, "NAME_INVALID"],
     ["a 7-character password", { name: "Ana", password: "passwo1" }, "PASSWORD_INVALID"],
     ["a password without a number", { name: "Ana", password: "password" }, "PASSWORD_INVALID"],
     ["no body", undefined, "NAME_INVALID"],
-  ])("rejects %s", (_label, body, code) => {
+  ])("AC2: rejects %s", (_label, body, code) => {
     expect(signUpRuleError(body)?.code).toBe(code);
   });
 
-  it("accepts a 30-character name and an 8-character password with a number", () => {
+  it("AC2: accepts a 30-character name and an 8-character password with a number", () => {
     expect(signUpRuleError({ name: "x".repeat(30), password: "passwor1" })).toBeNull();
   });
 
-  it("stops a sign-up that breaks them before Better Auth creates anything", async () => {
+  it("AC2: stops a sign-up that breaks them before Better Auth creates anything", async () => {
     const res = await request(createApp())
       .post("/api/auth/sign-up/email")
       .set("Origin", "http://localhost:5173")
