@@ -1,0 +1,1934 @@
+{
+  "version": 1,
+  "updatedAt": "2026-11-02T03:01:33.162Z",
+  "main": [
+    {
+      "summary": {
+        "meta": {
+          "runId": "41380692949-1",
+          "runUrl": "https://github.com/antshep-umich/si526-team/actions/runs/41380692949",
+          "repoUrl": "https://github.com/antshep-umich/si526-team",
+          "kind": "main",
+          "branch": "main",
+          "sha": "898bfeba4594819a44a487a3f45c9dd87c2f0fd1",
+          "message": "Merge pull request #11 from antshep-umich/acceptance-criteria-sprint-2",
+          "pr": null
+        },
+        "startedAt": "2026-11-02T03:00:58.820Z",
+        "durationMs": 18688,
+        "outcome": "passed",
+        "totals": {
+          "total": 538,
+          "passed": 538,
+          "failed": 0,
+          "skipped": 0
+        },
+        "stories": [
+          {
+            "story": "SCRUM-2",
+            "title": "Sign Up",
+            "epic": {
+              "key": "SCRUM-9",
+              "title": "Account/Household Setup"
+            },
+            "criteria": [
+              {
+                "id": "AC1",
+                "text": "The Create Account screen has 4 fields: Name, Email, Password, Confirm password. All are required.",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SignUp acceptance criteria > AC1: has the four fields Name, Email, Password and Confirm password, all required",
+                    "state": "passed",
+                    "id": "-1531221772_0_0",
+                    "moduleId": "-1531221772"
+                  }
+                ]
+              },
+              {
+                "id": "AC2",
+                "text": "Name is 30 characters or fewer. Password is at least 8 characters and includes at least 1 number.",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SignUp acceptance criteria > AC2: accepts a name of 30 characters and a password of 8 characters with a number",
+                    "state": "passed",
+                    "id": "-1531221772_0_1",
+                    "moduleId": "-1531221772"
+                  },
+                  {
+                    "name": "SignUp acceptance criteria > AC2: refuses a 31-character name",
+                    "state": "passed",
+                    "id": "-1531221772_0_2",
+                    "moduleId": "-1531221772"
+                  },
+                  {
+                    "name": "SignUp acceptance criteria > AC2: refuses a 7-character password",
+                    "state": "passed",
+                    "id": "-1531221772_0_3",
+                    "moduleId": "-1531221772"
+                  },
+                  {
+                    "name": "SignUp acceptance criteria > AC2: refuses a password without a number",
+                    "state": "passed",
+                    "id": "-1531221772_0_4",
+                    "moduleId": "-1531221772"
+                  },
+                  {
+                    "name": "sign-up rules > AC2: rejects an empty name",
+                    "state": "passed",
+                    "id": "-8436414_1_0",
+                    "moduleId": "-8436414"
+                  },
+                  {
+                    "name": "sign-up rules > AC2: rejects a 31-character name",
+                    "state": "passed",
+                    "id": "-8436414_1_1",
+                    "moduleId": "-8436414"
+                  },
+                  {
+                    "name": "sign-up rules > AC2: rejects a 7-character password",
+                    "state": "passed",
+                    "id": "-8436414_1_2",
+                    "moduleId": "-8436414"
+                  },
+                  {
+                    "name": "sign-up rules > AC2: rejects a password without a number",
+                    "state": "passed",
+                    "id": "-8436414_1_3",
+                    "moduleId": "-8436414"
+                  },
+                  {
+                    "name": "sign-up rules > AC2: rejects no body",
+                    "state": "passed",
+                    "id": "-8436414_1_4",
+                    "moduleId": "-8436414"
+                  },
+                  {
+                    "name": "sign-up rules > AC2: accepts a 30-character name and an 8-character password with a number",
+                    "state": "passed",
+                    "id": "-8436414_1_5",
+                    "moduleId": "-8436414"
+                  },
+                  {
+                    "name": "sign-up rules > AC2: stops a sign-up that breaks them before Better Auth creates anything",
+                    "state": "passed",
+                    "id": "-8436414_1_6",
+                    "moduleId": "-8436414"
+                  }
+                ]
+              },
+              {
+                "id": "AC3",
+                "text": "User Action: Clicks “Create account” with valid information. Expected System Behavior: The account is created, the user is logged in, and the “Your household” screen opens.",
+                "verify": "manual",
+                "note": "Shown end to end by e2e/account.e2e.test.ts (“signs up, logs out from the menu…”), which runs against every preview deployment. Creating a real account and session needs the database, which unit tests don't have.",
+                "status": "manual",
+                "tests": []
+              },
+              {
+                "id": "AC4",
+                "text": "User Action: Clicks “Create account” with any invalid fields. Expected System Behavior: All applicable errors show at once, inline under each field. Name and Email keep their values; both password fields are cleared.",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SignUp acceptance criteria > AC4: shows every error at once under its field, keeps Name and Email, and clears both passwords",
+                    "state": "passed",
+                    "id": "-1531221772_0_5",
+                    "moduleId": "-1531221772"
+                  }
+                ]
+              },
+              {
+                "id": "AC5",
+                "text": "User Action: Clicks “Already have an account? Log in.” Expected System Behavior: The Log in screen opens.",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "App acceptance criteria > Sign up > AC5: \"Already have an account? Log in\" opens the Log in screen",
+                    "state": "passed",
+                    "id": "1481293993_2_0_0",
+                    "moduleId": "1481293993"
+                  }
+                ]
+              },
+              {
+                "id": "AC6",
+                "text": "Error Condition: Name is empty. Message: “Name is required.”",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SignUp acceptance criteria > AC6: says \"Name is required.\" when Name is empty",
+                    "state": "passed",
+                    "id": "-1531221772_0_6",
+                    "moduleId": "-1531221772"
+                  }
+                ]
+              },
+              {
+                "id": "AC7",
+                "text": "Error Condition: Name is over 30 characters. Message: “Name must be 30 characters or fewer.”",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SignUp acceptance criteria > AC7: says \"Name must be 30 characters or fewer.\" when Name is over 30 characters",
+                    "state": "passed",
+                    "id": "-1531221772_0_7",
+                    "moduleId": "-1531221772"
+                  }
+                ]
+              },
+              {
+                "id": "AC8",
+                "text": "Error Condition: Email is empty. Message: “Email is required.”",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SignUp acceptance criteria > AC8: says \"Email is required.\" when Email is empty",
+                    "state": "passed",
+                    "id": "-1531221772_0_8",
+                    "moduleId": "-1531221772"
+                  }
+                ]
+              },
+              {
+                "id": "AC9",
+                "text": "Error Condition: Email format is invalid. Message: “Enter a valid email address.”",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SignUp acceptance criteria > AC9: says \"Enter a valid email address.\" when the email format is invalid",
+                    "state": "passed",
+                    "id": "-1531221772_0_9",
+                    "moduleId": "-1531221772"
+                  }
+                ]
+              },
+              {
+                "id": "AC10",
+                "text": "Error Condition: Email is already registered. Message: “An account with this email already exists. Use a different email or Log in instead.”",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SignUp acceptance criteria > AC10: says the email already has an account when it's registered",
+                    "state": "passed",
+                    "id": "-1531221772_0_10",
+                    "moduleId": "-1531221772"
+                  }
+                ]
+              },
+              {
+                "id": "AC11",
+                "text": "Error Condition: Password is empty. Message: “Password is required.”",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SignUp acceptance criteria > AC11: says \"Password is required.\" when Password is empty",
+                    "state": "passed",
+                    "id": "-1531221772_0_11",
+                    "moduleId": "-1531221772"
+                  }
+                ]
+              },
+              {
+                "id": "AC12",
+                "text": "Error Condition: Password does not meet requirements. Message: “Password must be at least 8 characters long and include 1 number.”",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SignUp acceptance criteria > AC12: explains the password rules when the password doesn't meet them",
+                    "state": "passed",
+                    "id": "-1531221772_0_12",
+                    "moduleId": "-1531221772"
+                  }
+                ]
+              },
+              {
+                "id": "AC13",
+                "text": "Error Condition: Passwords do not match. Message: “Passwords do not match.”",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SignUp acceptance criteria > AC13: says \"Passwords do not match.\" when they differ",
+                    "state": "passed",
+                    "id": "-1531221772_0_13",
+                    "moduleId": "-1531221772"
+                  }
+                ]
+              },
+              {
+                "id": "AC14",
+                "text": "Error Condition: Server error. Message: “Something went wrong. Please try again.” (banner above the form)",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SignUp acceptance criteria > AC14: shows a server error as a banner above the form",
+                    "state": "passed",
+                    "id": "-1531221772_0_14",
+                    "moduleId": "-1531221772"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "story": "SCRUM-3",
+            "title": "Log in & Log out",
+            "epic": {
+              "key": "SCRUM-9",
+              "title": "Account/Household Setup"
+            },
+            "criteria": [
+              {
+                "id": "AC1",
+                "text": "The Log in screen has 2 fields: Email and Password. Both are required.",
+                "verify": "test",
+                "note": "Corrected to email (team decision: log in with email, not name). Jira still says Name.",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "LogIn acceptance criteria > AC1: has two fields, Email and Password, both required",
+                    "state": "passed",
+                    "id": "-1111668727_0_0",
+                    "moduleId": "-1111668727"
+                  }
+                ]
+              },
+              {
+                "id": "AC2",
+                "text": "User Action: Clicks “Log in” with a valid email and password. Expected System Behavior: If the user belongs to a household, the Chore List opens. If not, the “Your household” screen opens.",
+                "verify": "test",
+                "note": "Corrected to email (team decision: log in with email, not name). Jira still says name.",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "App acceptance criteria > Log in and log out > AC2: logging in opens the Chore List when the user belongs to a household",
+                    "state": "passed",
+                    "id": "1481293993_2_1_0",
+                    "moduleId": "1481293993"
+                  },
+                  {
+                    "name": "App acceptance criteria > Log in and log out > AC2: logging in opens \"Your household\" when the user has none",
+                    "state": "passed",
+                    "id": "1481293993_2_1_1",
+                    "moduleId": "1481293993"
+                  },
+                  {
+                    "name": "LogIn acceptance criteria > AC2: logs in with the email and password",
+                    "state": "passed",
+                    "id": "-1111668727_0_1",
+                    "moduleId": "-1111668727"
+                  }
+                ]
+              },
+              {
+                "id": "AC3",
+                "text": "User Action: Refreshes the page while logged in. Expected System Behavior: The user stays logged in.",
+                "verify": "manual",
+                "note": "Shown end to end by e2e/account.e2e.test.ts (“keeps people signed in across a reload”), which runs against every preview deployment. The session cookie needs a real browser and server.",
+                "status": "manual",
+                "tests": []
+              },
+              {
+                "id": "AC4",
+                "text": "User Action: Clicks “Forgot your password?” Expected System Behavior: The password reset flow opens. (Reset flow will be detailed in a later story.)",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "App acceptance criteria > Log in and log out > AC4: \"Forgot your password?\" opens the password reset flow",
+                    "state": "passed",
+                    "id": "1481293993_2_1_2",
+                    "moduleId": "1481293993"
+                  }
+                ]
+              },
+              {
+                "id": "AC5",
+                "text": "User Action: Clicks “Log out” in the header menu. Expected System Behavior: The session ends and the Log in screen opens.",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "App acceptance criteria > Log in and log out > AC5: \"Log out\" in the header menu ends the session and opens the Log in screen",
+                    "state": "passed",
+                    "id": "1481293993_2_1_3",
+                    "moduleId": "1481293993"
+                  }
+                ]
+              },
+              {
+                "id": "AC6",
+                "text": "Error Condition: Email is empty. Message: “Email is required.”",
+                "verify": "test",
+                "note": "Corrected to email (team decision: log in with email, not name). Jira still says “Name is required.”",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "LogIn acceptance criteria > AC6: says \"Email is required.\" when Email is empty",
+                    "state": "passed",
+                    "id": "-1111668727_0_2",
+                    "moduleId": "-1111668727"
+                  }
+                ]
+              },
+              {
+                "id": "AC7",
+                "text": "Error Condition: Password is empty. Message: “Password is required.”",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "LogIn acceptance criteria > AC7: says \"Password is required.\" when Password is empty",
+                    "state": "passed",
+                    "id": "-1111668727_0_3",
+                    "moduleId": "-1111668727"
+                  }
+                ]
+              },
+              {
+                "id": "AC8",
+                "text": "Error Condition: Email and password do not match an account. Message: “Email or password is incorrect.” (does not say which one, for security)",
+                "verify": "test",
+                "note": "Corrected to email (team decision: log in with email, not name). Jira still says “Name or password is incorrect.”",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "LogIn acceptance criteria > AC8: says the email or password is incorrect without saying which",
+                    "state": "passed",
+                    "id": "-1111668727_0_4",
+                    "moduleId": "-1111668727"
+                  }
+                ]
+              },
+              {
+                "id": "AC9",
+                "text": "Error Condition: Server error. Message: “Something went wrong. Please try again.”",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "LogIn acceptance criteria > AC9: says \"Something went wrong. Please try again.\" on a server error",
+                    "state": "passed",
+                    "id": "-1111668727_0_5",
+                    "moduleId": "-1111668727"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "story": "SCRUM-6",
+            "title": "Add a chore",
+            "epic": {
+              "key": "SCRUM-1",
+              "title": "Chore Tracking"
+            },
+            "criteria": [
+              {
+                "id": "AC1",
+                "text": "User Action: Clicks \"Add chore\" on the Chore List. Expected System Behavior: The \"Add chore\" screen opens with the household name above the title and four fields: Chore name, Assigned to, Due date, Notes (optional).",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "App acceptance criteria > Add a chore > AC1: \"Add chore\" opens the form with the household name above the title and the four fields",
+                    "state": "passed",
+                    "id": "1481293993_2_3_0",
+                    "moduleId": "1481293993"
+                  }
+                ]
+              },
+              {
+                "id": "AC2",
+                "text": "User Action: Clicks \"Assigned to.\" Expected System Behavior: A dropdown lists all housemates in the household.",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "AddChore acceptance criteria > AC2: \"Assigned to\" opens a dropdown listing every housemate in the household",
+                    "state": "passed",
+                    "id": "-365681104_1_0",
+                    "moduleId": "-365681104"
+                  }
+                ]
+              },
+              {
+                "id": "AC3",
+                "text": "User Action: Clicks \"Due date.\" Expected System Behavior: A date picker opens.",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "AddChore acceptance criteria > AC3: \"Due date\" opens a date picker",
+                    "state": "passed",
+                    "id": "-365681104_1_1",
+                    "moduleId": "-365681104"
+                  }
+                ]
+              },
+              {
+                "id": "AC4",
+                "text": "User Action: Fills in the required fields and clicks \"Add chore.\" Expected System Behavior: The chore is saved, the Chore List opens, and the new chore appears in the list for all housemates.",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "App acceptance criteria > Add a chore > AC4: saving opens the Chore List with the new chore in it",
+                    "state": "passed",
+                    "id": "1481293993_2_3_1",
+                    "moduleId": "1481293993"
+                  },
+                  {
+                    "name": "acceptance criteria > AC4: a chore one housemate adds appears in every housemate's list",
+                    "state": "passed",
+                    "id": "1827697479_5_0",
+                    "moduleId": "1827697479"
+                  }
+                ]
+              },
+              {
+                "id": "AC5",
+                "text": "User Action: Clicks \"Cancel.\" Expected System Behavior: Returns to the Chore List without saving.",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "App acceptance criteria > Add a chore > AC5: \"Cancel\" returns to the Chore List without saving",
+                    "state": "passed",
+                    "id": "1481293993_2_3_2",
+                    "moduleId": "1481293993"
+                  }
+                ]
+              },
+              {
+                "id": "AC6",
+                "text": "Error Condition: Chore name is empty. Message: \"Chore name is required.\"",
+                "verify": "test",
+                "note": "Corrected to the app's wording (team decision). Jira still says \"Enter a chore name.\"",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "AddChore acceptance criteria > AC6: says \"Chore name is required.\" when the name is empty",
+                    "state": "passed",
+                    "id": "-365681104_1_2",
+                    "moduleId": "-365681104"
+                  }
+                ]
+              },
+              {
+                "id": "AC7",
+                "text": "Error Condition: No housemate selected. Message: \"Choose who this chore is assigned to.\"",
+                "verify": "test",
+                "note": "Corrected to the app's wording (team decision). Jira still says \"Choose the housemate responsible for this chore\"",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "AddChore acceptance criteria > AC7: says \"Choose who this chore is assigned to.\" when no housemate is selected",
+                    "state": "passed",
+                    "id": "-365681104_1_3",
+                    "moduleId": "-365681104"
+                  }
+                ]
+              },
+              {
+                "id": "AC8",
+                "text": "Error Condition: No due date selected. Message: \"Choose a due date.\"",
+                "verify": "test",
+                "note": "Corrected to the app's wording (team decision). Jira still says \"Pick a due date.\"",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "AddChore acceptance criteria > AC8: says \"Choose a due date.\" when no due date is selected",
+                    "state": "passed",
+                    "id": "-365681104_1_4",
+                    "moduleId": "-365681104"
+                  }
+                ]
+              },
+              {
+                "id": "AC9",
+                "text": "Error Condition: Server error. Message: \"Couldn't save this chore. Please try again.\"",
+                "verify": "test",
+                "note": "Corrected to the app's wording (team decision). Jira still says \"Something went wrong. Please try again.\"",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "AddChore acceptance criteria > AC9: says \"Couldn't save this chore. Please try again.\" on a server error",
+                    "state": "passed",
+                    "id": "-365681104_1_5",
+                    "moduleId": "-365681104"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "story": "SCRUM-7",
+            "title": "View a chore list",
+            "epic": {
+              "key": "SCRUM-1",
+              "title": "Chore Tracking"
+            },
+            "criteria": [
+              {
+                "id": "AC1",
+                "text": "User Action: Opens the \"Chores\" tab. Expected System Behavior: The Chore List opens with the household name in the header and the \"All\" filter selected.",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SCRUM-7 acceptance criteria > AC1: opens on the Chores tab with the household name in the header and \"All\" selected",
+                    "state": "passed",
+                    "id": "1675785645_1_0",
+                    "moduleId": "1675785645"
+                  }
+                ]
+              },
+              {
+                "id": "AC2",
+                "text": "The progress card shows \"[X] of [Y] chores done\" with a progress bar and a status label (Status: On track/ Complete!/ {num} Late), or \"No Chores Yet\" when no chores are due.",
+                "verify": "test",
+                "note": "Corrected to Figma's labels (team decision). Jira still says \"On track/ Complete/ {num} late/ N/A\".",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SCRUM-7 acceptance criteria > AC2: the progress card shows \"[X] of [Y] chores done\", a progress bar and the On track label",
+                    "state": "passed",
+                    "id": "1675785645_1_1",
+                    "moduleId": "1675785645"
+                  },
+                  {
+                    "name": "SCRUM-7 acceptance criteria > AC2: the progress card shows \"[X] of [Y] chores done\", a progress bar and the Complete! label",
+                    "state": "passed",
+                    "id": "1675785645_1_2",
+                    "moduleId": "1675785645"
+                  },
+                  {
+                    "name": "SCRUM-7 acceptance criteria > AC2: the progress card shows \"[X] of [Y] chores done\", a progress bar and the {num} Late label",
+                    "state": "passed",
+                    "id": "1675785645_1_3",
+                    "moduleId": "1675785645"
+                  },
+                  {
+                    "name": "SCRUM-7 acceptance criteria > AC2: the progress card says \"No Chores Yet\" when no chores are due",
+                    "state": "passed",
+                    "id": "1675785645_1_4",
+                    "moduleId": "1675785645"
+                  }
+                ]
+              },
+              {
+                "id": "AC3",
+                "text": "Each open chore card shows the chore name, the assigned housemate (\"You\" if it is the user), and the due date (e.g., \"due today,\" \"due tomorrow,\" \"due Fri, Oct 9\"), plus a checkbox if the chore is assigned to the user.",
+                "verify": "test",
+                "note": "Corrected (team decision: only the assignee can tick a chore). Jira still says every open card shows a checkbox.",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SCRUM-7 acceptance criteria > AC3: each open card shows the name, the housemate (\"You\" for the user), the due date, and a checkbox only on the user's own",
+                    "state": "passed",
+                    "id": "1675785645_1_5",
+                    "moduleId": "1675785645"
+                  }
+                ]
+              },
+              {
+                "id": "AC4",
+                "text": "A chore past its due date is highlighted and shows an \"Overdue\" chip.",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SCRUM-7 acceptance criteria > AC4: a chore past its due date is highlighted and has an \"Overdue\" chip",
+                    "state": "passed",
+                    "id": "1675785645_1_6",
+                    "moduleId": "1675785645"
+                  }
+                ]
+              },
+              {
+                "id": "AC5",
+                "text": "User Action: Clicks \"Mine.\" Expected System Behavior: Only chores assigned to the user are shown.",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SCRUM-7 acceptance criteria > AC5: \"Mine\" shows only the chores assigned to the user",
+                    "state": "passed",
+                    "id": "1675785645_1_7",
+                    "moduleId": "1675785645"
+                  }
+                ]
+              },
+              {
+                "id": "AC6",
+                "text": "User Action: Clicks \"All.\" Expected System Behavior: All household chores are shown.",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SCRUM-7 acceptance criteria > AC6: \"All\" shows every household chore again",
+                    "state": "passed",
+                    "id": "1675785645_1_8",
+                    "moduleId": "1675785645"
+                  }
+                ]
+              },
+              {
+                "id": "AC7",
+                "text": "Completed chores appear under \"Done ([count])\" below the open chores, with the name struck through and a \"Done\" chip, or a \"Late\" chip if they were completed after the due date.",
+                "verify": "test",
+                "note": "Corrected to Figma's Late chip (team decision). Jira only mentions the Done chip.",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SCRUM-7 acceptance criteria > AC7: done chores sit under \"Done ([count])\" below the open ones, struck through, with a \"Done\" or \"Late\" chip",
+                    "state": "passed",
+                    "id": "1675785645_1_9",
+                    "moduleId": "1675785645"
+                  }
+                ]
+              },
+              {
+                "id": "AC8",
+                "text": "User Action: Clicks \"Done ([count]).\" Expected System Behavior: The section expands or collapses.",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SCRUM-7 acceptance criteria > AC8: \"Done ([count])\" opens and closes the section",
+                    "state": "passed",
+                    "id": "1675785645_1_10",
+                    "moduleId": "1675785645"
+                  }
+                ]
+              },
+              {
+                "id": "AC9",
+                "text": "User Action: Clicks \"Add chore.\" Expected System Behavior: The \"Add chore\" screen opens.",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "App acceptance criteria > View a chore list > AC9: \"Add chore\" opens the \"Add chore\" screen",
+                    "state": "passed",
+                    "id": "1481293993_2_4_0",
+                    "moduleId": "1481293993"
+                  }
+                ]
+              },
+              {
+                "id": "AC10",
+                "text": "Error Condition: Chores fail to load. Message: \"Couldn't load chores.\" with a \"Try again\" button.",
+                "verify": "test",
+                "note": "Corrected to the app's wording (team decision). Jira still says \"We couldn't load your chores. Please try again.\"",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SCRUM-7 acceptance criteria > AC10: says \"Couldn't load chores.\" with a \"Try again\" button when they fail to load",
+                    "state": "passed",
+                    "id": "1675785645_1_11",
+                    "moduleId": "1675785645"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "story": "SCRUM-8",
+            "title": "Mark a chore done or undo",
+            "epic": {
+              "key": "SCRUM-1",
+              "title": "Chore Tracking"
+            },
+            "criteria": [
+              {
+                "id": "AC1",
+                "text": "User Action: Clicks the checkbox on an open chore. Expected System Behavior: The chore moves to \"Done\" with the name struck through and a \"Done\" chip (\"Late\" if it was overdue). The Done count and progress card update.",
+                "verify": "test",
+                "note": "Corrected to Figma's Late chip (team decision). Jira only mentions the Done chip.",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SCRUM-8 acceptance criteria > AC1: ticking an open chore moves it to \"Done\", struck through with a \"Done\" chip, and updates the count and progress",
+                    "state": "passed",
+                    "id": "1675785645_2_0",
+                    "moduleId": "1675785645"
+                  },
+                  {
+                    "name": "SCRUM-8 acceptance criteria > AC1: an overdue chore ticked off gets the \"Late\" chip",
+                    "state": "passed",
+                    "id": "1675785645_2_1",
+                    "moduleId": "1675785645"
+                  }
+                ]
+              },
+              {
+                "id": "AC2",
+                "text": "User Action: Clicks the checkbox on a done chore. Expected System Behavior: The chore returns to the open list. The Done count and progress card update.",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SCRUM-8 acceptance criteria > AC2: unticking a done chore returns it to the open list and updates the count and progress",
+                    "state": "passed",
+                    "id": "1675785645_2_2",
+                    "moduleId": "1675785645"
+                  }
+                ]
+              },
+              {
+                "id": "AC3",
+                "text": "Error Condition: The change fails to save. The chore returns to its previous state. Message: \"Couldn't update this chore. Please try again.\"",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SCRUM-8 acceptance criteria > AC3: when the change fails to save, the chore goes back and the error shows",
+                    "state": "passed",
+                    "id": "1675785645_2_3",
+                    "moduleId": "1675785645"
+                  }
+                ]
+              },
+              {
+                "id": "AC4",
+                "text": "Chore card layout, Done section, and progress card: see \"View the Chore List.\"",
+                "verify": "manual",
+                "note": "A pointer to SCRUM-7, whose criteria test the chore card, the Done section and the progress card.",
+                "status": "manual",
+                "tests": []
+              },
+              {
+                "id": "AC5",
+                "text": "Only the housemate a chore is assigned to can mark it done or undo it. Other housemates see no checkbox.",
+                "verify": "test",
+                "note": "Added (team decision: only the assignee can tick a chore). Not in Jira yet.",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SCRUM-8 acceptance criteria > AC5: only the assignee gets a checkbox, on open and done chores alike",
+                    "state": "passed",
+                    "id": "1675785645_2_4",
+                    "moduleId": "1675785645"
+                  },
+                  {
+                    "name": "acceptance criteria > AC5: only the housemate a chore is assigned to can mark it done or undo it",
+                    "state": "passed",
+                    "id": "1827697479_5_1",
+                    "moduleId": "1827697479"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "story": "SCRUM-32",
+            "title": "Joining a Household UI + Test",
+            "epic": {
+              "key": "SCRUM-9",
+              "title": "Account/Household Setup"
+            },
+            "criteria": [
+              {
+                "id": "AC1",
+                "text": "User Action: Clicks “Join with a code” on the “Your household” screen. Expected System Behavior: The “Join a household” screen opens with one field, Invite code.",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "App acceptance criteria > Joining a household > AC1: \"Join with a code\" opens \"Join a household\" with one field, Invite code",
+                    "state": "passed",
+                    "id": "1481293993_2_2_0",
+                    "moduleId": "1481293993"
+                  }
+                ]
+              },
+              {
+                "id": "AC2",
+                "text": "The Invite code field ignores letter case and leading or trailing spaces.",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "POST /api/households/join > AC2: accepts the code in lower case with leading and trailing spaces (and hyphens)",
+                    "state": "passed",
+                    "id": "-394470711_2_1",
+                    "moduleId": "-394470711"
+                  }
+                ]
+              },
+              {
+                "id": "AC3",
+                "text": "User Action: Enters a valid code and clicks “Join.” Expected System Behavior: The user is added to the household, the Chore List opens, and a message shows: “You joined [Household name].”",
+                "verify": "test",
+                "note": "Not met yet: joining and opening the Chore List work, but the “You joined…” message isn't built until a message design exists (README “Conflicts to resolve”, row 9).",
+                "status": "untested",
+                "tests": []
+              },
+              {
+                "id": "AC4",
+                "text": "User Action: Clicks “Back.” Expected System Behavior: Returns to the “Your household” screen.",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "App acceptance criteria > Joining a household > AC4: \"Back\" returns to \"Your household\"",
+                    "state": "passed",
+                    "id": "1481293993_2_2_1",
+                    "moduleId": "1481293993"
+                  }
+                ]
+              },
+              {
+                "id": "AC5",
+                "text": "Error Condition: Invite code is empty. Message: “Enter an invite code.”",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "JoinHousehold > acceptance criteria > AC5: says \"Enter an invite code.\" when the code is empty",
+                    "state": "passed",
+                    "id": "-1582053416_2_2_0",
+                    "moduleId": "-1582053416"
+                  }
+                ]
+              },
+              {
+                "id": "AC6",
+                "text": "Error Condition: Code does not match any household. Message: “We couldn’t find a household with that code. Check with your housemate and try again.”",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "JoinHousehold > acceptance criteria > AC6: says it couldn't find a household when the code matches none",
+                    "state": "passed",
+                    "id": "-1582053416_2_2_1",
+                    "moduleId": "-1582053416"
+                  }
+                ]
+              },
+              {
+                "id": "AC7",
+                "text": "Error Condition: Server error. Message: “Something went wrong. Please try again.”",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "JoinHousehold > acceptance criteria > AC7: says \"Something went wrong. Please try again.\" for a server error",
+                    "state": "passed",
+                    "id": "-1582053416_2_2_2",
+                    "moduleId": "-1582053416"
+                  },
+                  {
+                    "name": "JoinHousehold > acceptance criteria > AC7: says \"Something went wrong. Please try again.\" for no connection",
+                    "state": "passed",
+                    "id": "-1582053416_2_2_3",
+                    "moduleId": "-1582053416"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "problems": []
+      },
+      "report": "reports/main/41380692949-1"
+    },
+    {
+      "summary": {
+        "meta": {
+          "runId": "40909029131-1",
+          "runUrl": "https://github.com/antshep-umich/si526-team/actions/runs/40909029131",
+          "repoUrl": "https://github.com/antshep-umich/si526-team",
+          "kind": "main",
+          "branch": "main",
+          "sha": "044c240112070eb9a1d5ec84516dd9b30909e138",
+          "message": "Merge pull request #10 from antshep-umich/Sprint2_Dev",
+          "pr": null
+        },
+        "startedAt": "2026-10-29T16:11:28.645Z",
+        "durationMs": 17389,
+        "outcome": "passed",
+        "totals": {
+          "total": 502,
+          "passed": 502,
+          "failed": 0,
+          "skipped": 0
+        },
+        "stories": [],
+        "problems": []
+      },
+      "report": "reports/main/40909029131-1"
+    }
+  ],
+  "branches": [],
+  "merged": [
+    {
+      "summary": {
+        "meta": {
+          "runId": "41380693335-1",
+          "runUrl": "https://github.com/antshep-umich/si526-team/actions/runs/41380693335",
+          "repoUrl": "https://github.com/antshep-umich/si526-team",
+          "kind": "merged",
+          "branch": "acceptance-criteria-sprint-2",
+          "sha": "d497f29b9ba2e620ba49e7d5c5f78763b160dcc3",
+          "message": "Track Sprint 2 stories' acceptance criteria on the test dashboard",
+          "pr": {
+            "number": 11,
+            "title": "Track Sprint 2 stories' acceptance criteria on the test dashboard",
+            "mergeSha": "898bfeba4594819a44a487a3f45c9dd87c2f0fd1",
+            "mergedAt": "2026-11-02T03:00:30Z"
+          }
+        },
+        "startedAt": "2026-11-02T03:00:58.636Z",
+        "durationMs": 18516,
+        "outcome": "passed",
+        "totals": {
+          "total": 538,
+          "passed": 538,
+          "failed": 0,
+          "skipped": 0
+        },
+        "stories": [
+          {
+            "story": "SCRUM-2",
+            "title": "Sign Up",
+            "epic": {
+              "key": "SCRUM-9",
+              "title": "Account/Household Setup"
+            },
+            "criteria": [
+              {
+                "id": "AC1",
+                "text": "The Create Account screen has 4 fields: Name, Email, Password, Confirm password. All are required.",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SignUp acceptance criteria > AC1: has the four fields Name, Email, Password and Confirm password, all required",
+                    "state": "passed",
+                    "id": "-1531221772_0_0",
+                    "moduleId": "-1531221772"
+                  }
+                ]
+              },
+              {
+                "id": "AC2",
+                "text": "Name is 30 characters or fewer. Password is at least 8 characters and includes at least 1 number.",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SignUp acceptance criteria > AC2: accepts a name of 30 characters and a password of 8 characters with a number",
+                    "state": "passed",
+                    "id": "-1531221772_0_1",
+                    "moduleId": "-1531221772"
+                  },
+                  {
+                    "name": "SignUp acceptance criteria > AC2: refuses a 31-character name",
+                    "state": "passed",
+                    "id": "-1531221772_0_2",
+                    "moduleId": "-1531221772"
+                  },
+                  {
+                    "name": "SignUp acceptance criteria > AC2: refuses a 7-character password",
+                    "state": "passed",
+                    "id": "-1531221772_0_3",
+                    "moduleId": "-1531221772"
+                  },
+                  {
+                    "name": "SignUp acceptance criteria > AC2: refuses a password without a number",
+                    "state": "passed",
+                    "id": "-1531221772_0_4",
+                    "moduleId": "-1531221772"
+                  },
+                  {
+                    "name": "sign-up rules > AC2: rejects an empty name",
+                    "state": "passed",
+                    "id": "-8436414_1_0",
+                    "moduleId": "-8436414"
+                  },
+                  {
+                    "name": "sign-up rules > AC2: rejects a 31-character name",
+                    "state": "passed",
+                    "id": "-8436414_1_1",
+                    "moduleId": "-8436414"
+                  },
+                  {
+                    "name": "sign-up rules > AC2: rejects a 7-character password",
+                    "state": "passed",
+                    "id": "-8436414_1_2",
+                    "moduleId": "-8436414"
+                  },
+                  {
+                    "name": "sign-up rules > AC2: rejects a password without a number",
+                    "state": "passed",
+                    "id": "-8436414_1_3",
+                    "moduleId": "-8436414"
+                  },
+                  {
+                    "name": "sign-up rules > AC2: rejects no body",
+                    "state": "passed",
+                    "id": "-8436414_1_4",
+                    "moduleId": "-8436414"
+                  },
+                  {
+                    "name": "sign-up rules > AC2: accepts a 30-character name and an 8-character password with a number",
+                    "state": "passed",
+                    "id": "-8436414_1_5",
+                    "moduleId": "-8436414"
+                  },
+                  {
+                    "name": "sign-up rules > AC2: stops a sign-up that breaks them before Better Auth creates anything",
+                    "state": "passed",
+                    "id": "-8436414_1_6",
+                    "moduleId": "-8436414"
+                  }
+                ]
+              },
+              {
+                "id": "AC3",
+                "text": "User Action: Clicks “Create account” with valid information. Expected System Behavior: The account is created, the user is logged in, and the “Your household” screen opens.",
+                "verify": "manual",
+                "note": "Shown end to end by e2e/account.e2e.test.ts (“signs up, logs out from the menu…”), which runs against every preview deployment. Creating a real account and session needs the database, which unit tests don't have.",
+                "status": "manual",
+                "tests": []
+              },
+              {
+                "id": "AC4",
+                "text": "User Action: Clicks “Create account” with any invalid fields. Expected System Behavior: All applicable errors show at once, inline under each field. Name and Email keep their values; both password fields are cleared.",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SignUp acceptance criteria > AC4: shows every error at once under its field, keeps Name and Email, and clears both passwords",
+                    "state": "passed",
+                    "id": "-1531221772_0_5",
+                    "moduleId": "-1531221772"
+                  }
+                ]
+              },
+              {
+                "id": "AC5",
+                "text": "User Action: Clicks “Already have an account? Log in.” Expected System Behavior: The Log in screen opens.",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "App acceptance criteria > Sign up > AC5: \"Already have an account? Log in\" opens the Log in screen",
+                    "state": "passed",
+                    "id": "1481293993_2_0_0",
+                    "moduleId": "1481293993"
+                  }
+                ]
+              },
+              {
+                "id": "AC6",
+                "text": "Error Condition: Name is empty. Message: “Name is required.”",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SignUp acceptance criteria > AC6: says \"Name is required.\" when Name is empty",
+                    "state": "passed",
+                    "id": "-1531221772_0_6",
+                    "moduleId": "-1531221772"
+                  }
+                ]
+              },
+              {
+                "id": "AC7",
+                "text": "Error Condition: Name is over 30 characters. Message: “Name must be 30 characters or fewer.”",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SignUp acceptance criteria > AC7: says \"Name must be 30 characters or fewer.\" when Name is over 30 characters",
+                    "state": "passed",
+                    "id": "-1531221772_0_7",
+                    "moduleId": "-1531221772"
+                  }
+                ]
+              },
+              {
+                "id": "AC8",
+                "text": "Error Condition: Email is empty. Message: “Email is required.”",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SignUp acceptance criteria > AC8: says \"Email is required.\" when Email is empty",
+                    "state": "passed",
+                    "id": "-1531221772_0_8",
+                    "moduleId": "-1531221772"
+                  }
+                ]
+              },
+              {
+                "id": "AC9",
+                "text": "Error Condition: Email format is invalid. Message: “Enter a valid email address.”",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SignUp acceptance criteria > AC9: says \"Enter a valid email address.\" when the email format is invalid",
+                    "state": "passed",
+                    "id": "-1531221772_0_9",
+                    "moduleId": "-1531221772"
+                  }
+                ]
+              },
+              {
+                "id": "AC10",
+                "text": "Error Condition: Email is already registered. Message: “An account with this email already exists. Use a different email or Log in instead.”",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SignUp acceptance criteria > AC10: says the email already has an account when it's registered",
+                    "state": "passed",
+                    "id": "-1531221772_0_10",
+                    "moduleId": "-1531221772"
+                  }
+                ]
+              },
+              {
+                "id": "AC11",
+                "text": "Error Condition: Password is empty. Message: “Password is required.”",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SignUp acceptance criteria > AC11: says \"Password is required.\" when Password is empty",
+                    "state": "passed",
+                    "id": "-1531221772_0_11",
+                    "moduleId": "-1531221772"
+                  }
+                ]
+              },
+              {
+                "id": "AC12",
+                "text": "Error Condition: Password does not meet requirements. Message: “Password must be at least 8 characters long and include 1 number.”",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SignUp acceptance criteria > AC12: explains the password rules when the password doesn't meet them",
+                    "state": "passed",
+                    "id": "-1531221772_0_12",
+                    "moduleId": "-1531221772"
+                  }
+                ]
+              },
+              {
+                "id": "AC13",
+                "text": "Error Condition: Passwords do not match. Message: “Passwords do not match.”",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SignUp acceptance criteria > AC13: says \"Passwords do not match.\" when they differ",
+                    "state": "passed",
+                    "id": "-1531221772_0_13",
+                    "moduleId": "-1531221772"
+                  }
+                ]
+              },
+              {
+                "id": "AC14",
+                "text": "Error Condition: Server error. Message: “Something went wrong. Please try again.” (banner above the form)",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SignUp acceptance criteria > AC14: shows a server error as a banner above the form",
+                    "state": "passed",
+                    "id": "-1531221772_0_14",
+                    "moduleId": "-1531221772"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "story": "SCRUM-3",
+            "title": "Log in & Log out",
+            "epic": {
+              "key": "SCRUM-9",
+              "title": "Account/Household Setup"
+            },
+            "criteria": [
+              {
+                "id": "AC1",
+                "text": "The Log in screen has 2 fields: Email and Password. Both are required.",
+                "verify": "test",
+                "note": "Corrected to email (team decision: log in with email, not name). Jira still says Name.",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "LogIn acceptance criteria > AC1: has two fields, Email and Password, both required",
+                    "state": "passed",
+                    "id": "-1111668727_0_0",
+                    "moduleId": "-1111668727"
+                  }
+                ]
+              },
+              {
+                "id": "AC2",
+                "text": "User Action: Clicks “Log in” with a valid email and password. Expected System Behavior: If the user belongs to a household, the Chore List opens. If not, the “Your household” screen opens.",
+                "verify": "test",
+                "note": "Corrected to email (team decision: log in with email, not name). Jira still says name.",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "App acceptance criteria > Log in and log out > AC2: logging in opens the Chore List when the user belongs to a household",
+                    "state": "passed",
+                    "id": "1481293993_2_1_0",
+                    "moduleId": "1481293993"
+                  },
+                  {
+                    "name": "App acceptance criteria > Log in and log out > AC2: logging in opens \"Your household\" when the user has none",
+                    "state": "passed",
+                    "id": "1481293993_2_1_1",
+                    "moduleId": "1481293993"
+                  },
+                  {
+                    "name": "LogIn acceptance criteria > AC2: logs in with the email and password",
+                    "state": "passed",
+                    "id": "-1111668727_0_1",
+                    "moduleId": "-1111668727"
+                  }
+                ]
+              },
+              {
+                "id": "AC3",
+                "text": "User Action: Refreshes the page while logged in. Expected System Behavior: The user stays logged in.",
+                "verify": "manual",
+                "note": "Shown end to end by e2e/account.e2e.test.ts (“keeps people signed in across a reload”), which runs against every preview deployment. The session cookie needs a real browser and server.",
+                "status": "manual",
+                "tests": []
+              },
+              {
+                "id": "AC4",
+                "text": "User Action: Clicks “Forgot your password?” Expected System Behavior: The password reset flow opens. (Reset flow will be detailed in a later story.)",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "App acceptance criteria > Log in and log out > AC4: \"Forgot your password?\" opens the password reset flow",
+                    "state": "passed",
+                    "id": "1481293993_2_1_2",
+                    "moduleId": "1481293993"
+                  }
+                ]
+              },
+              {
+                "id": "AC5",
+                "text": "User Action: Clicks “Log out” in the header menu. Expected System Behavior: The session ends and the Log in screen opens.",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "App acceptance criteria > Log in and log out > AC5: \"Log out\" in the header menu ends the session and opens the Log in screen",
+                    "state": "passed",
+                    "id": "1481293993_2_1_3",
+                    "moduleId": "1481293993"
+                  }
+                ]
+              },
+              {
+                "id": "AC6",
+                "text": "Error Condition: Email is empty. Message: “Email is required.”",
+                "verify": "test",
+                "note": "Corrected to email (team decision: log in with email, not name). Jira still says “Name is required.”",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "LogIn acceptance criteria > AC6: says \"Email is required.\" when Email is empty",
+                    "state": "passed",
+                    "id": "-1111668727_0_2",
+                    "moduleId": "-1111668727"
+                  }
+                ]
+              },
+              {
+                "id": "AC7",
+                "text": "Error Condition: Password is empty. Message: “Password is required.”",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "LogIn acceptance criteria > AC7: says \"Password is required.\" when Password is empty",
+                    "state": "passed",
+                    "id": "-1111668727_0_3",
+                    "moduleId": "-1111668727"
+                  }
+                ]
+              },
+              {
+                "id": "AC8",
+                "text": "Error Condition: Email and password do not match an account. Message: “Email or password is incorrect.” (does not say which one, for security)",
+                "verify": "test",
+                "note": "Corrected to email (team decision: log in with email, not name). Jira still says “Name or password is incorrect.”",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "LogIn acceptance criteria > AC8: says the email or password is incorrect without saying which",
+                    "state": "passed",
+                    "id": "-1111668727_0_4",
+                    "moduleId": "-1111668727"
+                  }
+                ]
+              },
+              {
+                "id": "AC9",
+                "text": "Error Condition: Server error. Message: “Something went wrong. Please try again.”",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "LogIn acceptance criteria > AC9: says \"Something went wrong. Please try again.\" on a server error",
+                    "state": "passed",
+                    "id": "-1111668727_0_5",
+                    "moduleId": "-1111668727"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "story": "SCRUM-6",
+            "title": "Add a chore",
+            "epic": {
+              "key": "SCRUM-1",
+              "title": "Chore Tracking"
+            },
+            "criteria": [
+              {
+                "id": "AC1",
+                "text": "User Action: Clicks \"Add chore\" on the Chore List. Expected System Behavior: The \"Add chore\" screen opens with the household name above the title and four fields: Chore name, Assigned to, Due date, Notes (optional).",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "App acceptance criteria > Add a chore > AC1: \"Add chore\" opens the form with the household name above the title and the four fields",
+                    "state": "passed",
+                    "id": "1481293993_2_3_0",
+                    "moduleId": "1481293993"
+                  }
+                ]
+              },
+              {
+                "id": "AC2",
+                "text": "User Action: Clicks \"Assigned to.\" Expected System Behavior: A dropdown lists all housemates in the household.",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "AddChore acceptance criteria > AC2: \"Assigned to\" opens a dropdown listing every housemate in the household",
+                    "state": "passed",
+                    "id": "-365681104_1_0",
+                    "moduleId": "-365681104"
+                  }
+                ]
+              },
+              {
+                "id": "AC3",
+                "text": "User Action: Clicks \"Due date.\" Expected System Behavior: A date picker opens.",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "AddChore acceptance criteria > AC3: \"Due date\" opens a date picker",
+                    "state": "passed",
+                    "id": "-365681104_1_1",
+                    "moduleId": "-365681104"
+                  }
+                ]
+              },
+              {
+                "id": "AC4",
+                "text": "User Action: Fills in the required fields and clicks \"Add chore.\" Expected System Behavior: The chore is saved, the Chore List opens, and the new chore appears in the list for all housemates.",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "App acceptance criteria > Add a chore > AC4: saving opens the Chore List with the new chore in it",
+                    "state": "passed",
+                    "id": "1481293993_2_3_1",
+                    "moduleId": "1481293993"
+                  },
+                  {
+                    "name": "acceptance criteria > AC4: a chore one housemate adds appears in every housemate's list",
+                    "state": "passed",
+                    "id": "1827697479_5_0",
+                    "moduleId": "1827697479"
+                  }
+                ]
+              },
+              {
+                "id": "AC5",
+                "text": "User Action: Clicks \"Cancel.\" Expected System Behavior: Returns to the Chore List without saving.",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "App acceptance criteria > Add a chore > AC5: \"Cancel\" returns to the Chore List without saving",
+                    "state": "passed",
+                    "id": "1481293993_2_3_2",
+                    "moduleId": "1481293993"
+                  }
+                ]
+              },
+              {
+                "id": "AC6",
+                "text": "Error Condition: Chore name is empty. Message: \"Chore name is required.\"",
+                "verify": "test",
+                "note": "Corrected to the app's wording (team decision). Jira still says \"Enter a chore name.\"",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "AddChore acceptance criteria > AC6: says \"Chore name is required.\" when the name is empty",
+                    "state": "passed",
+                    "id": "-365681104_1_2",
+                    "moduleId": "-365681104"
+                  }
+                ]
+              },
+              {
+                "id": "AC7",
+                "text": "Error Condition: No housemate selected. Message: \"Choose who this chore is assigned to.\"",
+                "verify": "test",
+                "note": "Corrected to the app's wording (team decision). Jira still says \"Choose the housemate responsible for this chore\"",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "AddChore acceptance criteria > AC7: says \"Choose who this chore is assigned to.\" when no housemate is selected",
+                    "state": "passed",
+                    "id": "-365681104_1_3",
+                    "moduleId": "-365681104"
+                  }
+                ]
+              },
+              {
+                "id": "AC8",
+                "text": "Error Condition: No due date selected. Message: \"Choose a due date.\"",
+                "verify": "test",
+                "note": "Corrected to the app's wording (team decision). Jira still says \"Pick a due date.\"",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "AddChore acceptance criteria > AC8: says \"Choose a due date.\" when no due date is selected",
+                    "state": "passed",
+                    "id": "-365681104_1_4",
+                    "moduleId": "-365681104"
+                  }
+                ]
+              },
+              {
+                "id": "AC9",
+                "text": "Error Condition: Server error. Message: \"Couldn't save this chore. Please try again.\"",
+                "verify": "test",
+                "note": "Corrected to the app's wording (team decision). Jira still says \"Something went wrong. Please try again.\"",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "AddChore acceptance criteria > AC9: says \"Couldn't save this chore. Please try again.\" on a server error",
+                    "state": "passed",
+                    "id": "-365681104_1_5",
+                    "moduleId": "-365681104"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "story": "SCRUM-7",
+            "title": "View a chore list",
+            "epic": {
+              "key": "SCRUM-1",
+              "title": "Chore Tracking"
+            },
+            "criteria": [
+              {
+                "id": "AC1",
+                "text": "User Action: Opens the \"Chores\" tab. Expected System Behavior: The Chore List opens with the household name in the header and the \"All\" filter selected.",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SCRUM-7 acceptance criteria > AC1: opens on the Chores tab with the household name in the header and \"All\" selected",
+                    "state": "passed",
+                    "id": "1675785645_1_0",
+                    "moduleId": "1675785645"
+                  }
+                ]
+              },
+              {
+                "id": "AC2",
+                "text": "The progress card shows \"[X] of [Y] chores done\" with a progress bar and a status label (Status: On track/ Complete!/ {num} Late), or \"No Chores Yet\" when no chores are due.",
+                "verify": "test",
+                "note": "Corrected to Figma's labels (team decision). Jira still says \"On track/ Complete/ {num} late/ N/A\".",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SCRUM-7 acceptance criteria > AC2: the progress card shows \"[X] of [Y] chores done\", a progress bar and the On track label",
+                    "state": "passed",
+                    "id": "1675785645_1_1",
+                    "moduleId": "1675785645"
+                  },
+                  {
+                    "name": "SCRUM-7 acceptance criteria > AC2: the progress card shows \"[X] of [Y] chores done\", a progress bar and the Complete! label",
+                    "state": "passed",
+                    "id": "1675785645_1_2",
+                    "moduleId": "1675785645"
+                  },
+                  {
+                    "name": "SCRUM-7 acceptance criteria > AC2: the progress card shows \"[X] of [Y] chores done\", a progress bar and the {num} Late label",
+                    "state": "passed",
+                    "id": "1675785645_1_3",
+                    "moduleId": "1675785645"
+                  },
+                  {
+                    "name": "SCRUM-7 acceptance criteria > AC2: the progress card says \"No Chores Yet\" when no chores are due",
+                    "state": "passed",
+                    "id": "1675785645_1_4",
+                    "moduleId": "1675785645"
+                  }
+                ]
+              },
+              {
+                "id": "AC3",
+                "text": "Each open chore card shows the chore name, the assigned housemate (\"You\" if it is the user), and the due date (e.g., \"due today,\" \"due tomorrow,\" \"due Fri, Oct 9\"), plus a checkbox if the chore is assigned to the user.",
+                "verify": "test",
+                "note": "Corrected (team decision: only the assignee can tick a chore). Jira still says every open card shows a checkbox.",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SCRUM-7 acceptance criteria > AC3: each open card shows the name, the housemate (\"You\" for the user), the due date, and a checkbox only on the user's own",
+                    "state": "passed",
+                    "id": "1675785645_1_5",
+                    "moduleId": "1675785645"
+                  }
+                ]
+              },
+              {
+                "id": "AC4",
+                "text": "A chore past its due date is highlighted and shows an \"Overdue\" chip.",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SCRUM-7 acceptance criteria > AC4: a chore past its due date is highlighted and has an \"Overdue\" chip",
+                    "state": "passed",
+                    "id": "1675785645_1_6",
+                    "moduleId": "1675785645"
+                  }
+                ]
+              },
+              {
+                "id": "AC5",
+                "text": "User Action: Clicks \"Mine.\" Expected System Behavior: Only chores assigned to the user are shown.",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SCRUM-7 acceptance criteria > AC5: \"Mine\" shows only the chores assigned to the user",
+                    "state": "passed",
+                    "id": "1675785645_1_7",
+                    "moduleId": "1675785645"
+                  }
+                ]
+              },
+              {
+                "id": "AC6",
+                "text": "User Action: Clicks \"All.\" Expected System Behavior: All household chores are shown.",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SCRUM-7 acceptance criteria > AC6: \"All\" shows every household chore again",
+                    "state": "passed",
+                    "id": "1675785645_1_8",
+                    "moduleId": "1675785645"
+                  }
+                ]
+              },
+              {
+                "id": "AC7",
+                "text": "Completed chores appear under \"Done ([count])\" below the open chores, with the name struck through and a \"Done\" chip, or a \"Late\" chip if they were completed after the due date.",
+                "verify": "test",
+                "note": "Corrected to Figma's Late chip (team decision). Jira only mentions the Done chip.",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SCRUM-7 acceptance criteria > AC7: done chores sit under \"Done ([count])\" below the open ones, struck through, with a \"Done\" or \"Late\" chip",
+                    "state": "passed",
+                    "id": "1675785645_1_9",
+                    "moduleId": "1675785645"
+                  }
+                ]
+              },
+              {
+                "id": "AC8",
+                "text": "User Action: Clicks \"Done ([count]).\" Expected System Behavior: The section expands or collapses.",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SCRUM-7 acceptance criteria > AC8: \"Done ([count])\" opens and closes the section",
+                    "state": "passed",
+                    "id": "1675785645_1_10",
+                    "moduleId": "1675785645"
+                  }
+                ]
+              },
+              {
+                "id": "AC9",
+                "text": "User Action: Clicks \"Add chore.\" Expected System Behavior: The \"Add chore\" screen opens.",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "App acceptance criteria > View a chore list > AC9: \"Add chore\" opens the \"Add chore\" screen",
+                    "state": "passed",
+                    "id": "1481293993_2_4_0",
+                    "moduleId": "1481293993"
+                  }
+                ]
+              },
+              {
+                "id": "AC10",
+                "text": "Error Condition: Chores fail to load. Message: \"Couldn't load chores.\" with a \"Try again\" button.",
+                "verify": "test",
+                "note": "Corrected to the app's wording (team decision). Jira still says \"We couldn't load your chores. Please try again.\"",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SCRUM-7 acceptance criteria > AC10: says \"Couldn't load chores.\" with a \"Try again\" button when they fail to load",
+                    "state": "passed",
+                    "id": "1675785645_1_11",
+                    "moduleId": "1675785645"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "story": "SCRUM-8",
+            "title": "Mark a chore done or undo",
+            "epic": {
+              "key": "SCRUM-1",
+              "title": "Chore Tracking"
+            },
+            "criteria": [
+              {
+                "id": "AC1",
+                "text": "User Action: Clicks the checkbox on an open chore. Expected System Behavior: The chore moves to \"Done\" with the name struck through and a \"Done\" chip (\"Late\" if it was overdue). The Done count and progress card update.",
+                "verify": "test",
+                "note": "Corrected to Figma's Late chip (team decision). Jira only mentions the Done chip.",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SCRUM-8 acceptance criteria > AC1: ticking an open chore moves it to \"Done\", struck through with a \"Done\" chip, and updates the count and progress",
+                    "state": "passed",
+                    "id": "1675785645_2_0",
+                    "moduleId": "1675785645"
+                  },
+                  {
+                    "name": "SCRUM-8 acceptance criteria > AC1: an overdue chore ticked off gets the \"Late\" chip",
+                    "state": "passed",
+                    "id": "1675785645_2_1",
+                    "moduleId": "1675785645"
+                  }
+                ]
+              },
+              {
+                "id": "AC2",
+                "text": "User Action: Clicks the checkbox on a done chore. Expected System Behavior: The chore returns to the open list. The Done count and progress card update.",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SCRUM-8 acceptance criteria > AC2: unticking a done chore returns it to the open list and updates the count and progress",
+                    "state": "passed",
+                    "id": "1675785645_2_2",
+                    "moduleId": "1675785645"
+                  }
+                ]
+              },
+              {
+                "id": "AC3",
+                "text": "Error Condition: The change fails to save. The chore returns to its previous state. Message: \"Couldn't update this chore. Please try again.\"",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SCRUM-8 acceptance criteria > AC3: when the change fails to save, the chore goes back and the error shows",
+                    "state": "passed",
+                    "id": "1675785645_2_3",
+                    "moduleId": "1675785645"
+                  }
+                ]
+              },
+              {
+                "id": "AC4",
+                "text": "Chore card layout, Done section, and progress card: see \"View the Chore List.\"",
+                "verify": "manual",
+                "note": "A pointer to SCRUM-7, whose criteria test the chore card, the Done section and the progress card.",
+                "status": "manual",
+                "tests": []
+              },
+              {
+                "id": "AC5",
+                "text": "Only the housemate a chore is assigned to can mark it done or undo it. Other housemates see no checkbox.",
+                "verify": "test",
+                "note": "Added (team decision: only the assignee can tick a chore). Not in Jira yet.",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "SCRUM-8 acceptance criteria > AC5: only the assignee gets a checkbox, on open and done chores alike",
+                    "state": "passed",
+                    "id": "1675785645_2_4",
+                    "moduleId": "1675785645"
+                  },
+                  {
+                    "name": "acceptance criteria > AC5: only the housemate a chore is assigned to can mark it done or undo it",
+                    "state": "passed",
+                    "id": "1827697479_5_1",
+                    "moduleId": "1827697479"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "story": "SCRUM-32",
+            "title": "Joining a Household UI + Test",
+            "epic": {
+              "key": "SCRUM-9",
+              "title": "Account/Household Setup"
+            },
+            "criteria": [
+              {
+                "id": "AC1",
+                "text": "User Action: Clicks “Join with a code” on the “Your household” screen. Expected System Behavior: The “Join a household” screen opens with one field, Invite code.",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "App acceptance criteria > Joining a household > AC1: \"Join with a code\" opens \"Join a household\" with one field, Invite code",
+                    "state": "passed",
+                    "id": "1481293993_2_2_0",
+                    "moduleId": "1481293993"
+                  }
+                ]
+              },
+              {
+                "id": "AC2",
+                "text": "The Invite code field ignores letter case and leading or trailing spaces.",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "POST /api/households/join > AC2: accepts the code in lower case with leading and trailing spaces (and hyphens)",
+                    "state": "passed",
+                    "id": "-394470711_2_1",
+                    "moduleId": "-394470711"
+                  }
+                ]
+              },
+              {
+                "id": "AC3",
+                "text": "User Action: Enters a valid code and clicks “Join.” Expected System Behavior: The user is added to the household, the Chore List opens, and a message shows: “You joined [Household name].”",
+                "verify": "test",
+                "note": "Not met yet: joining and opening the Chore List work, but the “You joined…” message isn't built until a message design exists (README “Conflicts to resolve”, row 9).",
+                "status": "untested",
+                "tests": []
+              },
+              {
+                "id": "AC4",
+                "text": "User Action: Clicks “Back.” Expected System Behavior: Returns to the “Your household” screen.",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "App acceptance criteria > Joining a household > AC4: \"Back\" returns to \"Your household\"",
+                    "state": "passed",
+                    "id": "1481293993_2_2_1",
+                    "moduleId": "1481293993"
+                  }
+                ]
+              },
+              {
+                "id": "AC5",
+                "text": "Error Condition: Invite code is empty. Message: “Enter an invite code.”",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "JoinHousehold > acceptance criteria > AC5: says \"Enter an invite code.\" when the code is empty",
+                    "state": "passed",
+                    "id": "-1582053416_2_2_0",
+                    "moduleId": "-1582053416"
+                  }
+                ]
+              },
+              {
+                "id": "AC6",
+                "text": "Error Condition: Code does not match any household. Message: “We couldn’t find a household with that code. Check with your housemate and try again.”",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "JoinHousehold > acceptance criteria > AC6: says it couldn't find a household when the code matches none",
+                    "state": "passed",
+                    "id": "-1582053416_2_2_1",
+                    "moduleId": "-1582053416"
+                  }
+                ]
+              },
+              {
+                "id": "AC7",
+                "text": "Error Condition: Server error. Message: “Something went wrong. Please try again.”",
+                "verify": "test",
+                "status": "passing",
+                "tests": [
+                  {
+                    "name": "JoinHousehold > acceptance criteria > AC7: says \"Something went wrong. Please try again.\" for a server error",
+                    "state": "passed",
+                    "id": "-1582053416_2_2_2",
+                    "moduleId": "-1582053416"
+                  },
+                  {
+                    "name": "JoinHousehold > acceptance criteria > AC7: says \"Something went wrong. Please try again.\" for no connection",
+                    "state": "passed",
+                    "id": "-1582053416_2_2_3",
+                    "moduleId": "-1582053416"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "problems": []
+      },
+      "report": "reports/merged/pr-11"
+    }
+  ]
+}
