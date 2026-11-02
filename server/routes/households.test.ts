@@ -136,7 +136,7 @@ describe("POST /api/households/join", () => {
     });
   });
 
-  it("accepts the code in lower case with spaces or hyphens", async () => {
+  it("AC2: accepts the code in lower case with leading and trailing spaces (and hyphens)", { tags: ["SCRUM-32"] }, async () => {
     const { inviteCode } = await createHousehold("ana");
     const typed = ` ${inviteCode.slice(0, 4).toLowerCase()}-${inviteCode.slice(4).toLowerCase()} `;
 

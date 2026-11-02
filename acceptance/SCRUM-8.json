@@ -1,0 +1,35 @@
+{
+  "story": "SCRUM-8",
+  "title": "Mark a chore done or undo",
+  "epic": { "key": "SCRUM-1", "title": "Chore Tracking" },
+  "criteria": [
+    {
+      "id": "AC1",
+      "text": "User Action: Clicks the checkbox on an open chore. Expected System Behavior: The chore moves to \"Done\" with the name struck through and a \"Done\" chip (\"Late\" if it was overdue). The Done count and progress card update.",
+      "verify": "test",
+      "note": "Corrected to Figma's Late chip (team decision). Jira only mentions the Done chip."
+    },
+    {
+      "id": "AC2",
+      "text": "User Action: Clicks the checkbox on a done chore. Expected System Behavior: The chore returns to the open list. The Done count and progress card update.",
+      "verify": "test"
+    },
+    {
+      "id": "AC3",
+      "text": "Error Condition: The change fails to save. The chore returns to its previous state. Message: \"Couldn't update this chore. Please try again.\"",
+      "verify": "test"
+    },
+    {
+      "id": "AC4",
+      "text": "Chore card layout, Done section, and progress card: see \"View the Chore List.\"",
+      "verify": "manual",
+      "note": "A pointer to SCRUM-7, whose criteria test the chore card, the Done section and the progress card."
+    },
+    {
+      "id": "AC5",
+      "text": "Only the housemate a chore is assigned to can mark it done or undo it. Other housemates see no checkbox.",
+      "verify": "test",
+      "note": "Added (team decision: only the assignee can tick a chore). Not in Jira yet."
+    }
+  ]
+}

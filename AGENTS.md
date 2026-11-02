@@ -13,7 +13,7 @@ A shared chore tracker for people who live together (SI 526, Team JAALS: Jennife
 Ankun, Anthony, Louise). People sign up, create or join a **household** with an invite code,
 add chores, see the household's chore list and mark their own chores done.
 
-- **Requirements:** the Jira stories, exported to `JAALS Stories.txt` one folder **above** the repo (not in git). Where they disagree with Figma or the build, the decision is recorded in README "Conflicts to resolve". If you find a new disagreement, raise it with the user rather than picking a side.
+- **Requirements:** the Jira stories at https://jaals.atlassian.net (project SCRUM; readable through the Atlassian MCP, read-only). `JAALS Stories.txt` one folder above the repo is an older export: SCRUM-6, 7 and 8 have changed since. Where stories disagree with Figma or the build, the decision is recorded in README "Conflicts to resolve", and in `acceptance/` an AC whose text was corrected to a team decision carries a `note` until Jira is updated. If you find a new disagreement, raise it with the user rather than picking a side.
 
 - **Mobile web only** for now (designed at 402×874, the iPhone 17 frame). iOS/Android may come later, which is why the API is a plain JSON API.
 - **Light and dark mode follow the device setting.** There is no in-app switch (the `/components` dev page has one).
@@ -177,7 +177,7 @@ A request goes through six layers in order. **Each layer may only use the layers
 
 ## Current state (2026-10-28)
 
-**Done:** Feasibility spikes 1–3 (Vercel + Express + Prisma deploy, Better Auth, teammate deploys) · design tokens and all Figma components · Sprint 2 screens (SCRUM-2 Sign Up, SCRUM-3 Log in/Log out, SCRUM-4 Create a Household, SCRUM-32 Join a Household) + stand-in Forgot password · household API with member names · six-layer server · status codes · unit, component and e2e tests in CI · test dashboard · **chores**: the `Chore` table, `/api/chores`, the chore list ("Home - Chores (All)") and Add chore ("Home - Add Chore (refined)") screens (SCRUM-6, 7, 8) · sign-up, log-in and join messages and rules aligned with SCRUM-2, 3 and 32.
+**Done:** Feasibility spikes 1–3 (Vercel + Express + Prisma deploy, Better Auth, teammate deploys) · design tokens and all Figma components · Sprint 2 screens (SCRUM-2 Sign Up, SCRUM-3 Log in/Log out, SCRUM-4 Create a Household, SCRUM-32 Join a Household) + stand-in Forgot password · household API with member names · six-layer server · status codes · unit, component and e2e tests in CI · test dashboard · **chores**: the `Chore` table, `/api/chores`, the chore list ("Home - Chores (All)") and Add chore ("Home - Add Chore (refined)") screens (SCRUM-6, 7, 8) · sign-up, log-in and join messages and rules aligned with SCRUM-2, 3 and 32 · acceptance files for the six Done stories (SCRUM-2, 3, 6, 7, 8, 32), every AC tagged to tests or marked manual; SCRUM-32 AC3 (the "You joined…" message) has no test yet because the message isn't built.
 
 **Next (MVP, TECH_SPEC §4):**
 1. The team reviews README "Conflicts to resolve" (stories vs. Figma vs. build, Figma design issues, placeholder names). Several rows wait on UX designs: a card without a checkbox, the expanded chore row, toasts ("Chore added.", "Marked done. Undo"), empty/loading/error states.

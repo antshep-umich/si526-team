@@ -1,0 +1,39 @@
+{
+  "story": "SCRUM-32",
+  "title": "Joining a Household UI + Test",
+  "epic": { "key": "SCRUM-9", "title": "Account/Household Setup" },
+  "criteria": [
+    {
+      "id": "AC1",
+      "text": "User Action: Clicks “Join with a code” on the “Your household” screen. Expected System Behavior: The “Join a household” screen opens with one field, Invite code.",
+      "verify": "test"
+    },
+    {
+      "id": "AC2",
+      "text": "The Invite code field ignores letter case and leading or trailing spaces.",
+      "verify": "test"
+    },
+    {
+      "id": "AC3",
+      "text": "User Action: Enters a valid code and clicks “Join.” Expected System Behavior: The user is added to the household, the Chore List opens, and a message shows: “You joined [Household name].”",
+      "verify": "test",
+      "note": "Not met yet: joining and opening the Chore List work, but the “You joined…” message isn't built until a message design exists (README “Conflicts to resolve”, row 9)."
+    },
+    {
+      "id": "AC4",
+      "text": "User Action: Clicks “Back.” Expected System Behavior: Returns to the “Your household” screen.",
+      "verify": "test"
+    },
+    { "id": "AC5", "text": "Error Condition: Invite code is empty. Message: “Enter an invite code.”", "verify": "test" },
+    {
+      "id": "AC6",
+      "text": "Error Condition: Code does not match any household. Message: “We couldn’t find a household with that code. Check with your housemate and try again.”",
+      "verify": "test"
+    },
+    {
+      "id": "AC7",
+      "text": "Error Condition: Server error. Message: “Something went wrong. Please try again.”",
+      "verify": "test"
+    }
+  ]
+}

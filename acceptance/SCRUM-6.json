@@ -1,0 +1,56 @@
+{
+  "story": "SCRUM-6",
+  "title": "Add a chore",
+  "epic": { "key": "SCRUM-1", "title": "Chore Tracking" },
+  "criteria": [
+    {
+      "id": "AC1",
+      "text": "User Action: Clicks \"Add chore\" on the Chore List. Expected System Behavior: The \"Add chore\" screen opens with the household name above the title and four fields: Chore name, Assigned to, Due date, Notes (optional).",
+      "verify": "test"
+    },
+    {
+      "id": "AC2",
+      "text": "User Action: Clicks \"Assigned to.\" Expected System Behavior: A dropdown lists all housemates in the household.",
+      "verify": "test"
+    },
+    {
+      "id": "AC3",
+      "text": "User Action: Clicks \"Due date.\" Expected System Behavior: A date picker opens.",
+      "verify": "test"
+    },
+    {
+      "id": "AC4",
+      "text": "User Action: Fills in the required fields and clicks \"Add chore.\" Expected System Behavior: The chore is saved, the Chore List opens, and the new chore appears in the list for all housemates.",
+      "verify": "test"
+    },
+    {
+      "id": "AC5",
+      "text": "User Action: Clicks \"Cancel.\" Expected System Behavior: Returns to the Chore List without saving.",
+      "verify": "test"
+    },
+    {
+      "id": "AC6",
+      "text": "Error Condition: Chore name is empty. Message: \"Chore name is required.\"",
+      "verify": "test",
+      "note": "Corrected to the app's wording (team decision). Jira still says \"Enter a chore name.\""
+    },
+    {
+      "id": "AC7",
+      "text": "Error Condition: No housemate selected. Message: \"Choose who this chore is assigned to.\"",
+      "verify": "test",
+      "note": "Corrected to the app's wording (team decision). Jira still says \"Choose the housemate responsible for this chore\""
+    },
+    {
+      "id": "AC8",
+      "text": "Error Condition: No due date selected. Message: \"Choose a due date.\"",
+      "verify": "test",
+      "note": "Corrected to the app's wording (team decision). Jira still says \"Pick a due date.\""
+    },
+    {
+      "id": "AC9",
+      "text": "Error Condition: Server error. Message: \"Couldn't save this chore. Please try again.\"",
+      "verify": "test",
+      "note": "Corrected to the app's wording (team decision). Jira still says \"Something went wrong. Please try again.\""
+    }
+  ]
+}

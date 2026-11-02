@@ -173,3 +173,27 @@ describe("HTTP details", () => {
     expect(res.headers.allow).toBe(allow);
   });
 });
+
+describe("acceptance criteria", () => {
+  it("AC4: a chore one housemate adds appears in every housemate's list", { tags: ["SCRUM-6"] }, async () => {
+    await household();
+
+    const { body: added } = await as("ben").post("/api/chores", newChore);
+
+    for (const user of ["ana", "ben"]) {
+      const res = await as(user).get("/api/chores");
+      expect(res.body.chores.map((c: { id: string }) => c.id)).toEqual([added.id]);
+    }
+  });
+
+  it("AC5: only the housemate a chore is assigned to can mark it done or undo it", { tags: ["SCRUM-8"] }, async () => {
+    await household();
+    const { body: added } = await as("ben").post("/api/chores", newChore); // assigned to Ana
+    const complete = `/api/chores/${added.id}/complete`;
+
+    expect((await as("ben").post(complete)).status).toBe(403);
+    expect((await as("ana").post(complete)).status).toBe(200);
+    expect((await as("ben").delete(complete)).status).toBe(403);
+    expect((await as("ana").delete(complete)).status).toBe(200);
+  });
+});

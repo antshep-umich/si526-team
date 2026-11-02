@@ -1,0 +1,61 @@
+{
+  "story": "SCRUM-7",
+  "title": "View a chore list",
+  "epic": { "key": "SCRUM-1", "title": "Chore Tracking" },
+  "criteria": [
+    {
+      "id": "AC1",
+      "text": "User Action: Opens the \"Chores\" tab. Expected System Behavior: The Chore List opens with the household name in the header and the \"All\" filter selected.",
+      "verify": "test"
+    },
+    {
+      "id": "AC2",
+      "text": "The progress card shows \"[X] of [Y] chores done\" with a progress bar and a status label (Status: On track/ Complete!/ {num} Late), or \"No Chores Yet\" when no chores are due.",
+      "verify": "test",
+      "note": "Corrected to Figma's labels (team decision). Jira still says \"On track/ Complete/ {num} late/ N/A\"."
+    },
+    {
+      "id": "AC3",
+      "text": "Each open chore card shows the chore name, the assigned housemate (\"You\" if it is the user), and the due date (e.g., \"due today,\" \"due tomorrow,\" \"due Fri, Oct 9\"), plus a checkbox if the chore is assigned to the user.",
+      "verify": "test",
+      "note": "Corrected (team decision: only the assignee can tick a chore). Jira still says every open card shows a checkbox."
+    },
+    {
+      "id": "AC4",
+      "text": "A chore past its due date is highlighted and shows an \"Overdue\" chip.",
+      "verify": "test"
+    },
+    {
+      "id": "AC5",
+      "text": "User Action: Clicks \"Mine.\" Expected System Behavior: Only chores assigned to the user are shown.",
+      "verify": "test"
+    },
+    {
+      "id": "AC6",
+      "text": "User Action: Clicks \"All.\" Expected System Behavior: All household chores are shown.",
+      "verify": "test"
+    },
+    {
+      "id": "AC7",
+      "text": "Completed chores appear under \"Done ([count])\" below the open chores, with the name struck through and a \"Done\" chip, or a \"Late\" chip if they were completed after the due date.",
+      "verify": "test",
+      "note": "Corrected to Figma's Late chip (team decision). Jira only mentions the Done chip."
+    },
+    {
+      "id": "AC8",
+      "text": "User Action: Clicks \"Done ([count]).\" Expected System Behavior: The section expands or collapses.",
+      "verify": "test"
+    },
+    {
+      "id": "AC9",
+      "text": "User Action: Clicks \"Add chore.\" Expected System Behavior: The \"Add chore\" screen opens.",
+      "verify": "test"
+    },
+    {
+      "id": "AC10",
+      "text": "Error Condition: Chores fail to load. Message: \"Couldn't load chores.\" with a \"Try again\" button.",
+      "verify": "test",
+      "note": "Corrected to the app's wording (team decision). Jira still says \"We couldn't load your chores. Please try again.\""
+    }
+  ]
+}

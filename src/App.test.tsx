@@ -1,12 +1,14 @@
 // Which screen App shows, from the session and the household (src/App.tsx).
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { useSyncExternalStore } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Household } from "./api/households.ts";
 import App from "./App.tsx";
 
 const {
   useSession,
+  signIn,
   signOut,
   getCurrentHousehold,
   createHousehold,
@@ -16,6 +18,7 @@ const {
   createChore,
 } = vi.hoisted(() => ({
   useSession: vi.fn(),
+  signIn: vi.fn(),
   signOut: vi.fn(),
   getCurrentHousehold: vi.fn(),
   createHousehold: vi.fn(),
@@ -25,7 +28,7 @@ const {
   createChore: vi.fn(),
 }));
 vi.mock("./auth.ts", () => ({
-  authClient: { useSession, signOut, signIn: { email: vi.fn() }, signUp: { email: vi.fn() } },
+  authClient: { useSession, signOut, signIn: { email: signIn }, signUp: { email: vi.fn() } },
 }));
 vi.mock("./api/households.ts", () => ({ getCurrentHousehold, createHousehold, joinHousehold }));
 vi.mock("./api/passwordReset.ts", () => ({ resetPassword }));
@@ -43,8 +46,45 @@ const household: Household = {
 const signedIn = { data: { user: { id: "u-ana", name: "Ana Lopez", email: "ana@example.com" } }, isPending: false };
 const signedOut = { data: null, isPending: false };
 
+/**
+ * A session that changes like Better Auth's: signing in or out updates every
+ * component using it. The stand-in signIn and signOut switch it.
+ */
+function liveSession(initial: typeof signedIn | typeof signedOut) {
+  let current: typeof signedIn | typeof signedOut = initial;
+  const listeners = new Set<() => void>();
+  const set = (next: typeof current) => {
+    current = next;
+    for (const listener of listeners) listener();
+  };
+  useSession.mockImplementation(() =>
+    useSyncExternalStore(
+      (listener) => {
+        listeners.add(listener);
+        return () => listeners.delete(listener);
+      },
+      () => current,
+    ),
+  );
+  signIn.mockImplementation(async () => {
+    set(signedIn);
+    return { data: {}, error: null };
+  });
+  signOut.mockImplementation(async () => set(signedOut));
+}
+
 beforeEach(() => {
-  for (const mock of [useSession, signOut, getCurrentHousehold, createHousehold, joinHousehold, resetPassword]) {
+  for (const mock of [
+    useSession,
+    signIn,
+    signOut,
+    getCurrentHousehold,
+    createHousehold,
+    joinHousehold,
+    resetPassword,
+    listChores,
+    createChore,
+  ]) {
     mock.mockReset();
   }
   listChores.mockResolvedValue({ ok: true, chores: [] });
@@ -158,27 +198,6 @@ describe("App when signed in", () => {
     expect(await screen.findByRole("heading", { name: "Maple St House" })).toBeInTheDocument();
   });
 
-  it("opens Add chore from the chore list and comes back after saving or cancelling", async () => {
-    getCurrentHousehold.mockResolvedValue({ ok: true, household });
-    createChore.mockResolvedValue({ ok: true, chore: {} });
-    render(<App />);
-
-    await userEvent.click(await screen.findByRole("button", { name: "Add chore" }));
-    expect(screen.getByRole("heading", { name: "Add chore" })).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
-    expect(await screen.findByRole("heading", { name: "Maple St House" })).toBeInTheDocument();
-
-    await userEvent.click(screen.getByRole("button", { name: "Add chore" }));
-    await userEvent.type(screen.getByLabelText("Chore name"), "Mop kitchen");
-    await userEvent.click(screen.getByRole("combobox", { name: "Assigned to" }));
-    await userEvent.click(screen.getByRole("option", { name: "You" }));
-    fireEvent.change(screen.getByLabelText("Due date"), { target: { value: "2999-01-01" } });
-    await userEvent.click(screen.getByRole("button", { name: "Add chore" }));
-
-    expect(createChore).toHaveBeenCalledTimes(1);
-    expect(await screen.findByRole("heading", { name: "Maple St House" })).toBeInTheDocument();
-  });
-
   it("forgets the Mine filter on log out", async () => {
     getCurrentHousehold.mockResolvedValue({ ok: true, household });
     render(<App />);
@@ -190,14 +209,168 @@ describe("App when signed in", () => {
 
     expect(sessionStorage.getItem("jaals.choreFilter")).toBeNull();
   });
+});
 
-  it("logs out from the Home menu", async () => {
+// Acceptance criteria that run across screens, so they're proved here. The story's
+// own screen tests (SignUp, LogIn, Home, AddChore, …) prove the rest.
+describe("App acceptance criteria", () => {
+  const newChore = {
+    id: "c1",
+    name: "Mop kitchen",
+    notes: null,
+    dueDate: "2999-01-01",
+    assignee: { userId: "u-ana", name: "Ana Lopez" },
+    createdBy: { userId: "u-ana", name: "Ana Lopez" },
+    createdAt: "2026-10-29T16:00:00.000Z",
+    completedAt: null,
+    completedBy: null,
+  };
+
+  async function openChoreList() {
+    useSession.mockReturnValue(signedIn);
     getCurrentHousehold.mockResolvedValue({ ok: true, household });
     render(<App />);
+    await screen.findByRole("heading", { name: "Maple St House" });
+  }
 
-    await userEvent.click(await screen.findByRole("button", { name: "Menu" }));
-    await userEvent.click(screen.getByRole("menuitem", { name: "Log out" }));
+  async function openYourHousehold() {
+    useSession.mockReturnValue(signedIn);
+    getCurrentHousehold.mockResolvedValue({ ok: false, code: "NO_HOUSEHOLD" });
+    render(<App />);
+    await screen.findByRole("heading", { name: "Your household" });
+  }
 
-    expect(signOut).toHaveBeenCalledTimes(1);
+  describe("Sign up", { tags: ["SCRUM-2"] }, () => {
+    it('AC5: "Already have an account? Log in" opens the Log in screen', async () => {
+      useSession.mockReturnValue(signedOut);
+      render(<App />);
+      await userEvent.click(screen.getByRole("button", { name: "New here? Create an account" }));
+
+      await userEvent.click(screen.getByRole("button", { name: "Already have an account? Log in" }));
+
+      expect(screen.getByRole("heading", { name: "Log in" })).toBeInTheDocument();
+    });
+  });
+
+  describe("Log in and log out", { tags: ["SCRUM-3"] }, () => {
+    async function logIn() {
+      liveSession(signedOut);
+      render(<App />);
+      await userEvent.type(screen.getByLabelText("Email"), "ana@example.com");
+      await userEvent.type(screen.getByLabelText("Password"), "correct-horse-1");
+      await userEvent.click(screen.getByRole("button", { name: "Log in" }));
+    }
+
+    it("AC2: logging in opens the Chore List when the user belongs to a household", async () => {
+      getCurrentHousehold.mockResolvedValue({ ok: true, household });
+
+      await logIn();
+
+      expect(await screen.findByRole("heading", { name: "Maple St House" })).toBeInTheDocument();
+      expect(screen.getByRole("radiogroup", { name: "Show chores" })).toBeInTheDocument();
+    });
+
+    it('AC2: logging in opens "Your household" when the user has none', async () => {
+      getCurrentHousehold.mockResolvedValue({ ok: false, code: "NO_HOUSEHOLD" });
+
+      await logIn();
+
+      expect(await screen.findByRole("heading", { name: "Your household" })).toBeInTheDocument();
+    });
+
+    it('AC4: "Forgot your password?" opens the password reset flow', async () => {
+      useSession.mockReturnValue(signedOut);
+      render(<App />);
+
+      await userEvent.click(screen.getByRole("button", { name: "Forgot your password?" }));
+
+      expect(screen.getByRole("heading", { name: "Reset password" })).toBeInTheDocument();
+    });
+
+    it('AC5: "Log out" in the header menu ends the session and opens the Log in screen', async () => {
+      liveSession(signedIn);
+      getCurrentHousehold.mockResolvedValue({ ok: true, household });
+      render(<App />);
+
+      await userEvent.click(await screen.findByRole("button", { name: "Menu" }));
+      await userEvent.click(screen.getByRole("menuitem", { name: "Log out" }));
+
+      expect(signOut).toHaveBeenCalledTimes(1);
+      expect(await screen.findByRole("heading", { name: "Log in" })).toBeInTheDocument();
+    });
+  });
+
+  describe("Joining a household", { tags: ["SCRUM-32"] }, () => {
+    it('AC1: "Join with a code" opens "Join a household" with one field, Invite code', async () => {
+      await openYourHousehold();
+
+      await userEvent.click(screen.getByRole("button", { name: "Join with a code" }));
+
+      expect(screen.getByRole("heading", { name: "Join a household" })).toBeInTheDocument();
+      expect(screen.getAllByRole("textbox")).toEqual([screen.getByLabelText("Invite code")]);
+    });
+
+    it('AC4: "Back" returns to "Your household"', async () => {
+      await openYourHousehold();
+      await userEvent.click(screen.getByRole("button", { name: "Join with a code" }));
+
+      await userEvent.click(screen.getByRole("button", { name: "Back" }));
+
+      expect(screen.getByRole("heading", { name: "Your household" })).toBeInTheDocument();
+    });
+  });
+
+  describe("Add a chore", { tags: ["SCRUM-6"] }, () => {
+    it('AC1: "Add chore" opens the form with the household name above the title and the four fields', async () => {
+      await openChoreList();
+
+      await userEvent.click(screen.getByRole("button", { name: "Add chore" }));
+
+      const title = screen.getByRole("heading", { name: "Add chore" });
+      const householdName = screen.getByText("Maple St House");
+      expect(householdName.compareDocumentPosition(title)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+      expect(screen.getByLabelText("Chore name")).toBeInTheDocument();
+      expect(screen.getByRole("combobox", { name: "Assigned to" })).toBeInTheDocument();
+      expect(screen.getByLabelText("Due date")).toBeInTheDocument();
+      expect(screen.getByLabelText("Notes (optional)")).toBeInTheDocument();
+    });
+
+    it("AC4: saving opens the Chore List with the new chore in it", async () => {
+      listChores.mockResolvedValueOnce({ ok: true, chores: [] }).mockResolvedValue({ ok: true, chores: [newChore] });
+      createChore.mockResolvedValue({ ok: true, chore: newChore });
+      await openChoreList();
+      await userEvent.click(screen.getByRole("button", { name: "Add chore" }));
+
+      await userEvent.type(screen.getByLabelText("Chore name"), "Mop kitchen");
+      await userEvent.click(screen.getByRole("combobox", { name: "Assigned to" }));
+      await userEvent.click(screen.getByRole("option", { name: "You" }));
+      fireEvent.change(screen.getByLabelText("Due date"), { target: { value: "2999-01-01" } });
+      await userEvent.click(screen.getByRole("button", { name: "Add chore" }));
+
+      expect(createChore).toHaveBeenCalledTimes(1);
+      expect(await screen.findByRole("heading", { name: "Maple St House" })).toBeInTheDocument();
+      expect(await screen.findByText("Mop kitchen")).toBeInTheDocument();
+    });
+
+    it('AC5: "Cancel" returns to the Chore List without saving', async () => {
+      await openChoreList();
+      await userEvent.click(screen.getByRole("button", { name: "Add chore" }));
+      await userEvent.type(screen.getByLabelText("Chore name"), "Mop kitchen");
+
+      await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+      expect(await screen.findByRole("heading", { name: "Maple St House" })).toBeInTheDocument();
+      expect(createChore).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("View a chore list", { tags: ["SCRUM-7"] }, () => {
+    it('AC9: "Add chore" opens the "Add chore" screen', async () => {
+      await openChoreList();
+
+      await userEvent.click(screen.getByRole("button", { name: "Add chore" }));
+
+      expect(screen.getByRole("heading", { name: "Add chore" })).toBeInTheDocument();
+    });
   });
 });
