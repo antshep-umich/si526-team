@@ -8,6 +8,7 @@ import {
 import {
   createChore as insertChore,
   findChoreInHousehold,
+  findChoresAssignedTo,
   findChoresForHousehold,
   setChoreCompletion,
   type ChoreWithPeople,
@@ -56,6 +57,14 @@ export function listChores(membership: Membership, since?: string): Promise<Chor
   }
   const from = since ? new Date(utcDate(since).getTime() - DAY_MS) : utcDaysAgo(8);
   return findChoresForHousehold(membership.householdId, from);
+}
+
+/**
+ * The caller's chore history: every chore in their household assigned to them,
+ * done or not, latest due first.
+ */
+export function listMyChoreHistory(membership: Membership): Promise<ChoreWithPeople[]> {
+  return findChoresAssignedTo(membership.householdId, membership.userId);
 }
 
 export function getChore(membership: Membership, choreId: string): Promise<ChoreWithPeople> {

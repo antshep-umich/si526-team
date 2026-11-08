@@ -114,6 +114,28 @@ describe("GET /api/chores", () => {
   });
 });
 
+describe("GET /api/chores/history", () => {
+  it("lists only the caller's chores, latest due first", async () => {
+    await household();
+    await as("ben").post("/api/chores", { ...newChore, name: "Sooner", dueDate: "2026-10-30" });
+    await as("ben").post("/api/chores", { ...newChore, name: "Later", dueDate: "2026-11-02" });
+    await as("ana").post("/api/chores", { ...newChore, name: "Ben's", assigneeId: "ben" });
+
+    const res = await as("ana").get("/api/chores/history");
+
+    expect(res.status).toBe(200);
+    expect(res.body.chores.map((c: { name: string }) => c.name)).toEqual(["Later", "Sooner"]);
+  });
+
+  it("answers 405 for other methods, 404 without a household and 401 signed out", async () => {
+    await household();
+
+    expect((await as("ana").post("/api/chores/history")).status).toBe(405);
+    expect((await as("zed").get("/api/chores/history")).status).toBe(404);
+    expect((await request(app).get("/api/chores/history")).status).toBe(401);
+  });
+});
+
 describe("GET /api/chores/:id", () => {
   it("returns one chore, or 404 for another household's", async () => {
     await household();

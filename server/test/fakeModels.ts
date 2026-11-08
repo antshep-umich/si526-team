@@ -147,6 +147,12 @@ export const findChoresForHousehold: typeof choresModel.findChoresForHousehold =
     .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime() || a.createdAt.getTime() - b.createdAt.getTime())
     .map(withPeople);
 
+export const findChoresAssignedTo: typeof choresModel.findChoresAssignedTo = async (householdId, assigneeId) =>
+  db.chores
+    .filter((c) => c.householdId === householdId && c.assigneeId === assigneeId)
+    .sort((a, b) => b.dueDate.getTime() - a.dueDate.getTime() || b.createdAt.getTime() - a.createdAt.getTime())
+    .map(withPeople);
+
 export const findChoreInHousehold: typeof choresModel.findChoreInHousehold = async (householdId, choreId) => {
   const row = db.chores.find((c) => c.id === choreId && c.householdId === householdId);
   return row ? withPeople(row) : null;

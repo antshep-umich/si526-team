@@ -34,6 +34,17 @@ export async function listChores(since: string): Promise<ChoreListResult> {
   return answer.ok ? { ok: true, chores: (answer.body as ChoreListResponse).chores } : answer;
 }
 
+/** GET /api/chores/history: every chore assigned to the signed-in person, latest due first. */
+export async function listChoreHistory(): Promise<ChoreListResult> {
+  const answer = await call("/api/chores/history");
+  return answer.ok ? { ok: true, chores: (answer.body as ChoreListResponse).chores } : answer;
+}
+
+/** GET /api/chores/:id. CHORE_NOT_FOUND if it was deleted or isn't in the household. */
+export function getChore(id: string): Promise<ChoreResult> {
+  return choreCall(`/api/chores/${encodeURIComponent(id)}`, {});
+}
+
 /** POST /api/chores */
 export function createChore(chore: NewChoreRequest): Promise<ChoreResult> {
   return choreCall("/api/chores", {

@@ -5,7 +5,7 @@ save you from exploring the codebase. Deeper detail lives in `TECH_SPEC.md` (§ 
 `TECH_DEBT.md` and `README.md`. **If you change anything this file describes, update it in the
 same commit.**
 
-_Last updated: 2026-10-28 (chores: SCRUM-6, 7 and 8; SCRUM-2, 3 and 32 messages aligned with the stories), on `Sprint2_Dev`._
+_Last updated: 2026-11-05 (SCRUM-44 My chore history), on `Sprint3_Dev_chore-history`._
 
 ## The project
 
@@ -66,8 +66,9 @@ shared/                 imported by both server and frontend
   httpStatus.ts         HttpStatus.CREATED etc. Use these, never bare numbers
 src/                    React app
   App.tsx               which screen to show (session + household state machine)
-  screens/              one file per Figma screen, plus Screen.tsx (shared layout); Home.tsx is the chore list
+  screens/              one file per Figma screen, plus Screen.tsx (shared layout); Home.tsx is the chore list, ChoreHistory.tsx the user's history
   chores.ts, dates.ts   chore status/sorting/weekly progress, and "YYYY-MM-DD" dates in the phone's time zone
+  history.ts            My chore history's filters, sorts and card wording (SCRUM-44)
   components/           design-system components (from Figma), each with a .module.css
   styles/               tokens.css (colors, type), fonts.css, base.css
   api/                  fetch helpers that never throw: return { ok: true, … } | { ok: false, code }
@@ -131,7 +132,7 @@ A request goes through six layers in order. **Each layer may only use the layers
 
 ## Frontend (TECH_SPEC §3, README "Design system")
 
-- **No router.** `src/App.tsx` picks the screen: signed out → Log in / Sign up / Forgot password; signed in without a household → Your household / Create / Join; just created → Household Created!; otherwise → Home (the chore list), which opens Add chore.
+- **No router.** `src/App.tsx` picks the screen: signed out → Log in / Sign up / Forgot password; signed in without a household → Your household / Create / Join; just created → Household Created!; otherwise → Home (the chore list), which opens Add chore, and My chore history from its menu.
 - **Copy comes from the stories.** Error and empty-state messages are the Jira stories' exact words (auth ones in `src/screens/authErrors.ts` `AUTH_MESSAGES`). The current user is always **"You"** (not "Me"). Forms show every error at once.
 - **Screens** use `Screen` (`src/screens/Screen.tsx`): 402px max width, 24px sides, 60px top, 40px between items (`tight` = 24px). `Actions` groups a full-width button with the link under it. Errors go on the field they belong to (`TextField error=…`); others go in `FormError`.
 - **API helpers** (`src/api/`) never throw: `{ ok: true, household } | { ok: false, code }`. `NETWORK_ERROR` when the server can't be reached. Screens map codes to their own wording.
@@ -175,9 +176,9 @@ A request goes through six layers in order. **Each layer may only use the layers
 - The team develops on Windows: PowerShell and Git Bash. CRLF warnings from git are harmless.
 - Some contributors have two GitHub accounts. A 403 on push usually means the wrong one is active (`gh auth switch`, then `gh auth setup-git`).
 
-## Current state (2026-10-28)
+## Current state (2026-11-05)
 
-**Done:** Feasibility spikes 1–3 (Vercel + Express + Prisma deploy, Better Auth, teammate deploys) · design tokens and all Figma components · Sprint 2 screens (SCRUM-2 Sign Up, SCRUM-3 Log in/Log out, SCRUM-4 Create a Household, SCRUM-32 Join a Household) + stand-in Forgot password · household API with member names · six-layer server · status codes · unit, component and e2e tests in CI · test dashboard · **chores**: the `Chore` table, `/api/chores`, the chore list ("Home - Chores (All)") and Add chore ("Home - Add Chore (refined)") screens (SCRUM-6, 7, 8) · sign-up, log-in and join messages and rules aligned with SCRUM-2, 3 and 32 · acceptance files for the six Done stories (SCRUM-2, 3, 6, 7, 8, 32), every AC tagged to tests or marked manual; SCRUM-32 AC3 (the "You joined…" message) has no test yet because the message isn't built.
+**Done:** Feasibility spikes 1–3 (Vercel + Express + Prisma deploy, Better Auth, teammate deploys) · design tokens and all Figma components · Sprint 2 screens (SCRUM-2 Sign Up, SCRUM-3 Log in/Log out, SCRUM-4 Create a Household, SCRUM-32 Join a Household) + stand-in Forgot password · household API with member names · six-layer server · status codes · unit, component and e2e tests in CI · test dashboard · **chores**: the `Chore` table, `/api/chores`, the chore list ("Home - Chores (All)") and Add chore ("Home - Add Chore (refined)") screens (SCRUM-6, 7, 8) · sign-up, log-in and join messages and rules aligned with SCRUM-2, 3 and 32 · acceptance files for the six Done stories (SCRUM-2, 3, 6, 7, 8, 32), every AC tagged to tests or marked manual; SCRUM-32 AC3 (the "You joined…" message) has no test yet because the message isn't built · **Sprint 3, SCRUM-44 My chore history** (on `Sprint3_Dev_chore-history`): `GET /api/chores/history`, the history screen from the Home menu with filter, sort and an in-place expanded chore; no Figma design yet (README Conflicts rows 19–23).
 
 **Next (MVP, TECH_SPEC §4):**
 1. The team reviews README "Conflicts to resolve" (stories vs. Figma vs. build, Figma design issues, placeholder names). Several rows wait on UX designs: a card without a checkbox, the expanded chore row, toasts ("Chore added.", "Marked done. Undo"), empty/loading/error states.

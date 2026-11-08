@@ -29,6 +29,18 @@ export function findChoresForHousehold(householdId: string, since: Date): Promis
   });
 }
 
+/**
+ * Every chore in the household assigned to this person, done or not, latest due first
+ * (personal chore history). The screen filters and re-sorts it.
+ */
+export function findChoresAssignedTo(householdId: string, assigneeId: string): Promise<ChoreWithPeople[]> {
+  return getPrisma().chore.findMany({
+    where: { householdId, assigneeId },
+    include: people,
+    orderBy: [{ dueDate: "desc" }, { createdAt: "desc" }],
+  });
+}
+
 /** One chore, only if it belongs to this household. */
 export function findChoreInHousehold(householdId: string, choreId: string): Promise<ChoreWithPeople | null> {
   return getPrisma().chore.findFirst({ where: { id: choreId, householdId }, include: people });

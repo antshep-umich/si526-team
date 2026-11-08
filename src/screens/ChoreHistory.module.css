@@ -1,0 +1,91 @@
+/*
+ * Not in Figma yet (placeholder): My chore history (SCRUM-44). Spacing follows
+ * "Home - Chores (All)" (56px top, 24px sides, 26px between items); the header
+ * follows "Home - Chore Details" (back, household name as an overline, title).
+ */
+.page {
+  width: 100%;
+  max-width: 402px;
+  margin: 0 auto;
+  padding: 56px 24px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.back {
+  margin-bottom: 8px;
+}
+
+.overline {
+  font: var(--type-overline);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.title {
+  font: var(--type-screen-title);
+  color: var(--color-text-default);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.panel {
+  padding: 12px 16px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 14px;
+  background: var(--color-surface-card);
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+}
+
+.row dt {
+  font: var(--type-field-label);
+  color: var(--color-text-default);
+}
+
+.row dd {
+  margin: 0;
+  font: var(--type-small);
+  color: var(--color-text-muted);
+  overflow-wrap: break-word;
+}
+
+.message {
+  font: var(--type-body);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.failed {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}

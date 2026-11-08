@@ -1,7 +1,7 @@
 // Chore rules (SCRUM-6, 7, 8), with in-memory models and a fixed clock.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { db } from "../test/fakeModels.js";
-import { addChore, completeChore, getChore, listChores, undoChore } from "./chores.js";
+import { addChore, completeChore, getChore, listChores, listMyChoreHistory, undoChore } from "./chores.js";
 import { ServiceError } from "./errors.js";
 import { createHousehold, findMembership, joinHousehold } from "./households.js";
 
@@ -179,5 +179,29 @@ describe("completeChore and undoChore (SCRUM-8)", () => {
 
     expect(await codeOf(() => completeChore(ana, id))).toBe("CHORE_NOT_FOUND");
     expect(await codeOf(() => getChore(ana, id))).toBe("CHORE_NOT_FOUND");
+  });
+});
+
+describe("listMyChoreHistory (personal chore history)", () => {
+  it("lists every chore assigned to the caller, done or not and however old, latest due first", async () => {
+    const { ana, ben } = await setUp();
+    const old = await addChore(ben, chore({ name: "Old", dueDate: "2026-10-28" }));
+    await completeChore(ana, old.id);
+    await addChore(ben, chore({ name: "Later", dueDate: "2026-11-20" }));
+    await addChore(ana, chore({ name: "Ben's", assigneeId: "ben" }));
+
+    // A month on, the old chore is still in Ana's history.
+    vi.setSystemTime(new Date("2026-12-15T12:00:00Z"));
+    const history = await listMyChoreHistory(ana);
+
+    expect(history.map((c) => c.name)).toEqual(["Later", "Old"]);
+    expect(history[1]!.completedById).toBe("ana");
+  });
+
+  it("never includes another household's chores", async () => {
+    const { ana, cy } = await setUp();
+    await addChore(ana, chore());
+
+    expect(await listMyChoreHistory(cy)).toEqual([]);
   });
 });

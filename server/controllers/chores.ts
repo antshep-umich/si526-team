@@ -7,6 +7,7 @@ import {
   completeChore,
   getChore,
   listChores,
+  listMyChoreHistory,
   undoChore,
   type ChoreWithPeople,
 } from "../services/chores.js";
@@ -43,6 +44,13 @@ function param(value: string | string[] | undefined): string {
 export const list: RequestHandler = async (req, res) => {
   const since = typeof req.query.since === "string" ? req.query.since : undefined;
   const chores = await listChores(currentMembership(res), since);
+  const body: ChoreListResponse = { chores: chores.map(toChoreResponse) };
+  res.status(HttpStatus.OK).json(body);
+};
+
+/** GET /api/chores/history: 200 with every chore assigned to the caller, latest due first. */
+export const history: RequestHandler = async (_req, res) => {
+  const chores = await listMyChoreHistory(currentMembership(res));
   const body: ChoreListResponse = { chores: chores.map(toChoreResponse) };
   res.status(HttpStatus.OK).json(body);
 };

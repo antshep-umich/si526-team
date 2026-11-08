@@ -1,0 +1,36 @@
+{
+  "story": "SCRUM-44",
+  "title": "View user chore history",
+  "criteria": [
+    {
+      "id": "AC1",
+      "text": "User Action: User navigates to their personal chore history. Expected System Behavior: Displays a list of chores assigned to the user, including chore names, creation dates, due dates, completion statuses, and completion dates when applicable.",
+      "verify": "test"
+    },
+    {
+      "id": "AC2",
+      "text": "User Action: User selects a specific chore from their history. Expected System Behavior: Displays additional details about the chore.",
+      "verify": "test"
+    },
+    {
+      "id": "AC3",
+      "text": "User Action: User filters or sorts their chore history by date or completion status. Expected System Behavior: The system updates the displayed list to match the selected filters.",
+      "verify": "test"
+    },
+    {
+      "id": "AC4",
+      "text": "Error Condition: The user has no chore history. Expected message: \"No chore history.\"",
+      "verify": "test"
+    },
+    {
+      "id": "AC5",
+      "text": "Error Condition: The chore history fails to load. Expected message: The system displays an error message and provides an option to retry loading the history.",
+      "verify": "test"
+    },
+    {
+      "id": "AC6",
+      "text": "Error Condition: A chore has been deleted or is no longer available. Expected message: \"Chore no longer available.\"",
+      "verify": "test"
+    }
+  ]
+}
