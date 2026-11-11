@@ -66,3 +66,27 @@ export function isIsoDate(value: unknown): value is string {
   const date = new Date(`${value}T00:00:00Z`);
   return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
 }
+
+/** Types of events that can appear in a chore's history (SCRUM-45). */
+export type ChoreHistoryEventType =
+  | "created"
+  | "completed"
+  | "reopened"
+  | "due_date_changed";
+
+/** One event in a chore's history. */
+export interface ChoreHistoryEvent {
+  id: string;
+  eventType: ChoreHistoryEventType;
+  /** "YYYY-MM-DD", or null if no due date applies. */
+  dueDate: string | null;
+  actor: ChorePerson | null;
+  /** ISO 8601 timestamp. */
+  createdAt: string;
+}
+
+/** Body of GET /api/chores/:id/history. */
+export interface ChoreHistoryResponse {
+  chore: ChoreResponse;
+  history: ChoreHistoryEvent[];
+}

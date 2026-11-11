@@ -7,7 +7,10 @@ import {
 } from "../../shared/chores.js";
 import {
   createChore as insertChore,
+  createChoreHistoryEvent,
+  findChoreHistory,
   findChoreInHousehold,
+  findChoresAssignedTo,
   findChoresForHousehold,
   setChoreCompletion,
   type ChoreWithPeople,
@@ -58,8 +61,27 @@ export function listChores(membership: Membership, since?: string): Promise<Chor
   return findChoresForHousehold(membership.householdId, from);
 }
 
+/**
+ * The caller's chore history: every chore in their household assigned to them,
+ * done or not, latest due first.
+ */
+export function listMyChoreHistory(membership: Membership): Promise<ChoreWithPeople[]> {
+  return findChoresAssignedTo(membership.householdId, membership.userId);
+}
+
 export function getChore(membership: Membership, choreId: string): Promise<ChoreWithPeople> {
   return findOwnChore(membership, choreId);
+}
+
+/** Gets the history of one chore within the caller's household (SCRUM-45). */
+export async function getChoreHistory(membership: Membership, choreId: string) {
+  const chore = await findOwnChore(membership, choreId);
+  const history = await findChoreHistory(chore.id);
+
+  return {
+    chore,
+    history,
+  };
 }
 
 /**
@@ -97,7 +119,7 @@ export async function addChore(
     throw new ServiceError("ASSIGNEE_NOT_IN_HOUSEHOLD", "That person isn't in your household.");
   }
 
-  return insertChore({
+  const chore = await insertChore({
     householdId: membership.householdId,
     name,
     notes,
@@ -105,6 +127,15 @@ export async function addChore(
     dueDate,
     createdById: membership.userId,
   });
+
+  await createChoreHistoryEvent({
+    choreId: chore.id,
+    eventType: "created",
+    dueDate,
+    actorId: membership.userId,
+  });
+
+  return chore;
 }
 
 /** Only the assignee can mark a chore done or undo it (SCRUM-8). */
@@ -119,7 +150,22 @@ export async function completeChore(membership: Membership, choreId: string): Pr
   const chore = await findOwnChore(membership, choreId);
   assertAssignee(membership, chore);
   if (chore.completedAt) return chore;
-  return setChoreCompletion(chore.id, { completedAt: new Date(), completedById: membership.userId });
+
+  const completedAt = new Date();
+
+  const updatedChore = await setChoreCompletion(chore.id, {
+    completedAt,
+    completedById: membership.userId,
+  });
+
+  await createChoreHistoryEvent({
+    choreId: chore.id,
+    eventType: "completed",
+    dueDate: chore.dueDate,
+    actorId: membership.userId,
+  });
+
+  return updatedChore;
 }
 
 /** Undoes "done": the chore goes back to To do, or Overdue if its due date has passed. */
@@ -127,5 +173,18 @@ export async function undoChore(membership: Membership, choreId: string): Promis
   const chore = await findOwnChore(membership, choreId);
   assertAssignee(membership, chore);
   if (!chore.completedAt) return chore;
-  return setChoreCompletion(chore.id, { completedAt: null, completedById: null });
+
+  const updatedChore = await setChoreCompletion(chore.id, {
+    completedAt: null,
+    completedById: null,
+  });
+
+  await createChoreHistoryEvent({
+    choreId: chore.id,
+    eventType: "reopened",
+    dueDate: chore.dueDate,
+    actorId: membership.userId,
+  });
+
+  return updatedChore;
 }

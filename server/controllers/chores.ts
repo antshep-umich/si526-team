@@ -6,7 +6,9 @@ import {
   addChore,
   completeChore,
   getChore,
+  getChoreHistory,
   listChores,
+  listMyChoreHistory,
   undoChore,
   type ChoreWithPeople,
 } from "../services/chores.js";
@@ -47,6 +49,13 @@ export const list: RequestHandler = async (req, res) => {
   res.status(HttpStatus.OK).json(body);
 };
 
+/** GET /api/chores/history: 200 with every chore assigned to the caller, latest due first. */
+export const history: RequestHandler = async (_req, res) => {
+  const chores = await listMyChoreHistory(currentMembership(res));
+  const body: ChoreListResponse = { chores: chores.map(toChoreResponse) };
+  res.status(HttpStatus.OK).json(body);
+};
+
 /** POST /api/chores { name, assigneeId, dueDate, notes? }: 201 with the chore and its Location. */
 export const create: RequestHandler = async (req, res) => {
   const chore = await addChore(currentMembership(res), {
@@ -62,6 +71,22 @@ export const create: RequestHandler = async (req, res) => {
 export const show: RequestHandler = async (req, res) => {
   const chore = await getChore(currentMembership(res), param(req.params.id));
   res.status(HttpStatus.OK).json(toChoreResponse(chore));
+};
+
+/** GET /api/chores/:id/history: 200 with the chore and its history (SCRUM-45). */
+export const singleChoreHistory: RequestHandler = async (req, res) => {
+  const result = await getChoreHistory(currentMembership(res), param(req.params.id));
+
+  res.status(HttpStatus.OK).json({
+    chore: toChoreResponse(result.chore),
+    history: result.history.map((event) => ({
+      id: event.id,
+      eventType: event.eventType,
+      dueDate: event.dueDate ? event.dueDate.toISOString().slice(0, 10) : null,
+      actor: toPerson(event.actor),
+      createdAt: event.createdAt.toISOString(),
+    })),
+  });
 };
 
 /** POST /api/chores/:id/complete: 200 with the chore, now done (assignee only). */

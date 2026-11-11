@@ -1,6 +1,12 @@
 // The chore model's Prisma queries, against a stub Prisma client.
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createChore, findChoreInHousehold, findChoresForHousehold, setChoreCompletion } from "./chores.js";
+import {
+  createChore,
+  findChoreInHousehold,
+  findChoresAssignedTo,
+  findChoresForHousehold,
+  setChoreCompletion,
+} from "./chores.js";
 
 const { prisma } = vi.hoisted(() => ({
   prisma: { chore: { findMany: vi.fn(), findFirst: vi.fn(), create: vi.fn(), update: vi.fn() } },
@@ -30,6 +36,16 @@ describe("chores model", () => {
       },
       include: people,
       orderBy: [{ dueDate: "asc" }, { createdAt: "asc" }],
+    });
+  });
+
+  it("lists every chore assigned to a person in a household, latest due first", async () => {
+    await findChoresAssignedTo("h1", "ana");
+
+    expect(prisma.chore.findMany).toHaveBeenCalledWith({
+      where: { householdId: "h1", assigneeId: "ana" },
+      include: people,
+      orderBy: [{ dueDate: "desc" }, { createdAt: "desc" }],
     });
   });
 

@@ -1,0 +1,42 @@
+
+{
+  "story": "SCRUM-45",
+  "title": "View Single Chore History for Household",
+  "criteria": [
+    {
+      "id": "AC1",
+      "text": "User Action: The user navigates to the household's chore list. Expected System Behavior: Displays the household's available chores.",
+      "verify": "test"
+    },
+    {
+      "id": "AC2",
+      "text": "User Action: The user selects a specific chore. Expected System Behavior: Displays the selected chore's history, including its creation date, due dates, completion dates, completion statuses, and the housemate responsible for each completion when available.",
+      "verify": "test"
+    },
+    {
+      "id": "AC3",
+      "text": "User Action: The user reviews previous completions of the selected chore. Expected System Behavior: Displays completion records in chronological order, with the most recent record shown first.",
+      "verify": "test"
+    },
+    {
+      "id": "AC4",
+      "text": "Error Condition: The user attempts to view a chore from a household they do not belong to. Expected message: “You are not apart of this household.”",
+      "verify": "test"
+    },
+    {
+      "id": "AC5",
+      "text": "Error Condition: The user has no chore history. Expected message: “No chore history.”",
+      "verify": "test"
+    },
+    {
+      "id": "AC6",
+      "text": "Error Condition: The chore history fails to load. Expected System Behavior: Displays an error message and provides an option to retry loading the history.",
+      "verify": "test"
+    },
+    {
+      "id": "AC7",
+      "text": "Error Condition: A chore has been deleted or is no longer available. Expected message: “Chore no longer available.”",
+      "verify": "test"
+    }
+  ]
+}

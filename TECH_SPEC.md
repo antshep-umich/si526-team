@@ -235,6 +235,7 @@ Every route except `/api/auth/*` and `/api/health` requires a session. **Authori
 | POST | `/api/households/current/invite-code` | regenerate the invite code (owner only) |
 | GET | `/api/chores?since=YYYY-MM-DD` | the household's chores: every open one, plus those done or due since `since` (the app sends the Monday of this week). Without `since`, the last 8 days |
 | POST | `/api/chores` | add a chore: `{ name, assigneeId, dueDate, notes? }` |
+| GET | `/api/chores/history` | the caller's chore history (SCRUM-44): every chore in the household assigned to them, done or not and however old, latest due first. The app filters and sorts it |
 | GET | `/api/chores/:id` | one chore |
 | POST | `/api/chores/:id/complete` | mark it done (assignee only; repeating it changes nothing) |
 | DELETE | `/api/chores/:id/complete` | undo it (assignee only) |
@@ -264,7 +265,7 @@ Named in `shared/httpStatus.ts` (`HttpStatus.CREATED` rather than `201`) and use
 | `POST /api/households/join` | **201 Created** with `Location` when it adds the user; **200 OK** when they were already in that household (a repeat tap) |
 | `GET /api/households/current`, `POST …/invite-code`, `GET /api/health` | **200 OK** |
 | `POST /api/chores` | **201 Created**, with `Location: /api/chores/<id>` |
-| `GET /api/chores`, `GET /api/chores/:id`, `POST` and `DELETE /api/chores/:id/complete` | **200 OK**, with the chore (or `{ chores }`) |
+| `GET /api/chores`, `GET /api/chores/history`, `GET /api/chores/:id`, `POST` and `DELETE /api/chores/:id/complete` | **200 OK**, with the chore (or `{ chores }`) |
 | `POST /api/password-reset` | **204 No Content** |
 
 **Errors** (the same on every endpoint)

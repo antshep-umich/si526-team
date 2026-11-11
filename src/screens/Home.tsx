@@ -19,15 +19,18 @@ import {
 } from "../chores.ts";
 import { startOfWeek, today as localToday } from "../dates.ts";
 import styles from "./Home.module.css";
+import SingleChoreHistory from "./SingleChoreHistory.tsx";
 
 // The chore list, the home screen after log in (Figma "Home - Chores (All)";
 // SCRUM-7 View the Chore List and SCRUM-8 Mark a Chore Done). The header menu
-// holds Log out (SCRUM-3).
+// holds My chore history (SCRUM-44) and Log out (SCRUM-3).
 
 type HomeProps = {
   household: Household;
   userId: string;
   onAddChore: () => void;
+  /** Opens the person's chore history (SCRUM-44). */
+  onChoreHistory: () => void;
   onLogOut: () => void;
 };
 
@@ -67,10 +70,11 @@ export function forgetChoreFilter() {
 
 type ListState = { status: "loading" } | { status: "failed" } | { status: "ready"; chores: Chore[] };
 
-export default function Home({ household, userId, onAddChore, onLogOut }: HomeProps) {
+export default function Home({ household, userId, onAddChore, onChoreHistory, onLogOut }: HomeProps) {
   const [list, setList] = useState<ListState>({ status: "loading" });
   const [attempt, setAttempt] = useState(0);
   const [filter, setFilter] = useState<Filter>(savedFilter);
+  const [selectedChoreId, setSelectedChoreId] = useState<string | null>(null);
   const [doneOpen, setDoneOpen] = useState(false);
   const [saving, setSaving] = useState<ReadonlySet<string>>(new Set());
   const [toggleError, setToggleError] = useState<string | null>(null);
@@ -132,6 +136,7 @@ export default function Home({ household, userId, onAddChore, onLogOut }: HomePr
           // SCRUM-8: only the assignee can mark it done or undo it.
           onToggle={isMine(chore, userId) ? () => toggle(chore) : undefined}
           busy={saving.has(chore.id)}
+          onViewHistory={() => setSelectedChoreId(chore.id)}
         />
       </li>
     );
@@ -208,11 +213,19 @@ export default function Home({ household, userId, onAddChore, onLogOut }: HomePr
 
   // The week's progress is the whole household's, whichever filter is on.
   const progress = list.status === "ready" ? weeklyProgress(list.chores, today) : null;
+  if (selectedChoreId) {
+    return (
+      <SingleChoreHistory
+        choreId={selectedChoreId}
+        onBack={() => setSelectedChoreId(null)}
+      />
+    );
+  }
 
   return (
     <div className={styles.screen}>
       <main className={styles.page}>
-        <Header name={household.name} onLogOut={onLogOut} />
+        <Header name={household.name} onChoreHistory={onChoreHistory} onLogOut={onLogOut} />
         {progress && <ProgressCard {...progress} />}
         <Button fullWidth onClick={onAddChore}>
           Add chore
@@ -228,7 +241,15 @@ export default function Home({ household, userId, onAddChore, onLogOut }: HomePr
 }
 
 /** The household name and the menu with Log out (Figma "Home - Header menu" / "Home - Menu open"). */
-function Header({ name, onLogOut }: { name: string; onLogOut: () => void }) {
+function Header({
+  name,
+  onChoreHistory,
+  onLogOut,
+}: {
+  name: string;
+  onChoreHistory: () => void;
+  onLogOut: () => void;
+}) {
   const [menuOpen, setMenuOpen] = useState(false);
   const headerRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -268,6 +289,10 @@ function Header({ name, onLogOut }: { name: string; onLogOut: () => void }) {
         <div className={styles.menu} role="menu" ref={menuRef}>
           <Button role="menuitem" onClick={onLogOut}>
             Log out
+          </Button>
+          {/* Not in Figma yet: the menu only has Log out in the designs (SCRUM-44 needs a way in). */}
+          <Button role="menuitem" variant="outline" onClick={onChoreHistory}>
+            My chore history
           </Button>
         </div>
       )}

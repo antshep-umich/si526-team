@@ -1,7 +1,15 @@
-import type { ChoreListResponse, ChoreResponse, NewChoreRequest } from "../../shared/chores.ts";
+import type {
+  ChoreHistoryResponse,
+  ChoreListResponse,
+  ChoreResponse,
+  NewChoreRequest,
+} from "../../shared/chores.ts";
 
 export type ChoreResult = { ok: true; chore: ChoreResponse } | { ok: false; code: string };
 export type ChoreListResult = { ok: true; chores: ChoreResponse[] } | { ok: false; code: string };
+export type ChoreHistoryResult =
+  | { ok: true; chore: ChoreResponse; history: ChoreHistoryResponse["history"] }
+  | { ok: false; code: string };
 
 type Answer = { ok: true; body: unknown } | { ok: false; code: string };
 
@@ -34,6 +42,17 @@ export async function listChores(since: string): Promise<ChoreListResult> {
   return answer.ok ? { ok: true, chores: (answer.body as ChoreListResponse).chores } : answer;
 }
 
+/** GET /api/chores/history: every chore assigned to the signed-in person, latest due first. */
+export async function listChoreHistory(): Promise<ChoreListResult> {
+  const answer = await call("/api/chores/history");
+  return answer.ok ? { ok: true, chores: (answer.body as ChoreListResponse).chores } : answer;
+}
+
+/** GET /api/chores/:id. CHORE_NOT_FOUND if it was deleted or isn't in the household. */
+export function getChore(id: string): Promise<ChoreResult> {
+  return choreCall(`/api/chores/${encodeURIComponent(id)}`, {});
+}
+
 /** POST /api/chores */
 export function createChore(chore: NewChoreRequest): Promise<ChoreResult> {
   return choreCall("/api/chores", {
@@ -51,4 +70,19 @@ export function completeChore(id: string): Promise<ChoreResult> {
 /** DELETE /api/chores/:id/complete: marks it not done again. Only the assignee can. */
 export function undoChore(id: string): Promise<ChoreResult> {
   return choreCall(`/api/chores/${encodeURIComponent(id)}/complete`, { method: "DELETE" });
+}
+
+/** GET /api/chores/:id/history (SCRUM-45). */
+export async function getChoreHistory(id: string): Promise<ChoreHistoryResult> {
+  const answer = await call(`/api/chores/${encodeURIComponent(id)}/history`);
+
+  if (!answer.ok) return answer;
+
+  const body = answer.body as ChoreHistoryResponse;
+
+  return {
+    ok: true,
+    chore: body.chore,
+    history: body.history,
+  };
 }

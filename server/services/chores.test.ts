@@ -1,7 +1,15 @@
 // Chore rules (SCRUM-6, 7, 8), with in-memory models and a fixed clock.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { db } from "../test/fakeModels.js";
-import { addChore, completeChore, getChore, listChores, undoChore } from "./chores.js";
+import {
+  addChore,
+  completeChore,
+  getChore,
+  getChoreHistory,
+  listChores,
+  listMyChoreHistory,
+  undoChore,
+} from "./chores.js";
 import { ServiceError } from "./errors.js";
 import { createHousehold, findMembership, joinHousehold } from "./households.js";
 
@@ -179,5 +187,97 @@ describe("completeChore and undoChore (SCRUM-8)", () => {
 
     expect(await codeOf(() => completeChore(ana, id))).toBe("CHORE_NOT_FOUND");
     expect(await codeOf(() => getChore(ana, id))).toBe("CHORE_NOT_FOUND");
+  });
+});
+
+
+describe("listMyChoreHistory (personal chore history)", () => {
+  it("lists every chore assigned to the caller, done or not and however old, latest due first", async () => {
+    const { ana, ben } = await setUp();
+    const old = await addChore(ben, chore({ name: "Old", dueDate: "2026-10-28" }));
+    await completeChore(ana, old.id);
+    await addChore(ben, chore({ name: "Later", dueDate: "2026-11-20" }));
+    await addChore(ana, chore({ name: "Ben's", assigneeId: "ben" }));
+
+    // A month on, the old chore is still in Ana's history.
+    vi.setSystemTime(new Date("2026-12-15T12:00:00Z"));
+    const history = await listMyChoreHistory(ana);
+
+    expect(history.map((c) => c.name)).toEqual(["Later", "Old"]);
+    expect(history[1]!.completedById).toBe("ana");
+  });
+
+  it("never includes another household's chores", async () => {
+    const { ana, cy } = await setUp();
+    await addChore(ana, chore());
+
+    expect(await listMyChoreHistory(cy)).toEqual([]);
+  });
+});
+
+describe("getChoreHistory (SCRUM-45)", () => {
+  it("records when a chore is created", async () => {
+    const { ana } = await setUp();
+
+    const added = await addChore(ana, chore());
+
+    expect(db.choreHistory).toHaveLength(1);
+    expect(db.choreHistory[0]).toMatchObject({
+      choreId: added.id,
+      eventType: "created",
+      actorId: "ana",
+    });
+  });
+
+  it("records when a chore is completed and reopened", async () => {
+    const { ana } = await setUp();
+    const added = await addChore(ana, chore());
+
+    await completeChore(ana, added.id);
+    await undoChore(ana, added.id);
+
+    expect(db.choreHistory.map((event) => event.eventType)).toEqual([
+      "created",
+      "completed",
+      "reopened",
+    ]);
+  });
+
+  it("returns the chore and its history with newest events first", async () => {
+    const { ana } = await setUp();
+    const added = await addChore(ana, chore());
+
+    vi.setSystemTime(new Date("2026-10-29T16:00:00Z"));
+    await completeChore(ana, added.id);
+
+    vi.setSystemTime(new Date("2026-10-29T17:00:00Z"));
+    await undoChore(ana, added.id);
+
+    const result = await getChoreHistory(ana, added.id);
+
+    expect(result.chore.id).toBe(added.id);
+    expect(result.history.map((event) => event.eventType)).toEqual([
+      "reopened",
+      "completed",
+      "created",
+    ]);
+  });
+
+  it("does not return history for another household's chore", async () => {
+    const { ana, cy } = await setUp();
+    const theirs = await addChore(cy, chore({ assigneeId: "cy" }));
+
+    expect(await codeOf(() => getChoreHistory(ana, theirs.id))).toBe("CHORE_NOT_FOUND");
+  });
+
+  it("returns an empty history when a chore has no history events", async () => {
+    const { ana } = await setUp();
+    const added = await addChore(ana, chore());
+
+    db.choreHistory.length = 0;
+
+    const result = await getChoreHistory(ana, added.id);
+
+    expect(result.history).toEqual([]);
   });
 });

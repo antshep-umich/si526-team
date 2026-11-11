@@ -33,6 +33,15 @@ interface ChoreRow {
   updatedAt: Date;
 }
 
+interface ChoreHistoryRow {
+  id: string;
+  choreId: string;
+  eventType: "created" | "completed" | "reopened" | "due_date_changed";
+  dueDate: Date | null;
+  actorId: string | null;
+  createdAt: Date;
+}
+
 /** Test users' sign-up names: "ana" → "Ana Test". */
 export const nameOf = (userId: string) => `${userId[0]!.toUpperCase()}${userId.slice(1)} Test`;
 
@@ -40,6 +49,7 @@ export const db = {
   households: [] as Household[],
   memberships: [] as Membership[],
   chores: [] as ChoreRow[],
+  choreHistory: [] as ChoreHistoryRow[],
   clock: 0,
   /** Makes the next N household writes fail as if the invite code were taken. */
   codeCollisions: 0,
@@ -47,6 +57,7 @@ export const db = {
     db.households = [];
     db.memberships = [];
     db.chores = [];
+    db.choreHistory = [];
     db.clock = 0;
     db.codeCollisions = 0;
   },
@@ -147,6 +158,12 @@ export const findChoresForHousehold: typeof choresModel.findChoresForHousehold =
     .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime() || a.createdAt.getTime() - b.createdAt.getTime())
     .map(withPeople);
 
+export const findChoresAssignedTo: typeof choresModel.findChoresAssignedTo = async (householdId, assigneeId) =>
+  db.chores
+    .filter((c) => c.householdId === householdId && c.assigneeId === assigneeId)
+    .sort((a, b) => b.dueDate.getTime() - a.dueDate.getTime() || b.createdAt.getTime() - a.createdAt.getTime())
+    .map(withPeople);
+
 export const findChoreInHousehold: typeof choresModel.findChoreInHousehold = async (householdId, choreId) => {
   const row = db.chores.find((c) => c.id === choreId && c.householdId === householdId);
   return row ? withPeople(row) : null;
@@ -172,3 +189,35 @@ export const setChoreCompletion: typeof choresModel.setChoreCompletion = async (
   Object.assign(row, completion, { updatedAt: db.now() });
   return withPeople(row);
 };
+
+export const createChoreHistoryEvent: typeof choresModel.createChoreHistoryEvent =
+  async (data) => {
+    const row: ChoreHistoryRow = {
+      id: `history-${db.choreHistory.length + 1}`,
+      choreId: data.choreId,
+      eventType: data.eventType,
+      dueDate: data.dueDate ?? null,
+      actorId: data.actorId ?? null,
+      createdAt: db.now(),
+    };
+
+    db.choreHistory.push(row);
+
+    const actor = row.actorId
+      ? { id: row.actorId, name: nameOf(row.actorId) }
+      : null;
+
+    return { ...row, actor };
+  };
+
+export const findChoreHistory: typeof choresModel.findChoreHistory =
+  async (choreId) =>
+    db.choreHistory
+      .filter((event) => event.choreId === choreId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .map((event) => ({
+        ...event,
+        actor: event.actorId
+          ? { id: event.actorId, name: nameOf(event.actorId) }
+          : null,
+      }));

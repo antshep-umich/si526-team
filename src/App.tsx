@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { getCurrentHousehold, type Household } from "./api/households.ts";
 import { authClient } from "./auth.ts";
 import AddChore from "./screens/AddChore.tsx";
+import ChoreHistory from "./screens/ChoreHistory.tsx";
 import ChooseHousehold from "./screens/ChooseHousehold.tsx";
 import CreateHousehold from "./screens/CreateHousehold.tsx";
 import ForgotPassword from "./screens/ForgotPassword.tsx";
@@ -70,6 +71,7 @@ function SignedIn({ userId }: { userId: string }) {
   const [state, setState] = useState<HouseholdState>({ status: "loading" });
   const [screen, setScreen] = useState<"choose" | "create" | "join">("choose");
   const [addingChore, setAddingChore] = useState(false);
+  const [viewingHistory, setViewingHistory] = useState(false);
   const [justCreated, setJustCreated] = useState<Household | null>(null);
   const [attempt, setAttempt] = useState(0);
 
@@ -139,11 +141,17 @@ function SignedIn({ userId }: { userId: string }) {
         />
       );
     }
+    if (viewingHistory) {
+      return (
+        <ChoreHistory household={state.household} userId={userId} onBack={() => setViewingHistory(false)} />
+      );
+    }
     return (
       <Home
         household={state.household}
         userId={userId}
         onAddChore={() => setAddingChore(true)}
+        onChoreHistory={() => setViewingHistory(true)}
         onLogOut={logOut}
       />
     );

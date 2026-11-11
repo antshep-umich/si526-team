@@ -29,6 +29,18 @@ export function findChoresForHousehold(householdId: string, since: Date): Promis
   });
 }
 
+/**
+ * Every chore in the household assigned to this person, done or not, latest due first
+ * (personal chore history). The screen filters and re-sorts it.
+ */
+export function findChoresAssignedTo(householdId: string, assigneeId: string): Promise<ChoreWithPeople[]> {
+  return getPrisma().chore.findMany({
+    where: { householdId, assigneeId },
+    include: people,
+    orderBy: [{ dueDate: "desc" }, { createdAt: "desc" }],
+  });
+}
+
 /** One chore, only if it belongs to this household. */
 export function findChoreInHousehold(householdId: string, choreId: string): Promise<ChoreWithPeople | null> {
   return getPrisma().chore.findFirst({ where: { id: choreId, householdId }, include: people });
@@ -52,4 +64,33 @@ export function setChoreCompletion(
   completion: { completedAt: Date; completedById: string } | { completedAt: null; completedById: null },
 ): Promise<ChoreWithPeople> {
   return getPrisma().chore.update({ where: { id: choreId }, data: completion, include: people });
+}
+
+
+const historyPeople = {
+  actor: { select: { id: true, name: true } },
+} as const;
+
+export type ChoreHistoryWithActor = Prisma.ChoreHistoryGetPayload<{
+  include: typeof historyPeople;
+}>;
+
+export async function createChoreHistoryEvent(data: {
+  choreId: string;
+  eventType: "created" | "completed" | "reopened" | "due_date_changed";
+  dueDate?: Date | null;
+  actorId?: string | null;
+}) {
+  return getPrisma().choreHistory.create({
+    data,
+    include: historyPeople,
+  });
+}
+
+export async function findChoreHistory(choreId: string) {
+  return getPrisma().choreHistory.findMany({
+    where: { choreId },
+    include: historyPeople,
+    orderBy: { createdAt: "desc" },
+  });
 }
