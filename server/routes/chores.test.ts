@@ -149,6 +149,73 @@ describe("GET /api/chores/:id", () => {
   });
 });
 
+
+describe("GET /api/chores/:id/history (SCRUM-45)", () => {
+  it("returns the chore and its history, newest first", async () => {
+    await household();
+    const { body: added } = await as("ben").post("/api/chores", newChore);
+
+    // Complete the chore at a later time.
+    vi.setSystemTime(new Date("2026-10-29T16:00:00Z"));
+    await as("ana").post(`/api/chores/${added.id}/complete`);
+
+    // Reopen it at an even later time.
+    vi.setSystemTime(new Date("2026-10-29T17:00:00Z"));
+    await as("ana").delete(`/api/chores/${added.id}/complete`);
+
+    const res = await as("ben").get(`/api/chores/${added.id}/history`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.chore.name).toBe("Take out trash");
+    expect(res.body.history.map((event: { eventType: string }) => event.eventType)).toEqual([
+      "reopened",
+      "completed",
+      "created",
+    ]);
+
+    expect(res.body.history[0].actor).toEqual({
+      userId: "ana",
+      name: "Ana Test",
+    });
+  });
+
+  it("returns an empty history when there are no history events", async () => {
+    await household();
+    const { body: added } = await as("ben").post("/api/chores", newChore);
+
+    // Remove the creation event to test an empty history.
+    db.choreHistory.length = 0;
+
+    const res = await as("ana").get(`/api/chores/${added.id}/history`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.history).toEqual([]);
+  });
+
+  it("does not allow another household to view the chore history", async () => {
+    await household();
+    const { body: added } = await as("ben").post("/api/chores", newChore);
+    await as("cy").post("/api/households", { name: "Other House" });
+
+    const res = await as("cy").get(`/api/chores/${added.id}/history`);
+
+    expect(res.status).toBe(404);
+    expect(res.body.error.code).toBe("CHORE_NOT_FOUND");
+  });
+
+  it("returns 404 when the chore is unavailable", async () => {
+    await household();
+
+    const res = await as("ana").get(
+      "/api/chores/00000000-0000-4000-9000-999999999999/history",
+    );
+
+    expect(res.status).toBe(404);
+    expect(res.body.error.code).toBe("CHORE_NOT_FOUND");
+  });
+});
+
+
 describe("POST and DELETE /api/chores/:id/complete", () => {
   it("lets the assignee mark it done (200) and undo it (200)", async () => {
     await household();
@@ -217,5 +284,24 @@ describe("acceptance criteria", () => {
     expect((await as("ana").post(complete)).status).toBe(200);
     expect((await as("ben").delete(complete)).status).toBe(403);
     expect((await as("ana").delete(complete)).status).toBe(200);
+  });
+
+  it("AC1-AC3: housemates can view chore history with dates and newest events first", { tags: ["SCRUM-45"] }, async () => {
+    await household();
+
+    const { body: added } = await as("ben").post("/api/chores", newChore);
+
+    vi.setSystemTime(new Date("2026-10-29T16:00:00Z"));
+    await as("ana").post(`/api/chores/${added.id}/complete`);
+
+    const res = await as("ben").get(`/api/chores/${added.id}/history`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.chore.createdAt).toBeDefined();
+    expect(res.body.chore.dueDate).toBe("2026-10-30");
+    expect(res.body.history.map((event: { eventType: string }) => event.eventType)).toEqual([
+      "completed",
+      "created",
+    ]);
   });
 });

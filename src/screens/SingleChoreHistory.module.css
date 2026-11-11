@@ -1,0 +1,89 @@
+
+.page {
+  min-height: 100vh;
+  padding: 32px 20px;
+}
+
+.content {
+  width: 100%;
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+.header {
+  margin-top: 32px;
+  margin-bottom: 28px;
+}
+
+.overline {
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #777;
+}
+
+.header h1 {
+  margin: 0 0 12px;
+  font-size: 28px;
+}
+
+.header p {
+  line-height: 1.5;
+}
+
+.details,
+.history {
+  margin-top: 28px;
+}
+
+.details h2,
+.history h2 {
+  margin-bottom: 16px;
+  font-size: 20px;
+}
+
+.details p {
+  margin: 10px 0;
+  line-height: 1.5;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.event {
+  padding: 18px 0;
+  border-bottom: 1px solid #ddd;
+}
+
+.event h3 {
+  margin: 0 0 8px;
+  font-size: 17px;
+}
+
+.event p {
+  margin: 6px 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.message {
+  margin-top: 24px;
+  color: #666;
+}
+
+.error {
+  margin-top: 24px;
+  padding: 16px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.error p {
+  margin-top: 0;
+  margin-bottom: 16px;
+}

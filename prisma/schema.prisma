@@ -61,6 +61,7 @@ model Chore {
   assignee    User?     @relation("ChoreAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
   completedBy User?     @relation("ChoreCompletedBy", fields: [completedById], references: [id], onDelete: SetNull)
   createdBy   User?     @relation("ChoreCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  history     ChoreHistory[]
 
   @@index([householdId, dueDate])
   @@index([householdId, completedAt])
@@ -85,6 +86,7 @@ model User {
   choresAssigned  Chore[]     @relation("ChoreAssignee")
   choresCompleted Chore[]     @relation("ChoreCompletedBy")
   choresCreated   Chore[]     @relation("ChoreCreatedBy")
+  choreHistoryEvents ChoreHistory[]
 
   @@unique([email])
   @@map("user")
@@ -136,4 +138,25 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+enum ChoreHistoryEventType {
+  created
+  completed
+  reopened
+  due_date_changed
+}
+
+model ChoreHistory {
+  id        String                  @id @default(uuid()) @db.Uuid
+  choreId   String                  @db.Uuid
+  eventType ChoreHistoryEventType
+  dueDate   DateTime?               @db.Date
+  actorId   String?
+  createdAt DateTime                @default(now())
+
+  chore Chore @relation(fields: [choreId], references: [id], onDelete: Cascade)
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([choreId, createdAt])
 }

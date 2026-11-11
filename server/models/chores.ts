@@ -65,3 +65,32 @@ export function setChoreCompletion(
 ): Promise<ChoreWithPeople> {
   return getPrisma().chore.update({ where: { id: choreId }, data: completion, include: people });
 }
+
+
+const historyPeople = {
+  actor: { select: { id: true, name: true } },
+} as const;
+
+export type ChoreHistoryWithActor = Prisma.ChoreHistoryGetPayload<{
+  include: typeof historyPeople;
+}>;
+
+export async function createChoreHistoryEvent(data: {
+  choreId: string;
+  eventType: "created" | "completed" | "reopened" | "due_date_changed";
+  dueDate?: Date | null;
+  actorId?: string | null;
+}) {
+  return getPrisma().choreHistory.create({
+    data,
+    include: historyPeople,
+  });
+}
+
+export async function findChoreHistory(choreId: string) {
+  return getPrisma().choreHistory.findMany({
+    where: { choreId },
+    include: historyPeople,
+    orderBy: { createdAt: "desc" },
+  });
+}

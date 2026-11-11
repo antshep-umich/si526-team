@@ -18,6 +18,8 @@ type ChoreCardProps = {
    * space it would take (chores assigned to someone else).
    */
   onToggle?: () => void;
+  /** Opens the history for this chore. */
+  onViewHistory?: () => void;
   /** Turns the checkbox off while a change is being saved. */
   busy?: boolean;
   /**
@@ -36,12 +38,14 @@ export default function ChoreCard({
   details,
   status,
   onToggle,
+  onViewHistory,
   busy = false,
   onOpen,
   expanded = false,
   controls,
 }: ChoreCardProps) {
   const done = status === "done" || status === "late";
+
   return (
     <div className={`${styles.card} ${status === "overdue" ? styles.overdue : ""} ${done ? styles.done : ""}`}>
       {onToggle ? (
@@ -63,7 +67,6 @@ export default function ChoreCard({
           )}
         </button>
       ) : (
-        // Not in Figma yet: only the assignee can tick a chore, so the others see a gap.
         <span className={styles.checkbox} aria-hidden="true" />
       )}
       {onOpen ? (
@@ -83,6 +86,17 @@ export default function ChoreCard({
           <p className={styles.name}>{name}</p>
           <p className={styles.details}>{details}</p>
         </div>
+      )}
+
+      {onViewHistory && (
+        <button
+          type="button"
+          className={styles.historyButton}
+          onClick={onViewHistory}
+          aria-label={`View history for ${name}`}
+        >
+          View history
+        </button>
       )}
       {status === "overdue" && <Chip tone="overdue">Overdue</Chip>}
       {status === "done" && <Chip tone="success">Done</Chip>}
