@@ -55,7 +55,12 @@ const chores = [
 ];
 
 function renderHome(props: Partial<Parameters<typeof Home>[0]> = {}) {
-  const callbacks = { onAddChore: vi.fn(), onChoreHistory: vi.fn(), onLogOut: vi.fn() };
+  const callbacks = {
+    onAddChore: vi.fn(),
+    onChoreHistory: vi.fn(),
+    onHouseholdChoreHistory: vi.fn(),
+    onLogOut: vi.fn(),
+  };
   render(<Home household={household} userId="u-ana" {...callbacks} {...props} />);
   return callbacks;
 }
@@ -101,7 +106,16 @@ describe("Home chore list", () => {
   });
 
   it("remembers Mine until log out", async () => {
-    const { unmount } = render(<Home household={household} userId="u-ana" onAddChore={() => {}} onChoreHistory={() => {}} onLogOut={() => {}} />);
+    const { unmount } = render(
+      <Home
+        household={household}
+        userId="u-ana"
+        onAddChore={() => {}}
+        onChoreHistory={() => {}}
+        onHouseholdChoreHistory={() => {}}
+        onLogOut={() => {}}
+      />,
+    );
     await userEvent.click(await screen.findByRole("radio", { name: "Mine" }));
 
     unmount();
@@ -380,6 +394,15 @@ describe("Home menu", () => {
     await userEvent.click(screen.getByRole("menuitem", { name: "My chore history" }));
 
     expect(onChoreHistory).toHaveBeenCalledTimes(1);
+  });
+
+  it("opens Household chore history (SCRUM-46)", async () => {
+    const { onHouseholdChoreHistory } = renderHome();
+
+    await userEvent.click(screen.getByRole("button", { name: "Menu" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "Household chore history" }));
+
+    expect(onHouseholdChoreHistory).toHaveBeenCalledTimes(1);
   });
 
   it("logs out", async () => {
