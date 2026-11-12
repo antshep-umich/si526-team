@@ -49,3 +49,25 @@ export function describeDay(iso: string, todayIso: string): string {
   if (iso === addDays(todayIso, 1)) return "tomorrow";
   return formatDate(iso, todayIso);
 }
+
+/** The first day of the month a date is in. */
+export function startOfMonth(iso: string): string {
+  return `${iso.slice(0, 7)}-01`;
+}
+
+/** The first day of the month `months` after (or, if negative, before) the one a date is in. */
+export function addMonths(iso: string, months: number): string {
+  const date = parse(startOfMonth(iso));
+  date.setMonth(date.getMonth() + months);
+  return toIsoDate(date);
+}
+
+/** The last day of the month a date is in. */
+export function endOfMonth(iso: string): string {
+  return addDays(addMonths(iso, 1), -1);
+}
+
+/** "October 2026" */
+export function formatMonth(iso: string): string {
+  return parse(iso).toLocaleDateString("en-US", { month: "long", year: "numeric" });
+}

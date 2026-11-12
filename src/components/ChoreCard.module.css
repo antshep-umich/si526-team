@@ -98,26 +98,9 @@
   color: var(--color-text-muted);
 }
 
-.done /* Not in Figma yet: the text as a button that opens the chore (chore history). */
-.open {
-  margin: 0;
-  padding: 0;
-  border: none;
-  background: none;
-  text-align: left;
-  cursor: pointer;
-}
-
-.open:focus-visible {
-  outline: 2px solid var(--color-action-focus-ring);
-  outline-offset: 2px;
-  border-radius: 4px;
-}
-
-.name {
+.done .name {
   text-decoration: line-through;
 }
-
 
 .historyButton {
   border: none;

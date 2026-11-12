@@ -4,9 +4,11 @@ import { listChores } from "../api/chores.ts";
 import type { Household } from "../api/households.ts";
 import Button from "../components/Button.tsx";
 import ChoreCard from "../components/ChoreCard.tsx";
+import TabFilter from "../components/TabFilter.tsx";
 import TextLink from "../components/TextLink.tsx";
 import { choreDetails, choreStatus, type Chore } from "../chores.ts";
-import { addDays, formatDate, localDateOf, startOfWeek, today as localToday } from "../dates.ts";
+import { addDays, formatDate, localDateOf, startOfMonth, startOfWeek, today as localToday } from "../dates.ts";
+import MonthlyChoreHistory from "./MonthlyChoreHistory.tsx";
 import SingleChoreHistory from "./SingleChoreHistory.tsx";
 import styles from "./HouseholdChoreHistory.module.css";
 
@@ -16,6 +18,13 @@ type Props = {
   onBack: () => void;
 };
 
+type View = "weekly" | "monthly";
+
+const VIEWS = [
+  { id: "weekly", label: "Weekly" },
+  { id: "monthly", label: "Monthly" },
+] as const;
+
 type ListState =
   | { status: "loading" }
   | { status: "failed" }
@@ -23,7 +32,10 @@ type ListState =
 
 export default function HouseholdChoreHistory({ household, userId, onBack }: Props) {
   const today = localToday();
+  const [view, setView] = useState<View>("weekly");
   const [weekStart, setWeekStart] = useState(startOfWeek(today));
+  // The monthly view's month (SCRUM-47), kept here so it's still selected after opening a chore.
+  const [month, setMonth] = useState(startOfMonth(today));
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [list, setList] = useState<ListState>({ status: "loading" });
   const [attempt, setAttempt] = useState(0);
@@ -33,6 +45,9 @@ export default function HouseholdChoreHistory({ household, userId, onBack }: Pro
   const days = Array.from({ length: 7 }, (_, index) => addDays(weekStart, index));
 
   useEffect(() => {
+    // The monthly view loads its own chores.
+    if (view !== "weekly") return;
+
     let cancelled = false;
 
     setList({ status: "loading" });
@@ -45,7 +60,7 @@ export default function HouseholdChoreHistory({ household, userId, onBack }: Pro
     return () => {
       cancelled = true;
     };
-  }, [weekStart, attempt]);
+  }, [view, weekStart, attempt]);
 
   function changeWeek(amount: number) {
     setWeekStart((current) => addDays(current, amount * 7));
@@ -58,6 +73,34 @@ export default function HouseholdChoreHistory({ household, userId, onBack }: Pro
         choreId={selectedChoreId}
         onBack={() => setSelectedChoreId(null)}
       />
+    );
+  }
+
+  // The same header and Weekly / Monthly switch on both views.
+  const top = (
+    <>
+      <header className={styles.header}>
+        <TextLink className={styles.back} onClick={onBack}>
+          Back
+        </TextLink>
+        <p className={styles.overline}>{household.name}</p>
+        <h1 className={styles.title}>Household chore history</h1>
+      </header>
+      <TabFilter label="History view" options={VIEWS} selected={view} onSelect={setView} />
+    </>
+  );
+
+  if (view === "monthly") {
+    return (
+      <main className={styles.page}>
+        {top}
+        <MonthlyChoreHistory
+          userId={userId}
+          month={month}
+          onMonthChange={setMonth}
+          onOpenChore={setSelectedChoreId}
+        />
+      </main>
     );
   }
 
@@ -102,13 +145,7 @@ export default function HouseholdChoreHistory({ household, userId, onBack }: Pro
 
   return (
     <main className={styles.page}>
-      <header className={styles.header}>
-        <TextLink className={styles.back} onClick={onBack}>
-          Back
-        </TextLink>
-        <p className={styles.overline}>{household.name}</p>
-        <h1 className={styles.title}>Household chore history</h1>
-      </header>
+      {top}
 
       <section className={styles.week}>
         <div className={styles.weekNavigation}>
