@@ -1,0 +1,36 @@
+{
+  "story": "SCRUM-47",
+  "title": "View household chore history - monthly",
+  "criteria": [
+    {
+      "id": "AC1",
+      "text": "User Action: User navigates to the household chore history and selects the monthly view. Expected System Behavior: Displays the current month’s household chores, including chore names, assigned housemates, due dates, completion statuses, and completion dates when applicable.",
+      "verify": "test"
+    },
+    {
+      "id": "AC2",
+      "text": "User Action: User navigates to a previous month. Expected System Behavior: Updates the displayed history to show chores from the selected month.",
+      "verify": "test"
+    },
+    {
+      "id": "AC3",
+      "text": "User Action: User reviews the monthly summary. Expected System Behavior: Displays the number of completed, incomplete, and overdue chores for the selected month.",
+      "verify": "test"
+    },
+    {
+      "id": "AC4",
+      "text": "User Action: User selects a specific chore from the monthly history. Expected System Behavior: Opens the selected chore’s details and description.",
+      "verify": "test"
+    },
+    {
+      "id": "AC5",
+      "text": "Error Condition: The selected month has no chores. Expected message: “No chores this month.”",
+      "verify": "test"
+    },
+    {
+      "id": "AC6",
+      "text": "Error Condition: The chore history fails to load. Expected message: The system displays an error message and provides an option to retry loading the history.",
+      "verify": "test"
+    }
+  ]
+}
