@@ -114,9 +114,10 @@ function Timeline({
           <span className={styles.eventMeta}>
             {eventWhen(event.createdAt, today)} by {person(event.actor)}
           </span>
+          {/* Every event records the due date at the time; only a change makes it new. */}
           {event.dueDate && (
             <span className={styles.eventMeta}>
-              {event.eventType === "created" ? "Due" : "New due date"} {formatDate(event.dueDate, today)}
+              {event.eventType === "due_date_changed" ? "New due date" : "Due"} {formatDate(event.dueDate, today)}
             </span>
           )}
         </li>
