@@ -1,29 +1,39 @@
 import { useEffect, useId, useState } from "react";
 import { getChore, listChoreHistory } from "../api/chores.ts";
 import type { Household } from "../api/households.ts";
-import Button from "../components/Button.tsx";
-import ChoreCard from "../components/ChoreCard.tsx";
 import PickerField from "../components/PickerField.tsx";
 import TabFilter from "../components/TabFilter.tsx";
-import TextLink from "../components/TextLink.tsx";
 import { choreStatus, type Chore } from "../chores.ts";
 import { formatDate, localDateOf, today as localToday } from "../dates.ts";
 import {
+  doneTally,
   filterHistory,
-  historyDetails,
+  groupHistory,
+  historyDates,
   HISTORY_FILTERS,
   HISTORY_SORTS,
   isHistorySort,
+  outcomeLine,
   sortHistory,
   statusLabel,
   type HistoryFilter,
   type HistorySort,
 } from "../history.ts";
 import styles from "./ChoreHistory.module.css";
+import {
+  DetailList,
+  HistoryGroup,
+  HistoryGroups,
+  HistoryHeader,
+  HistoryMessage,
+  HistoryPage,
+  HistoryRow,
+  RowPanel,
+} from "./HistoryParts.tsx";
 
 // The person's own chore history (Jira SCRUM-44 View user chore history), opened from
-// the Home menu. Not in Figma yet: the whole screen is a placeholder built from the
-// design system's components until UX designs it.
+// the Home menu. Not in Figma yet: built from the design system's components and the
+// histories' shared parts (HistoryParts.tsx) until UX designs it.
 
 type ChoreHistoryProps = {
   household: Household;
@@ -54,82 +64,71 @@ export default function ChoreHistory({ household, userId, onBack }: ChoreHistory
   }, [attempt]);
 
   function body() {
-    if (list.status === "loading") {
-      return (
-        <p className={styles.message} role="status">
-          Loading chore history…
-        </p>
-      );
-    }
+    if (list.status === "loading") return <HistoryMessage role="status">Loading chore history…</HistoryMessage>;
     if (list.status === "failed") {
       return (
-        <div className={styles.failed}>
-          <p className={styles.message} role="alert">
-            Couldn't load your chore history.
-          </p>
-          <Button
-            variant="outline"
-            onClick={() => {
-              setList({ status: "loading" });
-              setAttempt((n) => n + 1);
-            }}
-          >
-            Try again
-          </Button>
-        </div>
+        <HistoryMessage
+          onRetry={() => {
+            setList({ status: "loading" });
+            setAttempt((n) => n + 1);
+          }}
+        >
+          Couldn't load your chore history.
+        </HistoryMessage>
       );
     }
-    if (list.chores.length === 0) return <p className={styles.message}>No chore history.</p>;
+    if (list.chores.length === 0) return <HistoryMessage>No chore history.</HistoryMessage>;
 
     const shown = sortHistory(filterHistory(list.chores, filter), sort);
     return (
       <>
-        <TabFilter label="Show chores" options={HISTORY_FILTERS} selected={filter} onSelect={setFilter} />
-        <PickerField
-          label="Sort by"
-          placeholder="Sort by"
-          options={HISTORY_SORTS}
-          value={sort}
-          onChange={(value) => isHistorySort(value) && setSort(value)}
-        />
+        <div className={styles.controls}>
+          <TabFilter label="Show chores" options={HISTORY_FILTERS} selected={filter} onSelect={setFilter} />
+          <PickerField
+            label="Sort by"
+            placeholder="Sort by"
+            options={HISTORY_SORTS}
+            value={sort}
+            onChange={(value) => isHistorySort(value) && setSort(value)}
+          />
+        </div>
         {shown.length === 0 ? (
-          <p className={styles.message}>No chores match this filter.</p>
+          <HistoryMessage>No chores match this filter.</HistoryMessage>
         ) : (
-          <ul className={styles.list} aria-label="Chore history">
-            {shown.map((chore) => {
-              const detailsId = `${idPrefix}-${chore.id}`;
-              const open = openId === chore.id;
-              return (
-                <li key={chore.id} className={styles.item}>
-                  <ChoreCard
-                    name={chore.name}
-                    details={historyDetails(chore, today)}
-                    status={choreStatus(chore, today)}
-                    onOpen={() => setOpenId(open ? null : chore.id)}
-                    expanded={open}
-                    controls={detailsId}
-                  />
-                  {open && <ChoreDetails id={detailsId} choreId={chore.id} userId={userId} today={today} />}
-                </li>
-              );
-            })}
-          </ul>
+          // Grouped by the month of the date the list is sorted by.
+          <HistoryGroups label="Chore history">
+            {groupHistory(shown, sort).map((group) => (
+              <HistoryGroup key={group.label} title={group.label} aside={doneTally(group.chores)}>
+                {group.chores.map((chore) => {
+                  const detailsId = `${idPrefix}-${chore.id}`;
+                  const open = openId === chore.id;
+                  return (
+                    <HistoryRow
+                      key={chore.id}
+                      name={chore.name}
+                      status={choreStatus(chore, today)}
+                      lines={[outcomeLine(chore, today), historyDates(chore, today).created]}
+                      onClick={() => setOpenId(open ? null : chore.id)}
+                      expanded={open}
+                      controls={detailsId}
+                    >
+                      {open && <ChoreDetails id={detailsId} choreId={chore.id} userId={userId} today={today} />}
+                    </HistoryRow>
+                  );
+                })}
+              </HistoryGroup>
+            ))}
+          </HistoryGroups>
         )}
       </>
     );
   }
 
   return (
-    <main className={styles.page}>
-      <div className={styles.header}>
-        <TextLink className={styles.back} onClick={onBack}>
-          Back
-        </TextLink>
-        <p className={styles.overline}>{household.name}</p>
-        <h1 className={styles.title}>My chore history</h1>
-      </div>
+    <HistoryPage>
+      <HistoryHeader onBack={onBack} overline={household.name} title="My chore history" />
       {body()}
-    </main>
+    </HistoryPage>
   );
 }
 
@@ -164,68 +163,40 @@ function ChoreDetails({ id, choreId, userId, today }: { id: string; choreId: str
     !who ? "Someone who left" : who.userId === userId ? "You" : who.name;
 
   function content() {
-    if (state.status === "loading") {
-      return (
-        <p className={styles.message} role="status">
-          Loading details…
-        </p>
-      );
-    }
-    if (state.status === "gone") {
-      return (
-        <p className={styles.message} role="alert">
-          Chore no longer available.
-        </p>
-      );
-    }
+    if (state.status === "loading") return <HistoryMessage role="status">Loading details…</HistoryMessage>;
+    if (state.status === "gone") return <HistoryMessage role="alert">Chore no longer available.</HistoryMessage>;
     if (state.status === "failed") {
       return (
-        <div className={styles.failed}>
-          <p className={styles.message} role="alert">
-            Couldn't load this chore.
-          </p>
-          <Button
-            variant="outline"
-            onClick={() => {
-              setState({ status: "loading" });
-              setAttempt((n) => n + 1);
-            }}
-          >
-            Try again
-          </Button>
-        </div>
+        <HistoryMessage
+          onRetry={() => {
+            setState({ status: "loading" });
+            setAttempt((n) => n + 1);
+          }}
+        >
+          Couldn't load this chore.
+        </HistoryMessage>
       );
     }
 
     const { chore } = state;
-    const rows: [string, string][] = [
-      ["Status", statusLabel(chore, today)],
-      ["Assigned to", person(chore.assignee)],
-      ["Created", `${formatDate(localDateOf(chore.createdAt), today)} by ${person(chore.createdBy)}`],
-      ["Due", formatDate(chore.dueDate, today)],
-      [
-        "Completed",
-        chore.completedAt
-          ? `${formatDate(localDateOf(chore.completedAt), today)} by ${person(chore.completedBy)}`
-          : "Not done yet",
-      ],
-      ["Notes", chore.notes ?? "No description added."],
-    ];
     return (
-      <dl className={styles.details}>
-        {rows.map(([term, value]) => (
-          <div key={term} className={styles.row}>
-            <dt>{term}</dt>
-            <dd>{value}</dd>
-          </div>
-        ))}
-      </dl>
+      <DetailList
+        rows={[
+          ["Status", statusLabel(chore, today)],
+          ["Assigned to", person(chore.assignee)],
+          ["Created", `${formatDate(localDateOf(chore.createdAt), today)} by ${person(chore.createdBy)}`],
+          ["Due", formatDate(chore.dueDate, today)],
+          [
+            "Completed",
+            chore.completedAt
+              ? `${formatDate(localDateOf(chore.completedAt), today)} by ${person(chore.completedBy)}`
+              : "Not done yet",
+          ],
+          ["Notes", chore.notes ?? "No description added."],
+        ]}
+      />
     );
   }
 
-  return (
-    <div id={id} className={styles.panel}>
-      {content()}
-    </div>
-  );
+  return <RowPanel id={id}>{content()}</RowPanel>;
 }

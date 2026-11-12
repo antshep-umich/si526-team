@@ -1,89 +1,70 @@
-
-.page {
-  min-height: 100vh;
-  padding: 32px 20px;
+/* One chore's history (SCRUM-45). The layout comes from HistoryParts.module.css; this is its notes and timeline. */
+.notes {
+  margin-top: 6px;
+  font: var(--type-note);
+  color: var(--color-text-muted);
 }
 
-.content {
-  width: 100%;
-  max-width: 680px;
-  margin: 0 auto;
-}
-
-.header {
-  margin-top: 32px;
-  margin-bottom: 28px;
-}
-
-.overline {
-  margin-bottom: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #777;
-}
-
-.header h1 {
-  margin: 0 0 12px;
-  font-size: 28px;
-}
-
-.header p {
-  line-height: 1.5;
-}
-
-.details,
-.history {
-  margin-top: 28px;
-}
-
-.details h2,
-.history h2 {
-  margin-bottom: 16px;
-  font-size: 20px;
-}
-
-.details p {
-  margin: 10px 0;
-  line-height: 1.5;
-}
-
-.list {
-  list-style: none;
-  padding: 0;
+/* Newest first, each event a dot on one line: done is filled, created and changes are rings. */
+.timeline {
   margin: 0;
+  padding: 18px 16px 2px;
+  list-style: none;
+  border: 1px solid var(--color-border-default);
+  border-radius: 14px;
+  background: var(--color-surface-card);
 }
 
 .event {
-  padding: 18px 0;
-  border-bottom: 1px solid #ddd;
+  position: relative;
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr);
+  column-gap: 14px;
+  row-gap: 2px;
+  padding-bottom: 18px;
 }
 
-.event h3 {
-  margin: 0 0 8px;
-  font-size: 17px;
+/* The line from this event's dot down to the next one. */
+.event::before {
+  content: "";
+  position: absolute;
+  top: 18px;
+  bottom: 0;
+  left: 6px;
+  width: 2px;
+  background: var(--color-border-default);
 }
 
-.event p {
-  margin: 6px 0;
-  font-size: 14px;
-  line-height: 1.5;
+.event:last-child::before {
+  display: none;
 }
 
-.message {
-  margin-top: 24px;
-  color: #666;
+.mark {
+  grid-row: 1 / span 3;
+  width: 14px;
+  height: 14px;
+  margin-top: 3px;
+  border-radius: 50%;
+  background: var(--color-surface-card);
+  box-shadow: inset 0 0 0 2px var(--color-border-input);
 }
 
-.error {
-  margin-top: 24px;
-  padding: 16px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
+.event[data-kind="completed"] .mark {
+  background: var(--color-success-default);
+  box-shadow: none;
 }
 
-.error p {
-  margin-top: 0;
-  margin-bottom: 16px;
+.event[data-kind="reopened"] .mark {
+  box-shadow: inset 0 0 0 2px var(--color-overdue-line);
+}
+
+.eventTitle {
+  font: var(--type-button);
+  color: var(--color-text-default);
+}
+
+.eventMeta {
+  grid-column: 2;
+  font: var(--type-meta);
+  color: var(--color-text-muted);
 }

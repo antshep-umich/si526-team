@@ -1,145 +1,66 @@
-
-.page {
-  width: 100%;
-  max-width: 402px;
-  margin: 0 auto;
-  padding: 56px 24px 40px;
-  display: flex;
-  flex-direction: column;
-  gap: 26px;
-}
-
-.header {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-}
-
-.back {
-  margin-bottom: 8px;
-}
-
-.overline {
-  font: var(--type-overline);
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.title {
-  font: var(--type-screen-title);
-  color: var(--color-text-default);
-}
-
-.week {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.weekNavigation {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.weekLabel {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  font: var(--type-small);
-  color: var(--color-text-default);
-}
-
-.weekLabel span {
-  color: var(--color-text-muted);
-}
-
-.summary {
+/*
+ * Household chore history (SCRUM-46, 47). The layout comes from HistoryParts.module.css;
+ * this is only the weekly view's day picker, styled like the Weekly / Monthly Tab Filter.
+ */
+.days {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 2px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--color-progress-track);
 }
 
-.summary div {
+.day {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 14px 6px;
-  border: 1px solid var(--color-border-default);
-  border-radius: 12px;
-  background: var(--color-surface-card);
-}
-
-.summary strong {
-  font: var(--type-screen-title);
-  color: var(--color-text-default);
-}
-
-.summary span {
-  font: var(--type-small);
+  justify-content: center;
+  gap: 1px;
+  min-width: 0;
+  padding: 6px 0 5px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: none;
   color: var(--color-text-muted);
-  text-align: center;
-}
-
-.days,
-.chores {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.days h2,
-.chores h2 {
-  font: var(--type-section-title);
-  color: var(--color-text-default);
-}
-
-.dayButtons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.dayButton,
-.selectedDay {
-  padding: 8px 12px;
-  border: 1px solid var(--color-border-default);
-  border-radius: 20px;
-  background: var(--color-surface-card);
-  color: var(--color-text-default);
-  font: var(--type-small);
   cursor: pointer;
 }
 
-.selectedDay {
-  border-color: var(--color-text-default);
-  background: var(--color-text-default);
-  color: var(--color-surface-card);
+.day[aria-pressed="true"] {
+  border-color: var(--color-border-default);
+  background: var(--color-surface-card);
+  color: var(--color-text-default);
 }
 
-.list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
+.day:focus-visible {
+  outline: 2px solid var(--color-action-focus-ring);
+  outline-offset: -2px;
 }
 
-.message {
-  font: var(--type-body);
-  color: var(--color-text-muted);
-  text-align: center;
+.allWeek {
+  font: var(--type-button);
 }
 
-.failed {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
+.dayName {
+  font: var(--type-tab-label);
+}
+
+.dayNumber {
+  font: var(--type-chore-name);
+  color: var(--color-text-default);
+}
+
+.day[data-today] .dayNumber {
+  color: var(--color-action-primary);
+}
+
+/* A dot under days with chores due or done; the space stays so the numbers line up. */
+.dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+
+.dot[data-has-chores] {
+  background: var(--color-text-muted);
 }

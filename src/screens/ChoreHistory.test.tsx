@@ -71,7 +71,8 @@ function renderHistory() {
   return { onBack };
 }
 
-const list = () => screen.findByRole("list", { name: "Chore history" });
+// The history, grouped into one list per month.
+const list = () => screen.findByRole("region", { name: "Chore history" });
 
 /** The chore names in the list, in order. */
 const names = (element: HTMLElement) =>
@@ -98,8 +99,10 @@ describe("My chore history", { tags: ["SCRUM-44"] }, () => {
 
     expect(names(await list())).toEqual(["Buy dish soap", "Wash dishes", "Take out trash", "Mop kitchen"]);
     expect(screen.getByRole("heading", { name: "My chore history" })).toBeInTheDocument();
-    expect(row("Wash dishes")).toHaveTextContent("Created Wed, Oct 21 · due Wed, Oct 28 · done Tue, Oct 27");
-    expect(row("Buy dish soap")).toHaveTextContent("Created Tue, Oct 27 · due Mon, Nov 2 · not done");
+    expect(row("Wash dishes")).toHaveTextContent("Due Wed, Oct 28 · Done Tue, Oct 27");
+    expect(row("Wash dishes")).toHaveTextContent("Created Wed, Oct 21");
+    expect(row("Buy dish soap")).toHaveTextContent("Due Mon, Nov 2 · Not done yet");
+    expect(row("Buy dish soap")).toHaveTextContent("Created Tue, Oct 27");
     // Completion status: Done, Late (done after the due date) and Overdue chips.
     const item = (name: string) => row(name).closest("li")!;
     expect(within(item("Wash dishes")).getByText("Done")).toBeInTheDocument();

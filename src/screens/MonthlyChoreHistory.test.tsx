@@ -71,8 +71,16 @@ async function openMonthlyView() {
 
 const list = () => screen.findByRole("list", { name: "Chores this month" });
 const cards = (element: HTMLElement) => within(element).getAllByRole("listitem");
-const names = (element: HTMLElement) => cards(element).map((item) => item.querySelector("p")?.textContent);
+// Each row is a button whose first part is the chore's name.
+const names = (element: HTMLElement) => cards(element).map((item) => item.querySelector("button")?.firstChild?.textContent);
 const card = (element: HTMLElement, name: string) => cards(element).find((item) => within(item).queryByText(name))!;
+
+/** A row's lines: first the due date and what happened, then who the chore is for. */
+function lines(element: HTMLElement, name: string) {
+  const button = within(card(element, name)).getByRole("button");
+  const described = document.getElementById(button.getAttribute("aria-describedby")!)!;
+  return Array.from(described.children, (line) => line.textContent);
+}
 
 /** The summary's numbers by label, for example { Completed: 2, Incomplete: 2, Overdue: 1 }. */
 function summary() {
@@ -107,10 +115,10 @@ describe("Household chore history, monthly view", { tags: ["SCRUM-47"] }, () => 
     // Only chores due in November, latest due first.
     expect(names(chores)).toEqual(["Buy dish soap", "Take out trash", "Mop kitchen", "Wash dishes"]);
 
-    expect(card(chores, "Wash dishes")).toHaveTextContent("You · due Thu, Nov 5 · done Wed, Nov 4");
-    expect(card(chores, "Mop kitchen")).toHaveTextContent("Sam Ito · due Fri, Nov 6 · done Sun, Nov 8");
-    expect(card(chores, "Take out trash")).toHaveTextContent("Sam Ito · due Tue, Nov 10 · not done");
-    expect(card(chores, "Buy dish soap")).toHaveTextContent("You · due Fri, Nov 20 · not done");
+    expect(lines(chores, "Wash dishes")).toEqual(["Due Thu, Nov 5 · Done Wed, Nov 4", "You"]);
+    expect(lines(chores, "Mop kitchen")).toEqual(["Due Fri, Nov 6 · Done Sun, Nov 8", "Sam Ito"]);
+    expect(lines(chores, "Take out trash")).toEqual(["Due Tue, Nov 10 · Not done yet", "Sam Ito"]);
+    expect(lines(chores, "Buy dish soap")).toEqual(["Due Fri, Nov 20 · Not done yet", "You"]);
     // Completion status: Done, Late (done after the due date) and Overdue chips; to do has none.
     expect(within(card(chores, "Wash dishes")).getByText("Done")).toBeInTheDocument();
     expect(within(card(chores, "Mop kitchen")).getByText("Late")).toBeInTheDocument();
@@ -129,7 +137,7 @@ describe("Household chore history, monthly view", { tags: ["SCRUM-47"] }, () => 
     const chores = await list();
     expect(names(chores)).toEqual(["Rake leaves", "Clean gutters"]);
     // Due in October, so it stays in October even though it was done on Nov 1.
-    expect(card(chores, "Rake leaves")).toHaveTextContent("Sam Ito · due Sat, Oct 31 · done Sun, Nov 1");
+    expect(lines(chores, "Rake leaves")).toEqual(["Due Sat, Oct 31 · Done Sun, Nov 1", "Sam Ito"]);
 
     await userEvent.click(screen.getByRole("button", { name: "Next month" }));
     expect(await screen.findByText("November 2026")).toBeInTheDocument();
@@ -165,7 +173,8 @@ describe("Household chore history, monthly view", { tags: ["SCRUM-47"] }, () => 
     expect(await screen.findByRole("heading", { name: "Wash dishes" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Chore details" })).toBeInTheDocument();
     expect(screen.getByText("Hand-wash the knives")).toBeInTheDocument();
-    expect(screen.getByText("Ana Lopez")).toBeInTheDocument();
+    // Ana is signed in, so the chore's assignee shows as "You" (README Conflicts row 3).
+    expect(screen.getByText("Assigned to").nextElementSibling).toHaveTextContent("You");
   });
 
   it("AC4: coming back from a chore returns to the same month", async () => {

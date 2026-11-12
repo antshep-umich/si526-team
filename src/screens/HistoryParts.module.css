@@ -1,0 +1,309 @@
+/*
+ * Not in Figma yet (placeholder): the chore histories' shared layout, from the design
+ * system's tokens only. Spacing follows "Home - Chores (All)" (56px top, 24px sides);
+ * cards use the chore card's 14px corners and border.
+ */
+.page {
+  width: 100%;
+  max-width: 402px;
+  margin: 0 auto;
+  padding: 56px 24px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Header: Back, overline, title, all left-aligned. */
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+/* TextLink stretches and centers by default (it sits under a form's button). */
+.header .back {
+  width: auto;
+  margin-bottom: 12px;
+  text-align: left;
+}
+
+.overline {
+  font: var(--type-overline);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.title {
+  font: var(--type-screen-title);
+  color: var(--color-text-default);
+}
+
+/* Week or month stepper: one card, arrows at the ends, the period in the middle. */
+.period {
+  display: grid;
+  grid-template-columns: 44px 1fr 44px;
+  align-items: center;
+  padding: 6px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 14px;
+  background: var(--color-surface-card);
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: none;
+  border-radius: 10px;
+  background: none;
+  cursor: pointer;
+}
+
+.step:hover {
+  background: var(--color-progress-track);
+}
+
+.step:focus-visible {
+  outline: 2px solid var(--color-action-focus-ring);
+  outline-offset: -2px;
+}
+
+.periodLabel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  text-align: center;
+}
+
+.periodLabel strong {
+  font: var(--type-section-title);
+  color: var(--color-text-default);
+}
+
+.periodLabel span,
+.periodLabel .toCurrent {
+  width: auto;
+  font: var(--type-meta);
+  color: var(--color-text-muted);
+}
+
+/* The one chevron icon, turned to point the way it's needed (as with chevron-up, D8). */
+.pointBack {
+  transform: rotate(90deg);
+}
+
+.pointForward {
+  transform: rotate(-90deg);
+}
+
+.pointUp {
+  transform: rotate(180deg);
+}
+
+/* Summary: three counts in one card, divided by rules. */
+.summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border: 1px solid var(--color-border-default);
+  border-radius: 14px;
+  background: var(--color-surface-card);
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 14px 6px 12px;
+}
+
+.stat + .stat {
+  border-left: 1px solid var(--color-border-default);
+}
+
+.stat strong {
+  font: var(--type-screen-title);
+  color: var(--color-text-default);
+}
+
+.stat span {
+  font: var(--type-meta);
+  color: var(--color-text-muted);
+}
+
+.stat[data-tone="overdue"] strong {
+  color: var(--color-overdue-line);
+}
+
+/* Groups: a heading with its count, then the group's chores in one card. */
+.groups {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.groupHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.groupTitle {
+  font: var(--type-section-title);
+  color: var(--color-text-default);
+}
+
+.groupAside {
+  font: var(--type-meta);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow: hidden;
+  border: 1px solid var(--color-border-default);
+  border-radius: 14px;
+  background: var(--color-surface-card);
+}
+
+.row + .row {
+  border-top: 1px solid var(--color-border-default);
+}
+
+/* Overdue keeps the chore card's tint, with the overdue line as a bar on the left. */
+.row[data-status="overdue"] {
+  background: var(--color-overdue-tint);
+  box-shadow: inset 3px 0 0 var(--color-overdue-line);
+}
+
+.rowButton {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 20px;
+  grid-template-areas:
+    "name chip chevron"
+    "lines lines chevron";
+  align-items: center;
+  column-gap: 10px;
+  row-gap: 4px;
+  width: 100%;
+  padding: 14px 12px 14px 16px;
+  border: none;
+  background: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.rowButton:focus-visible {
+  outline: 2px solid var(--color-action-focus-ring);
+  outline-offset: -2px;
+}
+
+.rowName {
+  grid-area: name;
+  font: var(--type-chore-name);
+  color: var(--color-text-default);
+}
+
+.rowChip {
+  grid-area: chip;
+}
+
+.rowLines {
+  grid-area: lines;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font: var(--type-meta);
+  color: var(--color-text-muted);
+}
+
+/* The first line (due and what happened) leads; the second is context. */
+.rowLines span:first-child {
+  color: var(--color-text-default);
+}
+
+.row[data-status="overdue"] .rowLines span:first-child {
+  color: var(--color-overdue-line);
+}
+
+.rowChevron {
+  grid-area: chevron;
+  justify-self: end;
+  opacity: 0.7;
+  transition: transform 150ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rowChevron {
+    transition: none;
+  }
+}
+
+/* What a row opens in place: a recessed panel inside the card. */
+.panel {
+  padding: 0 16px 16px;
+}
+
+.details {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 8px 12px;
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--color-background-top);
+}
+
+.detailsCard {
+  padding: 14px 16px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 14px;
+  background: var(--color-surface-card);
+}
+
+.details > div {
+  display: contents;
+}
+
+.details dt {
+  font: var(--type-meta);
+  color: var(--color-text-muted);
+}
+
+.details dd {
+  margin: 0;
+  font: var(--type-small);
+  color: var(--color-text-default);
+  overflow-wrap: break-word;
+}
+
+.message {
+  font: var(--type-body);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.failed {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}

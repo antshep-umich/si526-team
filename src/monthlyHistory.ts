@@ -1,8 +1,8 @@
 // The household's chore history by month (SCRUM-47 View household chore history - monthly).
 // A chore belongs to the month it's due in, the way the Home progress card counts a
 // chore in the week it's due. Status comes from the dates, as on the chore list.
-import { isDone, isMine, type Chore } from "./chores.ts";
-import { describeDay, endOfMonth, localDateOf, startOfMonth } from "./dates.ts";
+import { isDone, type Chore } from "./chores.ts";
+import { endOfMonth, startOfMonth } from "./dates.ts";
 
 /** The chores due in the month `month` is in, latest due first. */
 export function choresDueInMonth(chores: Chore[], month: string): Chore[] {
@@ -27,12 +27,4 @@ export function monthSummary(chores: Chore[], today: string): MonthSummary {
     incomplete: open.length,
     overdue: open.filter((chore) => chore.dueDate < today).length,
   };
-}
-
-/** The card's second line: "Sam · due Mon, Oct 5 · done Tue, Oct 6", or "… · not done" while open. */
-export function monthlyDetails(chore: Chore, userId: string, today: string): string {
-  const who = !chore.assignee ? "Unassigned" : isMine(chore, userId) ? "You" : chore.assignee.name;
-  const due = `due ${describeDay(chore.dueDate, today)}`;
-  const done = chore.completedAt ? `done ${describeDay(localDateOf(chore.completedAt), today)}` : "not done";
-  return `${who} · ${due} · ${done}`;
 }

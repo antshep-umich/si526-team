@@ -66,10 +66,10 @@ shared/                 imported by both server and frontend
   httpStatus.ts         HttpStatus.CREATED etc. Use these, never bare numbers
 src/                    React app
   App.tsx               which screen to show (session + household state machine)
-  screens/              one file per Figma screen, plus Screen.tsx (shared layout); Home.tsx is the chore list, ChoreHistory.tsx the user's history
+  screens/              one file per Figma screen, plus Screen.tsx (shared layout); Home.tsx is the chore list, ChoreHistory.tsx the user's history; HistoryParts.tsx the parts all three chore histories share (header, week/month bar, summary, grouped rows)
   chores.ts, dates.ts   chore status/sorting/weekly progress, and "YYYY-MM-DD" dates in the phone's time zone
-  history.ts            My chore history's filters, sorts and card wording (SCRUM-44)
-  monthlyHistory.ts     Household chore history by month: which chores, the summary, card wording (SCRUM-47)
+  history.ts            My chore history's filters, sorts and month groups (SCRUM-44), and the row wording all histories share
+  monthlyHistory.ts     Household chore history by month: which chores and the summary (SCRUM-47)
   components/           design-system components (from Figma), each with a .module.css
   styles/               tokens.css (colors, type), fonts.css, base.css
   api/                  fetch helpers that never throw: return { ok: true, … } | { ok: false, code }

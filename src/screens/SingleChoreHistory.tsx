@@ -1,157 +1,126 @@
-
 import { useEffect, useState } from "react";
 import { getChoreHistory, type ChoreHistoryResult } from "../api/chores.ts";
-import Button from "../components/Button.tsx";
+import { formatDate, today as localToday } from "../dates.ts";
+import { assigneeLabel, eventWhen, statusLabel } from "../history.ts";
+import { DetailList, HistoryHeader, HistoryMessage, HistoryPage, HistorySection } from "./HistoryParts.tsx";
 import styles from "./SingleChoreHistory.module.css";
 
-// SCRUM-45 View Single Chore History for Household.
+// SCRUM-45 View Single Chore History for Household: one chore's details and everything
+// that happened to it, newest first. Opened from a chore on Home or in Household chore
+// history. Not in Figma yet: built from the histories' shared parts (HistoryParts.tsx).
 
 type ChoreHistoryProps = {
   choreId: string;
+  /** The signed-in user, who's shown as "You". */
+  userId?: string;
   onBack: () => void;
 };
 
-function formatDate(value: string): string {
-  return new Date(value).toLocaleString([], {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
+type ChoreEvent = Extract<ChoreHistoryResult, { ok: true }>["history"][number];
 
-function formatDueDate(value: string): string {
-  return new Date(`${value}T00:00:00`).toLocaleDateString([], {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
+const EVENT_LABELS: Record<string, string> = {
+  created: "Created",
+  completed: "Marked done",
+  reopened: "Marked not done",
+  due_date_changed: "Due date changed",
+};
 
-function eventLabel(eventType: string): string {
-  switch (eventType) {
-    case "created":
-      return "Chore created";
-    case "completed":
-      return "Chore completed";
-    case "reopened":
-      return "Chore reopened";
-    case "due_date_changed":
-      return "Due date changed";
-    default:
-      return "Chore updated";
-  }
-}
-
-export default function ChoreHistory({ choreId, onBack }: ChoreHistoryProps) {
+export default function SingleChoreHistory({ choreId, userId, onBack }: ChoreHistoryProps) {
   const [result, setResult] = useState<ChoreHistoryResult | null>(null);
-  const [loading, setLoading] = useState(true);
   const [attempt, setAttempt] = useState(0);
+  const today = localToday();
 
   useEffect(() => {
     let cancelled = false;
-
-    setLoading(true);
     setResult(null);
-
     getChoreHistory(choreId).then((response) => {
-      if (!cancelled) {
-        setResult(response);
-        setLoading(false);
-      }
+      if (!cancelled) setResult(response);
     });
-
     return () => {
       cancelled = true;
     };
   }, [choreId, attempt]);
 
-  const retry = () => {
-    setAttempt((previous) => previous + 1);
-  };
+  const person = (who: { userId: string; name: string } | null) =>
+    !who ? "Someone who left" : who.userId === userId ? "You" : who.name;
+
+  if (!result || !result.ok) {
+    return (
+      <HistoryPage>
+        <HistoryHeader backLabel="Back to chores" onBack={onBack} title="Chore history" />
+        {!result ? (
+          <HistoryMessage role="status">Loading chore history…</HistoryMessage>
+        ) : result.code === "CHORE_NOT_FOUND" ? (
+          <HistoryMessage role="alert">Chore no longer available.</HistoryMessage>
+        ) : (
+          <HistoryMessage onRetry={() => setAttempt((n) => n + 1)}>Couldn't load chore history.</HistoryMessage>
+        )}
+      </HistoryPage>
+    );
+  }
+
+  const { chore, history } = result;
+  const events = [...history].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
   return (
-    <main className={styles.page}>
-      <div className={styles.content}>
-        <Button type="button" variant="outline" onClick={onBack}>
-          Back to chores
-        </Button>
+    <HistoryPage>
+      <HistoryHeader backLabel="Back to chores" onBack={onBack} overline="Chore history" title={chore.name}>
+        {chore.notes && <p className={styles.notes}>{chore.notes}</p>}
+      </HistoryHeader>
 
-        {loading && <p className={styles.message}>Loading chore history…</p>}
+      <HistorySection title="Chore details">
+        <DetailList
+          card
+          rows={[
+            ["Assigned to", userId ? assigneeLabel(chore, userId) : (chore.assignee?.name ?? "Unassigned")],
+            ["Status", statusLabel(chore, today)],
+            ["Due", formatDate(chore.dueDate, today)],
+            ["Created", `${eventWhen(chore.createdAt, today)} by ${person(chore.createdBy)}`],
+            [
+              "Completed",
+              chore.completedAt ? `${eventWhen(chore.completedAt, today)} by ${person(chore.completedBy)}` : "Not done yet",
+            ],
+          ]}
+        />
+      </HistorySection>
 
-        {!loading && result && !result.ok && (
-          <div className={styles.error}>
-            <p>
-              {result.code === "CHORE_NOT_FOUND"
-                ? "Chore no longer available."
-                : "Couldn't load chore history. Please try again."}
-            </p>
-            <Button type="button" onClick={retry}>
-              Retry
-            </Button>
-          </div>
+      <HistorySection title="Activity" aside={events.length > 0 ? "Newest first" : undefined}>
+        {events.length === 0 ? (
+          <HistoryMessage>No chore history.</HistoryMessage>
+        ) : (
+          <Timeline events={events} today={today} person={person} />
         )}
+      </HistorySection>
+    </HistoryPage>
+  );
+}
 
-        {!loading && result?.ok && (
-          <>
-            <header className={styles.header}>
-              <p className={styles.overline}>Chore history</p>
-              <h1>{result.chore.name}</h1>
-              {result.chore.notes && <p>{result.chore.notes}</p>}
-            </header>
-
-            <section className={styles.details}>
-              <h2>Chore details</h2>
-              <p>
-                <strong>Created:</strong> {formatDate(result.chore.createdAt)}
-              </p>
-              <p>
-                <strong>Due date:</strong> {formatDueDate(result.chore.dueDate)}
-              </p>
-              <p>
-                <strong>Assigned to:</strong>{" "}
-                {result.chore.assignee?.name ?? "Housemate unavailable"}
-              </p>
-            </section>
-
-            <section className={styles.history}>
-              <h2>Activity history</h2>
-
-              {result.history.length === 0 ? (
-                <p className={styles.message}>No chore history.</p>
-              ) : (
-                <ol className={styles.list}>
-                  {[...result.history]
-                    .sort(
-                      (a, b) =>
-                        new Date(b.createdAt).getTime() -
-                        new Date(a.createdAt).getTime(),
-                    )
-                    .map((event) => (
-                      <li key={event.id} className={styles.event}>
-                        <h3>{eventLabel(event.eventType)}</h3>
-                        <p>{formatDate(event.createdAt)}</p>
-
-                        <p>
-                          <strong>Housemate:</strong>{" "}
-                          {event.actor?.name ?? "Housemate unavailable"}
-                        </p>
-
-                        {event.dueDate && (
-                          <p>
-                            <strong>Due date:</strong>{" "}
-                            {formatDueDate(event.dueDate)}
-                          </p>
-                        )}
-                      </li>
-                    ))}
-                </ol>
-              )}
-            </section>
-          </>
-        )}
-      </div>
-    </main>
+/** What happened to the chore, newest first, joined by a line. */
+function Timeline({
+  events,
+  today,
+  person,
+}: {
+  events: ChoreEvent[];
+  today: string;
+  person: (who: { userId: string; name: string } | null) => string;
+}) {
+  return (
+    <ol className={styles.timeline} aria-label="Chore activity">
+      {events.map((event) => (
+        <li key={event.id} className={styles.event} data-kind={event.eventType}>
+          <span className={styles.mark} aria-hidden="true" />
+          <span className={styles.eventTitle}>{EVENT_LABELS[event.eventType] ?? "Updated"}</span>
+          <span className={styles.eventMeta}>
+            {eventWhen(event.createdAt, today)} by {person(event.actor)}
+          </span>
+          {event.dueDate && (
+            <span className={styles.eventMeta}>
+              {event.eventType === "created" ? "Due" : "New due date"} {formatDate(event.dueDate, today)}
+            </span>
+          )}
+        </li>
+      ))}
+    </ol>
   );
 }

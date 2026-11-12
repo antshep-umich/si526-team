@@ -225,6 +225,7 @@ export default function Home({
     return (
       <SingleChoreHistory
         choreId={selectedChoreId}
+        userId={userId}
         onBack={() => setSelectedChoreId(null)}
       />
     );
