@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { getCurrentHousehold, type Household } from "./api/households.ts";
 import { authClient } from "./auth.ts";
@@ -8,6 +9,7 @@ import CreateHousehold from "./screens/CreateHousehold.tsx";
 import ForgotPassword from "./screens/ForgotPassword.tsx";
 import Home, { forgetChoreFilter } from "./screens/Home.tsx";
 import HouseholdCreated from "./screens/HouseholdCreated.tsx";
+import HouseholdChoreHistory from "./screens/HouseholdChoreHistory.tsx";
 import JoinHousehold from "./screens/JoinHousehold.tsx";
 import LogIn from "./screens/LogIn.tsx";
 import Screen, { Actions, FormError, Loading } from "./screens/Screen.tsx";
@@ -72,6 +74,7 @@ function SignedIn({ userId }: { userId: string }) {
   const [screen, setScreen] = useState<"choose" | "create" | "join">("choose");
   const [addingChore, setAddingChore] = useState(false);
   const [viewingHistory, setViewingHistory] = useState(false);
+  const [viewingHouseholdHistory, setViewingHouseholdHistory] = useState(false);
   const [justCreated, setJustCreated] = useState<Household | null>(null);
   const [attempt, setAttempt] = useState(0);
 
@@ -141,17 +144,34 @@ function SignedIn({ userId }: { userId: string }) {
         />
       );
     }
+
     if (viewingHistory) {
       return (
-        <ChoreHistory household={state.household} userId={userId} onBack={() => setViewingHistory(false)} />
+        <ChoreHistory
+          household={state.household}
+          userId={userId}
+          onBack={() => setViewingHistory(false)}
+        />
       );
     }
+
+    if (viewingHouseholdHistory) {
+      return (
+        <HouseholdChoreHistory
+          household={state.household}
+          userId={userId}
+          onBack={() => setViewingHouseholdHistory(false)}
+        />
+      );
+    }
+
     return (
       <Home
         household={state.household}
         userId={userId}
         onAddChore={() => setAddingChore(true)}
         onChoreHistory={() => setViewingHistory(true)}
+        onHouseholdChoreHistory={() => setViewingHouseholdHistory(true)}
         onLogOut={logOut}
       />
     );

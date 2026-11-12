@@ -31,6 +31,7 @@ type HomeProps = {
   onAddChore: () => void;
   /** Opens the person's chore history (SCRUM-44). */
   onChoreHistory: () => void;
+  onHouseholdChoreHistory: () => void;
   onLogOut: () => void;
 };
 
@@ -70,7 +71,14 @@ export function forgetChoreFilter() {
 
 type ListState = { status: "loading" } | { status: "failed" } | { status: "ready"; chores: Chore[] };
 
-export default function Home({ household, userId, onAddChore, onChoreHistory, onLogOut }: HomeProps) {
+export default function Home({
+  household,
+  userId,
+  onAddChore,
+  onChoreHistory,
+  onHouseholdChoreHistory,
+  onLogOut,
+}: HomeProps) {
   const [list, setList] = useState<ListState>({ status: "loading" });
   const [attempt, setAttempt] = useState(0);
   const [filter, setFilter] = useState<Filter>(savedFilter);
@@ -225,7 +233,12 @@ export default function Home({ household, userId, onAddChore, onChoreHistory, on
   return (
     <div className={styles.screen}>
       <main className={styles.page}>
-        <Header name={household.name} onChoreHistory={onChoreHistory} onLogOut={onLogOut} />
+        <Header
+          name={household.name}
+          onChoreHistory={onChoreHistory}
+          onHouseholdChoreHistory={onHouseholdChoreHistory}
+          onLogOut={onLogOut}
+        />
         {progress && <ProgressCard {...progress} />}
         <Button fullWidth onClick={onAddChore}>
           Add chore
@@ -244,10 +257,12 @@ export default function Home({ household, userId, onAddChore, onChoreHistory, on
 function Header({
   name,
   onChoreHistory,
+  onHouseholdChoreHistory,
   onLogOut,
 }: {
   name: string;
   onChoreHistory: () => void;
+  onHouseholdChoreHistory: () => void;
   onLogOut: () => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -293,6 +308,9 @@ function Header({
           {/* Not in Figma yet: the menu only has Log out in the designs (SCRUM-44 needs a way in). */}
           <Button role="menuitem" variant="outline" onClick={onChoreHistory}>
             My chore history
+          </Button>
+          <Button role="menuitem" variant="outline" onClick={onHouseholdChoreHistory}>
+            Household chore history
           </Button>
         </div>
       )}
