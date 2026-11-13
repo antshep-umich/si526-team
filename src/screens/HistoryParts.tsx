@@ -4,7 +4,6 @@ import Chip from "../components/Chip.tsx";
 import type { ChoreStatus } from "../components/ChoreCard.tsx";
 import TextLink from "../components/TextLink.tsx";
 import ThemedIcon from "../components/ThemedIcon.tsx";
-import { TitleWithMenu } from "./HouseholdMenu.tsx";
 import styles from "./HistoryParts.module.css";
 
 // The pieces the three chore histories share, so they read as one family while each
@@ -14,30 +13,6 @@ import styles from "./HistoryParts.module.css";
 
 export function HistoryPage({ children }: { children: ReactNode }) {
   return <main className={styles.page}>{children}</main>;
-}
-
-/**
- * The overline, then the screen's title with the header menu. No Back link: the tab
- * bar and the menu are the way around (TabLayout).
- */
-export function HistoryHeader({
-  overline,
-  title,
-  children,
-}: {
-  overline?: string;
-  title: string;
-  children?: ReactNode;
-}) {
-  return (
-    <header className={styles.header}>
-      {overline && <p className={styles.overline}>{overline}</p>}
-      <TitleWithMenu>
-        <h1 className={styles.title}>{title}</h1>
-      </TitleWithMenu>
-      {children}
-    </header>
-  );
 }
 
 /** One bar to step through weeks or months, with a way back to the current one. */

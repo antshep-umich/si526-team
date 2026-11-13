@@ -5,9 +5,9 @@ import TabFilter from "../components/TabFilter.tsx";
 import { choreStatus, type Chore } from "../chores.ts";
 import { addDays, formatDate, localDateOf, startOfMonth, startOfWeek, today as localToday } from "../dates.ts";
 import { assigneeLabel, doneTally, outcomeLine, weekRange } from "../history.ts";
+import Header from "./Header.tsx";
 import {
   HistoryGroup,
-  HistoryHeader,
   HistoryMessage,
   HistoryPage,
   HistoryRow,
@@ -87,7 +87,7 @@ export default function HouseholdChoreHistory({ household, userId }: Props) {
   // The same header and Weekly / Monthly switch on both views.
   const top = (
     <>
-      <HistoryHeader overline={household.name} title="Household chore history" />
+      <Header overline={household.name} title="Household chore history" />
       <TabFilter label="History view" options={VIEWS} selected={view} onSelect={setView} />
     </>
   );

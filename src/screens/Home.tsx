@@ -17,12 +17,12 @@ import {
   type Chore,
 } from "../chores.ts";
 import { startOfWeek, today as localToday } from "../dates.ts";
-import { TitleWithMenu } from "./HouseholdMenu.tsx";
+import Header from "./Header.tsx";
 import styles from "./Home.module.css";
 
 // The chore list, the home screen after log in (Figma "Home - Chores (All)";
 // SCRUM-7 View the Chore List and SCRUM-8 Mark a Chore Done). The header menu
-// (HouseholdMenu.tsx) and the tab bar (TabLayout) are on every screen in a household.
+// (Header.tsx) and the tab bar (TabLayout) are on every screen in a household.
 
 type HomeProps = {
   household: Household;
@@ -218,9 +218,7 @@ export default function Home({
 
   return (
     <main className={styles.page}>
-      <TitleWithMenu>
-        <h1 className={styles.title}>{household.name}</h1>
-      </TitleWithMenu>
+      <Header title={household.name} />
       {progress && <ProgressCard {...progress} />}
       <Button fullWidth onClick={onAddChore}>
         Add chore

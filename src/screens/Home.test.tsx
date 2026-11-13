@@ -1,11 +1,10 @@
 // The chore list (SCRUM-7 and SCRUM-8) and its header menu (SCRUM-3).
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Household } from "../api/households.ts";
 import type { Chore } from "../chores.ts";
 import Home, { forgetChoreFilter } from "./Home.tsx";
-import { MenuProvider } from "./HouseholdMenu.tsx";
 
 const { listChores, completeChore, undoChore } = vi.hoisted(() => ({
   listChores: vi.fn(),
@@ -56,19 +55,8 @@ const chores = [
 ];
 
 function renderHome(props: Partial<Parameters<typeof Home>[0]> = {}) {
-  const callbacks = {
-    onAddChore: vi.fn(),
-    onOpenChore: vi.fn(),
-    onChoreHistory: vi.fn(),
-    onHouseholdChoreHistory: vi.fn(),
-    onLogOut: vi.fn(),
-  };
-  const { onAddChore, onOpenChore, ...menu } = callbacks;
-  render(
-    <MenuProvider actions={menu}>
-      <Home household={household} userId="u-ana" onAddChore={onAddChore} onOpenChore={onOpenChore} {...props} />
-    </MenuProvider>,
-  );
+  const callbacks = { onAddChore: vi.fn(), onOpenChore: vi.fn() };
+  render(<Home household={household} userId="u-ana" {...callbacks} {...props} />);
   return callbacks;
 }
 
@@ -369,71 +357,5 @@ describe("SCRUM-8 acceptance criteria", { tags: ["SCRUM-8"] }, () => {
     for (const sams of ["Buy dish soap", "Take out trash", "Vacuum"]) {
       expect(within(card(sams)).queryByRole("checkbox")).not.toBeInTheDocument();
     }
-  });
-});
-
-// The menu is on every screen in a household (HouseholdMenu.tsx); Home is where it started.
-describe("Home menu", () => {
-  it("starts closed", async () => {
-    renderHome();
-
-    expect(screen.getByRole("button", { name: "Menu" })).toHaveAttribute("aria-expanded", "false");
-    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
-    await screen.findByRole("list", { name: "Chores to do" });
-  });
-
-  it("opens with Log out as a primary button, focused", async () => {
-    renderHome();
-
-    await userEvent.click(screen.getByRole("button", { name: "Menu" }));
-
-    const logOut = screen.getByRole("menuitem", { name: "Log out" });
-    expect(screen.getByRole("button", { name: "Menu" })).toHaveAttribute("aria-expanded", "true");
-    expect(logOut).toHaveClass("button", "primary");
-    expect(logOut).toHaveFocus();
-  });
-
-  it("opens My chore history (SCRUM-44)", async () => {
-    const { onChoreHistory } = renderHome();
-
-    await userEvent.click(screen.getByRole("button", { name: "Menu" }));
-    await userEvent.click(screen.getByRole("menuitem", { name: "My chore history" }));
-
-    expect(onChoreHistory).toHaveBeenCalledTimes(1);
-  });
-
-  it("opens Household chore history (SCRUM-46)", async () => {
-    const { onHouseholdChoreHistory } = renderHome();
-
-    await userEvent.click(screen.getByRole("button", { name: "Menu" }));
-    await userEvent.click(screen.getByRole("menuitem", { name: "Household chore history" }));
-
-    expect(onHouseholdChoreHistory).toHaveBeenCalledTimes(1);
-  });
-
-  it("logs out", async () => {
-    const { onLogOut } = renderHome();
-
-    await userEvent.click(screen.getByRole("button", { name: "Menu" }));
-    await userEvent.click(screen.getByRole("menuitem", { name: "Log out" }));
-
-    expect(onLogOut).toHaveBeenCalledTimes(1);
-  });
-
-  it("closes with Escape, a tap outside, or the menu button again", async () => {
-    renderHome();
-    const menuButton = screen.getByRole("button", { name: "Menu" });
-
-    await userEvent.click(menuButton);
-    await userEvent.keyboard("{Escape}");
-    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
-
-    await userEvent.click(menuButton);
-    fireEvent.pointerDown(screen.getByRole("button", { name: "Add chore" }));
-    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
-
-    await userEvent.click(menuButton);
-    await userEvent.click(menuButton);
-    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
   });
 });

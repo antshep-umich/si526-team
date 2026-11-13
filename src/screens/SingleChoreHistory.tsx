@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { getChoreHistory, type ChoreHistoryResult } from "../api/chores.ts";
 import { formatDate, today as localToday } from "../dates.ts";
 import { assigneeLabel, eventWhen, statusLabel } from "../history.ts";
-import { DetailList, HistoryHeader, HistoryMessage, HistoryPage, HistorySection } from "./HistoryParts.tsx";
+import Header from "./Header.tsx";
+import { DetailList, HistoryMessage, HistoryPage, HistorySection } from "./HistoryParts.tsx";
 import styles from "./SingleChoreHistory.module.css";
 
 // SCRUM-45 View Single Chore History for Household: one chore's details and everything
@@ -46,7 +47,7 @@ export default function SingleChoreHistory({ choreId, userId }: ChoreHistoryProp
   if (!result || !result.ok) {
     return (
       <HistoryPage>
-        <HistoryHeader title="Chore history" />
+        <Header title="Chore history" />
         {!result ? (
           <HistoryMessage role="status">Loading chore history…</HistoryMessage>
         ) : result.code === "CHORE_NOT_FOUND" ? (
@@ -63,9 +64,9 @@ export default function SingleChoreHistory({ choreId, userId }: ChoreHistoryProp
 
   return (
     <HistoryPage>
-      <HistoryHeader overline="Chore history" title={chore.name}>
+      <Header overline="Chore history" title={chore.name}>
         {chore.notes && <p className={styles.notes}>{chore.notes}</p>}
-      </HistoryHeader>
+      </Header>
 
       <HistorySection title="Chore details">
         <DetailList

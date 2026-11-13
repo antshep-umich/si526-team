@@ -1,11 +1,11 @@
 import type { ReactNode } from "react";
 import TabBar from "../components/TabBar.tsx";
-import { MenuProvider, type MenuActions } from "./HouseholdMenu.tsx";
+import { MenuProvider, type MenuActions } from "./Header.tsx";
 import styles from "./TabLayout.module.css";
 
 // Every screen inside a household (the chore list, Add chore and the chore histories)
 // sits above the tab bar, fixed to the bottom of the view, and has the header menu by
-// its title (TitleWithMenu). Those are the way around: the screens have no Back link,
+// its title (Header). Those are the way around: the screens have no Back link,
 // and Chores always returns to the chore list.
 
 type TabLayoutProps = {

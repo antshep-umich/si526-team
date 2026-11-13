@@ -20,11 +20,11 @@ import {
   type HistorySort,
 } from "../history.ts";
 import styles from "./ChoreHistory.module.css";
+import Header from "./Header.tsx";
 import {
   DetailList,
   HistoryGroup,
   HistoryGroups,
-  HistoryHeader,
   HistoryMessage,
   HistoryPage,
   HistoryRow,
@@ -125,7 +125,7 @@ export default function ChoreHistory({ household, userId }: ChoreHistoryProps) {
 
   return (
     <HistoryPage>
-      <HistoryHeader overline={household.name} title="My chore history" />
+      <Header overline={household.name} title="My chore history" />
       {body()}
     </HistoryPage>
   );

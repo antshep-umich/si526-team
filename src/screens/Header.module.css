@@ -1,0 +1,110 @@
+/*
+ * Every household screen's header: overline, then the title with the menu button on
+ * its right (Figma "Home - Header menu"; the overline and its 6px gap from
+ * "Home - Add Chore (refined)"). The dropdown list isn't in Figma yet.
+ */
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.overline {
+  font: var(--type-overline);
+  letter-spacing: var(--tracking-overline);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.titleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+/* Wraps instead of pushing the menu button off the screen. */
+.title {
+  min-width: 0;
+  overflow-wrap: break-word;
+  font: var(--type-screen-title); /* serif bold 28/34 */
+  color: var(--color-text-default);
+}
+
+/* The dropdown hangs from here, right-aligned with the icon. */
+.menuArea {
+  position: relative;
+  flex-shrink: 0;
+}
+
+/*
+ * 24×24 icon as drawn; the button around it is 44×44 so it's easy to tap. The icon
+ * sits centered on the title's first line (34px), also when a long title wraps.
+ */
+.menuButton {
+  display: flex;
+  margin: -5px -10px -15px;
+  padding: 10px;
+  border: none;
+  border-radius: 12px;
+  background: none;
+  cursor: pointer;
+}
+
+.menuButton:focus-visible {
+  outline: 2px solid var(--color-action-focus-ring);
+  outline-offset: -2px;
+}
+
+/* A card under the icon, above everything but the tab bar's own layer. */
+.menu {
+  position: absolute;
+  top: calc(100% + 14px);
+  right: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  min-width: 232px;
+  padding: 6px 0;
+  border: 1px solid var(--color-border-default);
+  border-radius: 14px; /* the chore card's corners */
+  /* The card color on the page color: dark mode's card is a see-through tint, and a list floating over the screen needs to be solid. */
+  background: linear-gradient(var(--color-surface-card), var(--color-surface-card)), var(--color-background-bottom);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 14%);
+}
+
+/* One row per item, 44px tall so it's easy to tap. */
+.item {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 10px 16px;
+  border: none;
+  background: none;
+  font: var(--type-body);
+  color: var(--color-text-default);
+  text-align: left;
+  cursor: pointer;
+}
+
+.item:hover {
+  background: var(--color-background-top);
+}
+
+.item:focus-visible {
+  outline: 2px solid var(--color-action-focus-ring);
+  outline-offset: -2px;
+  background: var(--color-background-top);
+}
+
+.separator {
+  height: 1px;
+  margin: 6px 0;
+  background: var(--color-border-default);
+}
+
+/* Log out stays the menu's main action, in the primary color (team decision, 2026-10-17). */
+.logOut {
+  font: var(--type-button);
+  color: var(--color-action-primary);
+}

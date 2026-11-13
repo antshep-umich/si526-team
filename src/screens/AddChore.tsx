@@ -8,7 +8,7 @@ import TextArea from "../components/TextArea.tsx";
 import TextField from "../components/TextField.tsx";
 import { today as localToday } from "../dates.ts";
 import { CHORE_NAME_MAX_LENGTH, CHORE_NOTES_MAX_LENGTH, type ChoreResponse } from "../../shared/chores.ts";
-import { TitleWithMenu } from "./HouseholdMenu.tsx";
+import Header from "./Header.tsx";
 import styles from "./AddChore.module.css";
 import { FormError } from "./Screen.tsx";
 
@@ -104,12 +104,7 @@ export default function AddChore({ household: initialHousehold, userId, onAdded,
           handleSubmit();
         }}
       >
-        <div className={styles.titles}>
-          <p className={styles.overline}>{household.name}</p>
-          <TitleWithMenu>
-            <h1 className={styles.title}>Add chore</h1>
-          </TitleWithMenu>
-        </div>
+        <Header overline={household.name} title="Add chore" />
         <div className={styles.form}>
           <TextField
             label="Chore name"

@@ -1,8 +1,7 @@
 /*
  * Figma "Home - Chores (All)" (423:104): content 56px from the top, 24px from the
- * sides, 26px between items. The header menu (HouseholdMenu) and the tab bar fixed to
- * the bottom (TabLayout) are shared with every screen in a household; Log out is the
- * menu's primary Button in both modes (team decision, 2026-10-17).
+ * sides, 26px between items. The header with its menu (Header) and the tab bar fixed
+ * to the bottom (TabLayout) are shared with every screen in a household.
  */
 .page {
   width: 100%;
@@ -12,11 +11,6 @@
   display: flex;
   flex-direction: column;
   gap: 26px;
-}
-
-.title {
-  font: var(--type-screen-title); /* serif bold 28/34 */
-  color: var(--color-text-default);
 }
 
 /* Chore list: cards 10px apart. */

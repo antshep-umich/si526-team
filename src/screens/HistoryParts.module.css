@@ -13,26 +13,6 @@
   gap: 24px;
 }
 
-/* Header: overline, then title, left-aligned. */
-.header {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-}
-
-.overline {
-  font: var(--type-overline);
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.title {
-  font: var(--type-screen-title);
-  color: var(--color-text-default);
-}
-
 /* Week or month stepper: one card, arrows at the ends, the period in the middle. */
 .period {
   display: grid;
