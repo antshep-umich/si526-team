@@ -4,6 +4,7 @@ import Chip from "../components/Chip.tsx";
 import type { ChoreStatus } from "../components/ChoreCard.tsx";
 import TextLink from "../components/TextLink.tsx";
 import ThemedIcon from "../components/ThemedIcon.tsx";
+import { TitleWithMenu } from "./HouseholdMenu.tsx";
 import styles from "./HistoryParts.module.css";
 
 // The pieces the three chore histories share, so they read as one family while each
@@ -16,8 +17,8 @@ export function HistoryPage({ children }: { children: ReactNode }) {
 }
 
 /**
- * The overline and the screen's title. No Back link: the tab bar under every screen
- * in a household is the way around (TabLayout).
+ * The overline, then the screen's title with the header menu. No Back link: the tab
+ * bar and the menu are the way around (TabLayout).
  */
 export function HistoryHeader({
   overline,
@@ -31,7 +32,9 @@ export function HistoryHeader({
   return (
     <header className={styles.header}>
       {overline && <p className={styles.overline}>{overline}</p>}
-      <h1 className={styles.title}>{title}</h1>
+      <TitleWithMenu>
+        <h1 className={styles.title}>{title}</h1>
+      </TitleWithMenu>
       {children}
     </header>
   );

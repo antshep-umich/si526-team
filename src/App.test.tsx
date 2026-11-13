@@ -161,11 +161,12 @@ describe("App when signed in", () => {
     render(<App />);
 
     expect(await screen.findByRole("heading", { name: "Your household" })).toBeInTheDocument();
-    // No tab bar until there's a household for its tabs to show.
+    // No tab bar or menu until there's a household for them to show.
     expect(screen.queryByRole("navigation", { name: "Main" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Menu" })).not.toBeInTheDocument();
   });
 
-  it("keeps the tab bar on every screen in the household, without Back links; Chores returns to the chore list", async () => {
+  it("keeps the tab bar and the menu on every screen in the household, without Back links; Chores returns to the chore list", async () => {
     const chore = {
       id: "c1",
       name: "Mop kitchen",
@@ -199,11 +200,33 @@ describe("App when signed in", () => {
       expect(await screen.findByRole("heading", { level: 1, name: heading })).toBeInTheDocument();
       expect(screen.getByRole("navigation", { name: "Main" })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Chores" })).toHaveAttribute("aria-current", "page");
+      expect(screen.getByRole("button", { name: "Menu" })).toBeInTheDocument();
       expect(screen.queryByRole("button", { name: /^Back/ })).not.toBeInTheDocument();
 
       await userEvent.click(screen.getByRole("button", { name: "Chores" }));
       expect(await screen.findByRole("heading", { name: "Maple St House" })).toBeInTheDocument();
     }
+  });
+
+  it("opens the menu's screens from any screen, closing the menu even on the screen already showing", async () => {
+    getCurrentHousehold.mockResolvedValue({ ok: true, household });
+    render(<App />);
+    await screen.findByRole("heading", { name: "Maple St House" });
+    await userEvent.click(screen.getByRole("button", { name: "Add chore" }));
+    await screen.findByRole("heading", { name: "Add chore" });
+
+    await userEvent.click(screen.getByRole("button", { name: "Menu" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "Household chore history" }));
+    expect(await screen.findByRole("heading", { name: "Household chore history" })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Menu" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "Household chore history" }));
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Household chore history" })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Menu" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "My chore history" }));
+    expect(await screen.findByRole("heading", { name: "My chore history" })).toBeInTheDocument();
   });
 
   it("creates a household, shows Household Created!, then goes Home", async () => {

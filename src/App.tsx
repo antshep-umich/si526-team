@@ -165,14 +165,20 @@ function SignedIn({ userId }: { userId: string }) {
             userId={userId}
             onAddChore={() => setView({ name: "add-chore" })}
             onOpenChore={(choreId) => setView({ name: "chore", choreId })}
-            onChoreHistory={() => setView({ name: "my-history" })}
-            onHouseholdChoreHistory={() => setView({ name: "household-history" })}
-            onLogOut={logOut}
           />
         );
         break;
     }
-    return <TabLayout onChores={showChores}>{content}</TabLayout>;
+    const menu = {
+      onChoreHistory: () => setView({ name: "my-history" }),
+      onHouseholdChoreHistory: () => setView({ name: "household-history" }),
+      onLogOut: logOut,
+    };
+    return (
+      <TabLayout onChores={showChores} menu={menu}>
+        {content}
+      </TabLayout>
+    );
   }
 
   if (screen === "create") {

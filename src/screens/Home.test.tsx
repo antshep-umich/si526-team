@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Household } from "../api/households.ts";
 import type { Chore } from "../chores.ts";
 import Home, { forgetChoreFilter } from "./Home.tsx";
+import { MenuProvider } from "./HouseholdMenu.tsx";
 
 const { listChores, completeChore, undoChore } = vi.hoisted(() => ({
   listChores: vi.fn(),
@@ -62,7 +63,12 @@ function renderHome(props: Partial<Parameters<typeof Home>[0]> = {}) {
     onHouseholdChoreHistory: vi.fn(),
     onLogOut: vi.fn(),
   };
-  render(<Home household={household} userId="u-ana" {...callbacks} {...props} />);
+  const { onAddChore, onOpenChore, ...menu } = callbacks;
+  render(
+    <MenuProvider actions={menu}>
+      <Home household={household} userId="u-ana" onAddChore={onAddChore} onOpenChore={onOpenChore} {...props} />
+    </MenuProvider>,
+  );
   return callbacks;
 }
 
@@ -113,9 +119,6 @@ describe("Home chore list", () => {
         userId="u-ana"
         onAddChore={() => {}}
         onOpenChore={() => {}}
-        onChoreHistory={() => {}}
-        onHouseholdChoreHistory={() => {}}
-        onLogOut={() => {}}
       />,
     );
     await userEvent.click(await screen.findByRole("radio", { name: "Mine" }));
@@ -369,6 +372,7 @@ describe("SCRUM-8 acceptance criteria", { tags: ["SCRUM-8"] }, () => {
   });
 });
 
+// The menu is on every screen in a household (HouseholdMenu.tsx); Home is where it started.
 describe("Home menu", () => {
   it("starts closed", async () => {
     renderHome();

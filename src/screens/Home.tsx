@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 import { completeChore, listChores, undoChore } from "../api/chores.ts";
 import type { Household } from "../api/households.ts";
 import Button from "../components/Button.tsx";
@@ -17,12 +17,12 @@ import {
   type Chore,
 } from "../chores.ts";
 import { startOfWeek, today as localToday } from "../dates.ts";
+import { TitleWithMenu } from "./HouseholdMenu.tsx";
 import styles from "./Home.module.css";
 
 // The chore list, the home screen after log in (Figma "Home - Chores (All)";
 // SCRUM-7 View the Chore List and SCRUM-8 Mark a Chore Done). The header menu
-// holds My chore history (SCRUM-44) and Log out (SCRUM-3). The tab bar comes from
-// TabLayout, around every screen inside a household.
+// (HouseholdMenu.tsx) and the tab bar (TabLayout) are on every screen in a household.
 
 type HomeProps = {
   household: Household;
@@ -30,10 +30,6 @@ type HomeProps = {
   onAddChore: () => void;
   /** Opens one chore's history (SCRUM-45). */
   onOpenChore: (choreId: string) => void;
-  /** Opens the person's chore history (SCRUM-44). */
-  onChoreHistory: () => void;
-  onHouseholdChoreHistory: () => void;
-  onLogOut: () => void;
 };
 
 type Filter = "all" | "mine";
@@ -77,9 +73,6 @@ export default function Home({
   userId,
   onAddChore,
   onOpenChore,
-  onChoreHistory,
-  onHouseholdChoreHistory,
-  onLogOut,
 }: HomeProps) {
   const [list, setList] = useState<ListState>({ status: "loading" });
   const [attempt, setAttempt] = useState(0);
@@ -225,12 +218,9 @@ export default function Home({
 
   return (
     <main className={styles.page}>
-      <Header
-        name={household.name}
-        onChoreHistory={onChoreHistory}
-        onHouseholdChoreHistory={onHouseholdChoreHistory}
-        onLogOut={onLogOut}
-      />
+      <TitleWithMenu>
+        <h1 className={styles.title}>{household.name}</h1>
+      </TitleWithMenu>
       {progress && <ProgressCard {...progress} />}
       <Button fullWidth onClick={onAddChore}>
         Add chore
@@ -238,70 +228,5 @@ export default function Home({
       <TabFilter label="Show chores" options={FILTERS} selected={filter} onSelect={changeFilter} />
       {body()}
     </main>
-  );
-}
-
-/** The household name and the menu with Log out (Figma "Home - Header menu" / "Home - Menu open"). */
-function Header({
-  name,
-  onChoreHistory,
-  onHouseholdChoreHistory,
-  onLogOut,
-}: {
-  name: string;
-  onChoreHistory: () => void;
-  onHouseholdChoreHistory: () => void;
-  onLogOut: () => void;
-}) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const headerRef = useRef<HTMLDivElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  // Close the menu on a tap outside it or the Escape key; focus its first item when it opens.
-  useEffect(() => {
-    if (!menuOpen) return;
-    menuRef.current?.querySelector("button")?.focus();
-    const onPointerDown = (e: PointerEvent) => {
-      if (!headerRef.current?.contains(e.target as Node)) setMenuOpen(false);
-    };
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setMenuOpen(false);
-    };
-    document.addEventListener("pointerdown", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("pointerdown", onPointerDown);
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [menuOpen]);
-
-  return (
-    <div className={styles.header} ref={headerRef}>
-      <h1 className={styles.title}>{name}</h1>
-      <button
-        type="button"
-        className={styles.menuButton}
-        aria-label="Menu"
-        aria-haspopup="menu"
-        aria-expanded={menuOpen}
-        onClick={() => setMenuOpen((open) => !open)}
-      >
-        <ThemedIcon name="menu" />
-      </button>
-      {menuOpen && (
-        <div className={styles.menu} role="menu" ref={menuRef}>
-          <Button role="menuitem" onClick={onLogOut}>
-            Log out
-          </Button>
-          {/* Not in Figma yet: the menu only has Log out in the designs (SCRUM-44 needs a way in). */}
-          <Button role="menuitem" variant="outline" onClick={onChoreHistory}>
-            My chore history
-          </Button>
-          <Button role="menuitem" variant="outline" onClick={onHouseholdChoreHistory}>
-            Household chore history
-          </Button>
-        </div>
-      )}
-    </div>
   );
 }

@@ -5,7 +5,7 @@ save you from exploring the codebase. Deeper detail lives in `TECH_SPEC.md` (§ 
 `TECH_DEBT.md` and `README.md`. **If you change anything this file describes, update it in the
 same commit.**
 
-_Last updated: 2026-11-12 (chore history redesign, test household seed, tab bar on every household screen), on `chore-history-design`._
+_Last updated: 2026-11-12 (chore history redesign, test household seed, tab bar and menu on every household screen), on `chore-history-design`._
 
 ## The project
 
@@ -68,7 +68,7 @@ shared/                 imported by both server and frontend
   httpStatus.ts         HttpStatus.CREATED etc. Use these, never bare numbers
 src/                    React app
   App.tsx               which screen to show (session + household state machine)
-  screens/              one file per Figma screen, plus Screen.tsx (shared layout) and TabLayout.tsx (the tab bar under every screen in a household); Home.tsx is the chore list, ChoreHistory.tsx the user's history; HistoryParts.tsx the parts all three chore histories share (header, week/month bar, summary, grouped rows)
+  screens/              one file per Figma screen, plus Screen.tsx (shared layout) TabLayout.tsx (the tab bar under every screen in a household) and HouseholdMenu.tsx (the header menu beside each of their titles); Home.tsx is the chore list, ChoreHistory.tsx the user's history; HistoryParts.tsx the parts all three chore histories share (header, week/month bar, summary, grouped rows)
   chores.ts, dates.ts   chore status/sorting/weekly progress, and "YYYY-MM-DD" dates in the phone's time zone
   history.ts            My chore history's filters, sorts and month groups (SCRUM-44), and the row wording all histories share
   monthlyHistory.ts     Household chore history by month: which chores and the summary (SCRUM-47)
@@ -135,7 +135,7 @@ A request goes through six layers in order. **Each layer may only use the layers
 
 ## Frontend (TECH_SPEC §3, README "Design system")
 
-- **No router.** `src/App.tsx` picks the screen: signed out → Log in / Sign up / Forgot password; signed in without a household → Your household / Create / Join; just created → Household Created!; otherwise → Home (the chore list), which opens Add chore, a chore's history, and My / Household chore history from its menu. Every screen in a household sits in `TabLayout`: the tab bar fixed to the bottom, and no Back links; Chores returns to the chore list (README Conflicts row 28).
+- **No router.** `src/App.tsx` picks the screen: signed out → Log in / Sign up / Forgot password; signed in without a household → Your household / Create / Join; just created → Household Created!; otherwise → Home (the chore list), which opens Add chore, a chore's history, and My / Household chore history from its menu. Every screen in a household sits in `TabLayout`: the tab bar fixed to the bottom, the header menu beside the title (`TitleWithMenu` in `HouseholdMenu.tsx`, which gets the menu's actions from `TabLayout`), and no Back links; Chores returns to the chore list (README Conflicts row 28).
 - **Copy comes from the stories.** Error and empty-state messages are the Jira stories' exact words (auth ones in `src/screens/authErrors.ts` `AUTH_MESSAGES`). The current user is always **"You"** (not "Me"). Forms show every error at once.
 - **Screens** use `Screen` (`src/screens/Screen.tsx`): 402px max width, 24px sides, 60px top, 40px between items (`tight` = 24px). `Actions` groups a full-width button with the link under it. Errors go on the field they belong to (`TextField error=…`); others go in `FormError`.
 - **API helpers** (`src/api/`) never throw: `{ ok: true, household } | { ok: false, code }`. `NETWORK_ERROR` when the server can't be reached. Screens map codes to their own wording.
