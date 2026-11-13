@@ -57,6 +57,7 @@ const chores = [
 function renderHome(props: Partial<Parameters<typeof Home>[0]> = {}) {
   const callbacks = {
     onAddChore: vi.fn(),
+    onOpenChore: vi.fn(),
     onChoreHistory: vi.fn(),
     onHouseholdChoreHistory: vi.fn(),
     onLogOut: vi.fn(),
@@ -111,6 +112,7 @@ describe("Home chore list", () => {
         household={household}
         userId="u-ana"
         onAddChore={() => {}}
+        onOpenChore={() => {}}
         onChoreHistory={() => {}}
         onHouseholdChoreHistory={() => {}}
         onLogOut={() => {}}
@@ -161,11 +163,11 @@ describe("Home chore list", () => {
 });
 
 describe("SCRUM-7 acceptance criteria", { tags: ["SCRUM-7"] }, () => {
-  it('AC1: opens on the Chores tab with the household name in the header and "All" selected', async () => {
+  // The Chores tab itself is around every screen (TabLayout), so App.test.tsx checks it.
+  it('AC1: opens with the household name in the header and "All" selected', async () => {
     renderHome();
     await screen.findByRole("list", { name: "Chores to do" });
 
-    expect(screen.getByRole("button", { name: "Chores" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("heading", { level: 1, name: "Maple St House" })).toBeInTheDocument();
     expect(screen.getByRole("radio", { name: "All" })).toBeChecked();
   });

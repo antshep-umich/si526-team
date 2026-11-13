@@ -5,7 +5,6 @@ import Button from "../components/Button.tsx";
 import ChoreCard from "../components/ChoreCard.tsx";
 import DoneSection from "../components/DoneSection.tsx";
 import ProgressCard from "../components/ProgressCard.tsx";
-import TabBar from "../components/TabBar.tsx";
 import TabFilter from "../components/TabFilter.tsx";
 import ThemedIcon from "../components/ThemedIcon.tsx";
 import {
@@ -19,16 +18,18 @@ import {
 } from "../chores.ts";
 import { startOfWeek, today as localToday } from "../dates.ts";
 import styles from "./Home.module.css";
-import SingleChoreHistory from "./SingleChoreHistory.tsx";
 
 // The chore list, the home screen after log in (Figma "Home - Chores (All)";
 // SCRUM-7 View the Chore List and SCRUM-8 Mark a Chore Done). The header menu
-// holds My chore history (SCRUM-44) and Log out (SCRUM-3).
+// holds My chore history (SCRUM-44) and Log out (SCRUM-3). The tab bar comes from
+// TabLayout, around every screen inside a household.
 
 type HomeProps = {
   household: Household;
   userId: string;
   onAddChore: () => void;
+  /** Opens one chore's history (SCRUM-45). */
+  onOpenChore: (choreId: string) => void;
   /** Opens the person's chore history (SCRUM-44). */
   onChoreHistory: () => void;
   onHouseholdChoreHistory: () => void;
@@ -75,6 +76,7 @@ export default function Home({
   household,
   userId,
   onAddChore,
+  onOpenChore,
   onChoreHistory,
   onHouseholdChoreHistory,
   onLogOut,
@@ -82,7 +84,6 @@ export default function Home({
   const [list, setList] = useState<ListState>({ status: "loading" });
   const [attempt, setAttempt] = useState(0);
   const [filter, setFilter] = useState<Filter>(savedFilter);
-  const [selectedChoreId, setSelectedChoreId] = useState<string | null>(null);
   const [doneOpen, setDoneOpen] = useState(false);
   const [saving, setSaving] = useState<ReadonlySet<string>>(new Set());
   const [toggleError, setToggleError] = useState<string | null>(null);
@@ -144,7 +145,7 @@ export default function Home({
           // SCRUM-8: only the assignee can mark it done or undo it.
           onToggle={isMine(chore, userId) ? () => toggle(chore) : undefined}
           busy={saving.has(chore.id)}
-          onViewHistory={() => setSelectedChoreId(chore.id)}
+          onViewHistory={() => onOpenChore(chore.id)}
         />
       </li>
     );
@@ -221,36 +222,22 @@ export default function Home({
 
   // The week's progress is the whole household's, whichever filter is on.
   const progress = list.status === "ready" ? weeklyProgress(list.chores, today) : null;
-  if (selectedChoreId) {
-    return (
-      <SingleChoreHistory
-        choreId={selectedChoreId}
-        userId={userId}
-        onBack={() => setSelectedChoreId(null)}
-      />
-    );
-  }
 
   return (
-    <div className={styles.screen}>
-      <main className={styles.page}>
-        <Header
-          name={household.name}
-          onChoreHistory={onChoreHistory}
-          onHouseholdChoreHistory={onHouseholdChoreHistory}
-          onLogOut={onLogOut}
-        />
-        {progress && <ProgressCard {...progress} />}
-        <Button fullWidth onClick={onAddChore}>
-          Add chore
-        </Button>
-        <TabFilter label="Show chores" options={FILTERS} selected={filter} onSelect={changeFilter} />
-        {body()}
-      </main>
-      <div className={styles.tabBar}>
-        <TabBar selected="chores" onSelect={() => {}} available={["chores"]} />
-      </div>
-    </div>
+    <main className={styles.page}>
+      <Header
+        name={household.name}
+        onChoreHistory={onChoreHistory}
+        onHouseholdChoreHistory={onHouseholdChoreHistory}
+        onLogOut={onLogOut}
+      />
+      {progress && <ProgressCard {...progress} />}
+      <Button fullWidth onClick={onAddChore}>
+        Add chore
+      </Button>
+      <TabFilter label="Show chores" options={FILTERS} selected={filter} onSelect={changeFilter} />
+      {body()}
+    </main>
   );
 }
 

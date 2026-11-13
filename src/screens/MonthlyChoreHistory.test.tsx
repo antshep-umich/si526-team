@@ -61,7 +61,7 @@ const december = [chore("Hang lights", { dueDate: "2026-12-01", assignee: sam })
 const everything = [...october, ...november, ...december];
 
 function renderHistory() {
-  render(<HouseholdChoreHistory household={household} userId="u-ana" onBack={() => {}} />);
+  render(<HouseholdChoreHistory household={household} userId="u-ana" />);
 }
 
 async function openMonthlyView() {
@@ -175,21 +175,6 @@ describe("Household chore history, monthly view", { tags: ["SCRUM-47"] }, () => 
     expect(screen.getByText("Hand-wash the knives")).toBeInTheDocument();
     // Ana is signed in, so the chore's assignee shows as "You" (README Conflicts row 3).
     expect(screen.getByText("Assigned to").nextElementSibling).toHaveTextContent("You");
-  });
-
-  it("AC4: coming back from a chore returns to the same month", async () => {
-    getChoreHistory.mockResolvedValue({ ok: true, chore: october[0], history: [] });
-    await openMonthlyView();
-    await list();
-    await userEvent.click(screen.getByRole("button", { name: "Previous month" }));
-    await screen.findByText("October 2026");
-
-    await userEvent.click(within(await list()).getByRole("button", { name: "View history for Rake leaves" }));
-    await screen.findByRole("heading", { name: "Rake leaves" });
-    await userEvent.click(screen.getByRole("button", { name: "Back to chores" }));
-
-    expect(await screen.findByText("October 2026")).toBeInTheDocument();
-    expect(screen.getByRole("radio", { name: "Monthly" })).toBeChecked();
   });
 
   it("AC5: a month with no chores says so", async () => {

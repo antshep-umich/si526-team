@@ -15,25 +15,21 @@ export function HistoryPage({ children }: { children: ReactNode }) {
   return <main className={styles.page}>{children}</main>;
 }
 
-/** Back, then the overline and the screen's title, as on Figma "Home - Chore Details". */
+/**
+ * The overline and the screen's title. No Back link: the tab bar under every screen
+ * in a household is the way around (TabLayout).
+ */
 export function HistoryHeader({
-  backLabel = "Back",
-  onBack,
   overline,
   title,
   children,
 }: {
-  backLabel?: string;
-  onBack: () => void;
   overline?: string;
   title: string;
   children?: ReactNode;
 }) {
   return (
     <header className={styles.header}>
-      <TextLink className={styles.back} onClick={onBack}>
-        {backLabel}
-      </TextLink>
       {overline && <p className={styles.overline}>{overline}</p>}
       <h1 className={styles.title}>{title}</h1>
       {children}

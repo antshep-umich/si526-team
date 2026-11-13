@@ -25,7 +25,6 @@ import styles from "./HouseholdChoreHistory.module.css";
 type Props = {
   household: Household;
   userId: string;
-  onBack: () => void;
 };
 
 type View = "weekly" | "monthly";
@@ -44,11 +43,11 @@ type ListState =
 const onDay = (chore: Chore, day: string) =>
   chore.dueDate === day || (chore.completedAt !== null && localDateOf(chore.completedAt) === day);
 
-export default function HouseholdChoreHistory({ household, userId, onBack }: Props) {
+export default function HouseholdChoreHistory({ household, userId }: Props) {
   const today = localToday();
   const [view, setView] = useState<View>("weekly");
   const [weekStart, setWeekStart] = useState(startOfWeek(today));
-  // The monthly view's month (SCRUM-47), kept here so it's still selected after opening a chore.
+  // The monthly view's month (SCRUM-47), kept here so it survives switching to Weekly and back.
   const [month, setMonth] = useState(startOfMonth(today));
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [list, setList] = useState<ListState>({ status: "loading" });
@@ -82,19 +81,13 @@ export default function HouseholdChoreHistory({ household, userId, onBack }: Pro
   }
 
   if (selectedChoreId) {
-    return (
-      <SingleChoreHistory
-        choreId={selectedChoreId}
-        userId={userId}
-        onBack={() => setSelectedChoreId(null)}
-      />
-    );
+    return <SingleChoreHistory choreId={selectedChoreId} userId={userId} />;
   }
 
   // The same header and Weekly / Monthly switch on both views.
   const top = (
     <>
-      <HistoryHeader onBack={onBack} overline={household.name} title="Household chore history" />
+      <HistoryHeader overline={household.name} title="Household chore history" />
       <TabFilter label="History view" options={VIEWS} selected={view} onSelect={setView} />
     </>
   );

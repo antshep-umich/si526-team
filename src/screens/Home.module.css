@@ -1,19 +1,14 @@
 /*
  * Figma "Home - Chores (All)" (423:104): content 56px from the top, 24px from the
- * sides, 26px between items, and the tab bar fixed to the bottom. The header menu
- * comes from "Home - Menu open" (SCRUM-3); Log out is the primary Button in both
- * modes (team decision, 2026-10-17).
+ * sides, 26px between items. The tab bar fixed to the bottom comes from TabLayout,
+ * which also leaves room for it. The header menu comes from "Home - Menu open"
+ * (SCRUM-3); Log out is the primary Button in both modes (team decision, 2026-10-17).
  */
-.screen {
-  min-height: 100dvh;
-}
-
-/* The bottom padding keeps the last card clear of the 81px tab bar. */
 .page {
   width: 100%;
   max-width: 402px;
   margin: 0 auto;
-  padding: 56px 24px calc(81px + 24px);
+  padding: 56px 24px 24px;
   display: flex;
   flex-direction: column;
   gap: 26px;
@@ -95,15 +90,4 @@
   font: var(--type-field-label);
   color: var(--color-error-text);
   text-align: center;
-}
-
-.tabBar {
-  position: fixed;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  z-index: 5;
-  width: 100%;
-  max-width: 402px;
-  margin: 0 auto;
 }

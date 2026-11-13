@@ -14,6 +14,8 @@ import JoinHousehold from "./screens/JoinHousehold.tsx";
 import LogIn from "./screens/LogIn.tsx";
 import Screen, { Actions, FormError, Loading } from "./screens/Screen.tsx";
 import SignUp from "./screens/SignUp.tsx";
+import SingleChoreHistory from "./screens/SingleChoreHistory.tsx";
+import TabLayout from "./screens/TabLayout.tsx";
 import Button from "./components/Button.tsx";
 
 // Which screen to show comes from two things: whether someone is signed in
@@ -69,12 +71,18 @@ type HouseholdState =
   | { status: "failed" }
   | { status: "ready"; household: Household };
 
+/** The screens inside a household, all under the tab bar's Chores tab. */
+type View =
+  | { name: "chores" }
+  | { name: "add-chore" }
+  | { name: "my-history" }
+  | { name: "household-history" }
+  | { name: "chore"; choreId: string };
+
 function SignedIn({ userId }: { userId: string }) {
   const [state, setState] = useState<HouseholdState>({ status: "loading" });
   const [screen, setScreen] = useState<"choose" | "create" | "join">("choose");
-  const [addingChore, setAddingChore] = useState(false);
-  const [viewingHistory, setViewingHistory] = useState(false);
-  const [viewingHouseholdHistory, setViewingHouseholdHistory] = useState(false);
+  const [view, setView] = useState<View>({ name: "chores" });
   const [justCreated, setJustCreated] = useState<Household | null>(null);
   const [attempt, setAttempt] = useState(0);
 
@@ -134,47 +142,37 @@ function SignedIn({ userId }: { userId: string }) {
   }
 
   if (state.status === "ready") {
-    if (addingChore) {
-      return (
-        <AddChore
-          household={state.household}
-          userId={userId}
-          onAdded={() => setAddingChore(false)}
-          onCancel={() => setAddingChore(false)}
-        />
-      );
+    const household = state.household;
+    const showChores = () => setView({ name: "chores" });
+    let content;
+    switch (view.name) {
+      case "add-chore":
+        content = <AddChore household={household} userId={userId} onAdded={showChores} onCancel={showChores} />;
+        break;
+      case "my-history":
+        content = <ChoreHistory household={household} userId={userId} />;
+        break;
+      case "household-history":
+        content = <HouseholdChoreHistory household={household} userId={userId} />;
+        break;
+      case "chore":
+        content = <SingleChoreHistory choreId={view.choreId} userId={userId} />;
+        break;
+      case "chores":
+        content = (
+          <Home
+            household={household}
+            userId={userId}
+            onAddChore={() => setView({ name: "add-chore" })}
+            onOpenChore={(choreId) => setView({ name: "chore", choreId })}
+            onChoreHistory={() => setView({ name: "my-history" })}
+            onHouseholdChoreHistory={() => setView({ name: "household-history" })}
+            onLogOut={logOut}
+          />
+        );
+        break;
     }
-
-    if (viewingHistory) {
-      return (
-        <ChoreHistory
-          household={state.household}
-          userId={userId}
-          onBack={() => setViewingHistory(false)}
-        />
-      );
-    }
-
-    if (viewingHouseholdHistory) {
-      return (
-        <HouseholdChoreHistory
-          household={state.household}
-          userId={userId}
-          onBack={() => setViewingHouseholdHistory(false)}
-        />
-      );
-    }
-
-    return (
-      <Home
-        household={state.household}
-        userId={userId}
-        onAddChore={() => setAddingChore(true)}
-        onChoreHistory={() => setViewingHistory(true)}
-        onHouseholdChoreHistory={() => setViewingHouseholdHistory(true)}
-        onLogOut={logOut}
-      />
-    );
+    return <TabLayout onChores={showChores}>{content}</TabLayout>;
   }
 
   if (screen === "create") {

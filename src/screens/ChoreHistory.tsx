@@ -38,12 +38,11 @@ import {
 type ChoreHistoryProps = {
   household: Household;
   userId: string;
-  onBack: () => void;
 };
 
 type ListState = { status: "loading" } | { status: "failed" } | { status: "ready"; chores: Chore[] };
 
-export default function ChoreHistory({ household, userId, onBack }: ChoreHistoryProps) {
+export default function ChoreHistory({ household, userId }: ChoreHistoryProps) {
   const [list, setList] = useState<ListState>({ status: "loading" });
   const [attempt, setAttempt] = useState(0);
   const [filter, setFilter] = useState<HistoryFilter>("all");
@@ -126,7 +125,7 @@ export default function ChoreHistory({ household, userId, onBack }: ChoreHistory
 
   return (
     <HistoryPage>
-      <HistoryHeader onBack={onBack} overline={household.name} title="My chore history" />
+      <HistoryHeader overline={household.name} title="My chore history" />
       {body()}
     </HistoryPage>
   );

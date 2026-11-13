@@ -49,7 +49,7 @@ afterEach(() => {
 
 describe("Single chore history", { tags: ["SCRUM-45"] }, () => {
   it("AC2: shows when the chore was created, its due dates, completions and who completed it", async () => {
-    render(<SingleChoreHistory choreId="c1" userId="u-ana" onBack={() => {}} />);
+    render(<SingleChoreHistory choreId="c1" userId="u-ana" />);
 
     const events = within(await screen.findByRole("list", { name: "Chore activity" })).getAllByRole("listitem");
     // Newest first; only a change of due date says "New due date".

@@ -13,7 +13,6 @@ type ChoreHistoryProps = {
   choreId: string;
   /** The signed-in user, who's shown as "You". */
   userId?: string;
-  onBack: () => void;
 };
 
 type ChoreEvent = Extract<ChoreHistoryResult, { ok: true }>["history"][number];
@@ -25,7 +24,7 @@ const EVENT_LABELS: Record<string, string> = {
   due_date_changed: "Due date changed",
 };
 
-export default function SingleChoreHistory({ choreId, userId, onBack }: ChoreHistoryProps) {
+export default function SingleChoreHistory({ choreId, userId }: ChoreHistoryProps) {
   const [result, setResult] = useState<ChoreHistoryResult | null>(null);
   const [attempt, setAttempt] = useState(0);
   const today = localToday();
@@ -47,7 +46,7 @@ export default function SingleChoreHistory({ choreId, userId, onBack }: ChoreHis
   if (!result || !result.ok) {
     return (
       <HistoryPage>
-        <HistoryHeader backLabel="Back to chores" onBack={onBack} title="Chore history" />
+        <HistoryHeader title="Chore history" />
         {!result ? (
           <HistoryMessage role="status">Loading chore history…</HistoryMessage>
         ) : result.code === "CHORE_NOT_FOUND" ? (
@@ -64,7 +63,7 @@ export default function SingleChoreHistory({ choreId, userId, onBack }: ChoreHis
 
   return (
     <HistoryPage>
-      <HistoryHeader backLabel="Back to chores" onBack={onBack} overline="Chore history" title={chore.name}>
+      <HistoryHeader overline="Chore history" title={chore.name}>
         {chore.notes && <p className={styles.notes}>{chore.notes}</p>}
       </HistoryHeader>
 

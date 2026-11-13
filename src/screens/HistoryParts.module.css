@@ -13,19 +13,12 @@
   gap: 24px;
 }
 
-/* Header: Back, overline, title, all left-aligned. */
+/* Header: overline, then title, left-aligned. */
 .header {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 4px;
-}
-
-/* TextLink stretches and centers by default (it sits under a form's button). */
-.header .back {
-  width: auto;
-  margin-bottom: 12px;
-  text-align: left;
 }
 
 .overline {
