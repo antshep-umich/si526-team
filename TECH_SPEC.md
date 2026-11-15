@@ -140,7 +140,7 @@ Vercel project (one deployment)
 }
 ```
 
-The first rewrite sends all API paths to the Express function. The second lets React Router handle all other paths. `framework` and `outputDirectory` are set here because the Vercel project's dashboard preset is "Other". `build:vercel` runs `prisma generate && prisma migrate deploy && npm run build`. Spike 1 confirmed this setup (PR #4).
+The first rewrite sends all API paths to the Express function. The second lets React Router handle all other paths. `framework` and `outputDirectory` are set here because the Vercel project's dashboard preset is "Other". `build:vercel` runs `prisma generate && prisma migrate deploy && tsx server/seed/run.ts && npm run build`. Spike 1 confirmed this setup (PR #4). The seed step resets a test household (Test_House_Data, signed in as `Test_User@test.com`) on **preview** builds only, since preview databases are copied from production, which has no test data. Production builds skip it, and a failed seed doesn't fail the preview. `npm run seed:test-house` does the same for the dev database.
 
 ### Local development
 

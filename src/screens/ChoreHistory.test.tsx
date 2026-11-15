@@ -66,9 +66,7 @@ const history = [
 ];
 
 function renderHistory() {
-  const onBack = vi.fn();
-  render(<ChoreHistory household={household} userId="u-ana" onBack={onBack} />);
-  return { onBack };
+  render(<ChoreHistory household={household} userId="u-ana" />);
 }
 
 const list = () => screen.findByRole("list", { name: "Chore history" });
@@ -209,13 +207,5 @@ describe("My chore history, other states", () => {
     await userEvent.click(screen.getByRole("button", { name: "Try again" }));
 
     expect(await screen.findByText("No description added.")).toBeInTheDocument();
-  });
-
-  it("goes back", async () => {
-    const { onBack } = renderHistory();
-
-    await userEvent.click(screen.getByRole("button", { name: "Back" }));
-
-    expect(onBack).toHaveBeenCalledTimes(1);
   });
 });

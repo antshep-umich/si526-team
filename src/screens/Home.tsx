@@ -1,11 +1,10 @@
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 import { completeChore, listChores, undoChore } from "../api/chores.ts";
 import type { Household } from "../api/households.ts";
 import Button from "../components/Button.tsx";
 import ChoreCard from "../components/ChoreCard.tsx";
 import DoneSection from "../components/DoneSection.tsx";
 import ProgressCard from "../components/ProgressCard.tsx";
-import TabBar from "../components/TabBar.tsx";
 import TabFilter from "../components/TabFilter.tsx";
 import ThemedIcon from "../components/ThemedIcon.tsx";
 import {
@@ -18,21 +17,19 @@ import {
   type Chore,
 } from "../chores.ts";
 import { startOfWeek, today as localToday } from "../dates.ts";
+import Header from "./Header.tsx";
 import styles from "./Home.module.css";
-import SingleChoreHistory from "./SingleChoreHistory.tsx";
 
 // The chore list, the home screen after log in (Figma "Home - Chores (All)";
 // SCRUM-7 View the Chore List and SCRUM-8 Mark a Chore Done). The header menu
-// holds My chore history (SCRUM-44) and Log out (SCRUM-3).
+// (Header.tsx) and the tab bar (TabLayout) are on every screen in a household.
 
 type HomeProps = {
   household: Household;
   userId: string;
   onAddChore: () => void;
-  /** Opens the person's chore history (SCRUM-44). */
-  onChoreHistory: () => void;
-  onHouseholdChoreHistory: () => void;
-  onLogOut: () => void;
+  /** Opens one chore's history (SCRUM-45). */
+  onOpenChore: (choreId: string) => void;
 };
 
 type Filter = "all" | "mine";
@@ -75,14 +72,11 @@ export default function Home({
   household,
   userId,
   onAddChore,
-  onChoreHistory,
-  onHouseholdChoreHistory,
-  onLogOut,
+  onOpenChore,
 }: HomeProps) {
   const [list, setList] = useState<ListState>({ status: "loading" });
   const [attempt, setAttempt] = useState(0);
   const [filter, setFilter] = useState<Filter>(savedFilter);
-  const [selectedChoreId, setSelectedChoreId] = useState<string | null>(null);
   const [doneOpen, setDoneOpen] = useState(false);
   const [saving, setSaving] = useState<ReadonlySet<string>>(new Set());
   const [toggleError, setToggleError] = useState<string | null>(null);
@@ -144,7 +138,7 @@ export default function Home({
           // SCRUM-8: only the assignee can mark it done or undo it.
           onToggle={isMine(chore, userId) ? () => toggle(chore) : undefined}
           busy={saving.has(chore.id)}
-          onViewHistory={() => setSelectedChoreId(chore.id)}
+          onViewHistory={() => onOpenChore(chore.id)}
         />
       </li>
     );
@@ -221,99 +215,16 @@ export default function Home({
 
   // The week's progress is the whole household's, whichever filter is on.
   const progress = list.status === "ready" ? weeklyProgress(list.chores, today) : null;
-  if (selectedChoreId) {
-    return (
-      <SingleChoreHistory
-        choreId={selectedChoreId}
-        onBack={() => setSelectedChoreId(null)}
-      />
-    );
-  }
 
   return (
-    <div className={styles.screen}>
-      <main className={styles.page}>
-        <Header
-          name={household.name}
-          onChoreHistory={onChoreHistory}
-          onHouseholdChoreHistory={onHouseholdChoreHistory}
-          onLogOut={onLogOut}
-        />
-        {progress && <ProgressCard {...progress} />}
-        <Button fullWidth onClick={onAddChore}>
-          Add chore
-        </Button>
-        <TabFilter label="Show chores" options={FILTERS} selected={filter} onSelect={changeFilter} />
-        {body()}
-      </main>
-      <div className={styles.tabBar}>
-        <TabBar selected="chores" onSelect={() => {}} available={["chores"]} />
-      </div>
-    </div>
-  );
-}
-
-/** The household name and the menu with Log out (Figma "Home - Header menu" / "Home - Menu open"). */
-function Header({
-  name,
-  onChoreHistory,
-  onHouseholdChoreHistory,
-  onLogOut,
-}: {
-  name: string;
-  onChoreHistory: () => void;
-  onHouseholdChoreHistory: () => void;
-  onLogOut: () => void;
-}) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const headerRef = useRef<HTMLDivElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  // Close the menu on a tap outside it or the Escape key; focus its first item when it opens.
-  useEffect(() => {
-    if (!menuOpen) return;
-    menuRef.current?.querySelector("button")?.focus();
-    const onPointerDown = (e: PointerEvent) => {
-      if (!headerRef.current?.contains(e.target as Node)) setMenuOpen(false);
-    };
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setMenuOpen(false);
-    };
-    document.addEventListener("pointerdown", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("pointerdown", onPointerDown);
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [menuOpen]);
-
-  return (
-    <div className={styles.header} ref={headerRef}>
-      <h1 className={styles.title}>{name}</h1>
-      <button
-        type="button"
-        className={styles.menuButton}
-        aria-label="Menu"
-        aria-haspopup="menu"
-        aria-expanded={menuOpen}
-        onClick={() => setMenuOpen((open) => !open)}
-      >
-        <ThemedIcon name="menu" />
-      </button>
-      {menuOpen && (
-        <div className={styles.menu} role="menu" ref={menuRef}>
-          <Button role="menuitem" onClick={onLogOut}>
-            Log out
-          </Button>
-          {/* Not in Figma yet: the menu only has Log out in the designs (SCRUM-44 needs a way in). */}
-          <Button role="menuitem" variant="outline" onClick={onChoreHistory}>
-            My chore history
-          </Button>
-          <Button role="menuitem" variant="outline" onClick={onHouseholdChoreHistory}>
-            Household chore history
-          </Button>
-        </div>
-      )}
-    </div>
+    <main className={styles.page}>
+      <Header title={household.name} />
+      {progress && <ProgressCard {...progress} />}
+      <Button fullWidth onClick={onAddChore}>
+        Add chore
+      </Button>
+      <TabFilter label="Show chores" options={FILTERS} selected={filter} onSelect={changeFilter} />
+      {body()}
+    </main>
   );
 }

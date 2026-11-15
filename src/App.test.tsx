@@ -16,6 +16,8 @@ const {
   resetPassword,
   listChores,
   createChore,
+  listChoreHistory,
+  getChoreHistory,
 } = vi.hoisted(() => ({
   useSession: vi.fn(),
   signIn: vi.fn(),
@@ -26,13 +28,23 @@ const {
   resetPassword: vi.fn(),
   listChores: vi.fn(),
   createChore: vi.fn(),
+  listChoreHistory: vi.fn(),
+  getChoreHistory: vi.fn(),
 }));
 vi.mock("./auth.ts", () => ({
   authClient: { useSession, signOut, signIn: { email: signIn }, signUp: { email: vi.fn() } },
 }));
 vi.mock("./api/households.ts", () => ({ getCurrentHousehold, createHousehold, joinHousehold }));
 vi.mock("./api/passwordReset.ts", () => ({ resetPassword }));
-vi.mock("./api/chores.ts", () => ({ listChores, createChore, completeChore: vi.fn(), undoChore: vi.fn() }));
+vi.mock("./api/chores.ts", () => ({
+  listChores,
+  createChore,
+  completeChore: vi.fn(),
+  undoChore: vi.fn(),
+  listChoreHistory,
+  getChore: vi.fn(),
+  getChoreHistory,
+}));
 
 const household: Household = {
   id: "h1",
@@ -84,10 +96,13 @@ beforeEach(() => {
     resetPassword,
     listChores,
     createChore,
+    listChoreHistory,
+    getChoreHistory,
   ]) {
     mock.mockReset();
   }
   listChores.mockResolvedValue({ ok: true, chores: [] });
+  listChoreHistory.mockResolvedValue({ ok: true, chores: [] });
 });
 
 describe("App when signed out", () => {
@@ -146,6 +161,72 @@ describe("App when signed in", () => {
     render(<App />);
 
     expect(await screen.findByRole("heading", { name: "Your household" })).toBeInTheDocument();
+    // No tab bar or menu until there's a household for them to show.
+    expect(screen.queryByRole("navigation", { name: "Main" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Menu" })).not.toBeInTheDocument();
+  });
+
+  it("keeps the tab bar and the menu on every screen in the household, without Back links; Chores returns to the chore list", async () => {
+    const chore = {
+      id: "c1",
+      name: "Mop kitchen",
+      notes: null,
+      dueDate: "2999-01-01",
+      assignee: { userId: "u-ana", name: "Ana Lopez" },
+      createdBy: { userId: "u-ana", name: "Ana Lopez" },
+      createdAt: "2026-10-29T16:00:00.000Z",
+      completedAt: null,
+      completedBy: null,
+    };
+    listChores.mockResolvedValue({ ok: true, chores: [chore] });
+    getChoreHistory.mockResolvedValue({ ok: true, chore, history: [] });
+    getCurrentHousehold.mockResolvedValue({ ok: true, household });
+    render(<App />);
+    await screen.findByRole("heading", { name: "Maple St House" });
+
+    const fromMenu = (item: string) => async () => {
+      await userEvent.click(screen.getByRole("button", { name: "Menu" }));
+      await userEvent.click(screen.getByRole("menuitem", { name: item }));
+    };
+    const screens = [
+      ["Add chore", () => userEvent.click(screen.getByRole("button", { name: "Add chore" }))],
+      ["My chore history", fromMenu("My chore history")],
+      ["Household chore history", fromMenu("Household chore history")],
+      ["Mop kitchen", () => userEvent.click(screen.getByRole("button", { name: "View history for Mop kitchen" }))],
+    ] as const;
+
+    for (const [heading, open] of screens) {
+      await open();
+      expect(await screen.findByRole("heading", { level: 1, name: heading })).toBeInTheDocument();
+      expect(screen.getByRole("navigation", { name: "Main" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Chores" })).toHaveAttribute("aria-current", "page");
+      expect(screen.getByRole("button", { name: "Menu" })).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /^Back/ })).not.toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole("button", { name: "Chores" }));
+      expect(await screen.findByRole("heading", { name: "Maple St House" })).toBeInTheDocument();
+    }
+  });
+
+  it("opens the menu's screens from any screen, closing the menu even on the screen already showing", async () => {
+    getCurrentHousehold.mockResolvedValue({ ok: true, household });
+    render(<App />);
+    await screen.findByRole("heading", { name: "Maple St House" });
+    await userEvent.click(screen.getByRole("button", { name: "Add chore" }));
+    await screen.findByRole("heading", { name: "Add chore" });
+
+    await userEvent.click(screen.getByRole("button", { name: "Menu" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "Household chore history" }));
+    expect(await screen.findByRole("heading", { name: "Household chore history" })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Menu" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "Household chore history" }));
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Household chore history" })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Menu" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "My chore history" }));
+    expect(await screen.findByRole("heading", { name: "My chore history" })).toBeInTheDocument();
   });
 
   it("creates a household, shows Household Created!, then goes Home", async () => {
@@ -365,6 +446,13 @@ describe("App acceptance criteria", () => {
   });
 
   describe("View a chore list", { tags: ["SCRUM-7"] }, () => {
+    it('AC1: the "Chores" tab shows the chore list', async () => {
+      await openChoreList();
+
+      expect(screen.getByRole("button", { name: "Chores" })).toHaveAttribute("aria-current", "page");
+      expect(screen.getByRole("radio", { name: "All" })).toBeChecked();
+    });
+
     it('AC9: "Add chore" opens the "Add chore" screen', async () => {
       await openChoreList();
 

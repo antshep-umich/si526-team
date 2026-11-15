@@ -2,13 +2,13 @@
 import { useEffect, useState } from "react";
 import { getChoreHistory, type ChoreHistoryResult } from "../api/chores.ts";
 import Button from "../components/Button.tsx";
+import Header from "./Header.tsx";
 import styles from "./SingleChoreHistory.module.css";
 
 // SCRUM-45 View Single Chore History for Household.
 
 type ChoreHistoryProps = {
   choreId: string;
-  onBack: () => void;
 };
 
 function formatDate(value: string): string {
@@ -44,7 +44,7 @@ function eventLabel(eventType: string): string {
   }
 }
 
-export default function ChoreHistory({ choreId, onBack }: ChoreHistoryProps) {
+export default function ChoreHistory({ choreId }: ChoreHistoryProps) {
   const [result, setResult] = useState<ChoreHistoryResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [attempt, setAttempt] = useState(0);
@@ -74,9 +74,8 @@ export default function ChoreHistory({ choreId, onBack }: ChoreHistoryProps) {
   return (
     <main className={styles.page}>
       <div className={styles.content}>
-        <Button type="button" variant="outline" onClick={onBack}>
-          Back to chores
-        </Button>
+        {/* The tab bar's Chores tab is the way back (README Conflicts row 28). */}
+        {!result?.ok && <Header title="Chore history" />}
 
         {loading && <p className={styles.message}>Loading chore history…</p>}
 
@@ -95,11 +94,9 @@ export default function ChoreHistory({ choreId, onBack }: ChoreHistoryProps) {
 
         {!loading && result?.ok && (
           <>
-            <header className={styles.header}>
-              <p className={styles.overline}>Chore history</p>
-              <h1>{result.chore.name}</h1>
-              {result.chore.notes && <p>{result.chore.notes}</p>}
-            </header>
+            <Header overline="Chore history" title={result.chore.name}>
+              {result.chore.notes && <p className={styles.notes}>{result.chore.notes}</p>}
+            </Header>
 
             <section className={styles.details}>
               <h2>Chore details</h2>

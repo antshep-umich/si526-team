@@ -1,7 +1,6 @@
 /*
  * Not in Figma yet (placeholder): My chore history (SCRUM-44). Spacing follows
- * "Home - Chores (All)" (56px top, 24px sides, 26px between items); the header
- * follows "Home - Chore Details" (back, household name as an overline, title).
+ * "Home - Chores (All)" (56px top, 24px sides, 26px between items).
  */
 .page {
   width: 100%;
@@ -11,29 +10,6 @@
   display: flex;
   flex-direction: column;
   gap: 26px;
-}
-
-.header {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-}
-
-.back {
-  margin-bottom: 8px;
-}
-
-.overline {
-  font: var(--type-overline);
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.title {
-  font: var(--type-screen-title);
-  color: var(--color-text-default);
 }
 
 .list {

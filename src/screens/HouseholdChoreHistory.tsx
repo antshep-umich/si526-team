@@ -5,17 +5,16 @@ import type { Household } from "../api/households.ts";
 import Button from "../components/Button.tsx";
 import ChoreCard from "../components/ChoreCard.tsx";
 import TabFilter from "../components/TabFilter.tsx";
-import TextLink from "../components/TextLink.tsx";
 import { choreDetails, choreStatus, type Chore } from "../chores.ts";
 import { addDays, formatDate, localDateOf, startOfMonth, startOfWeek, today as localToday } from "../dates.ts";
 import MonthlyChoreHistory from "./MonthlyChoreHistory.tsx";
 import SingleChoreHistory from "./SingleChoreHistory.tsx";
 import styles from "./HouseholdChoreHistory.module.css";
+import Header from "./Header.tsx";
 
 type Props = {
   household: Household;
   userId: string;
-  onBack: () => void;
 };
 
 type View = "weekly" | "monthly";
@@ -30,7 +29,7 @@ type ListState =
   | { status: "failed" }
   | { status: "ready"; chores: Chore[] };
 
-export default function HouseholdChoreHistory({ household, userId, onBack }: Props) {
+export default function HouseholdChoreHistory({ household, userId }: Props) {
   const today = localToday();
   const [view, setView] = useState<View>("weekly");
   const [weekStart, setWeekStart] = useState(startOfWeek(today));
@@ -69,23 +68,14 @@ export default function HouseholdChoreHistory({ household, userId, onBack }: Pro
 
   if (selectedChoreId) {
     return (
-      <SingleChoreHistory
-        choreId={selectedChoreId}
-        onBack={() => setSelectedChoreId(null)}
-      />
+<SingleChoreHistory choreId={selectedChoreId} />
     );
   }
 
   // The same header and Weekly / Monthly switch on both views.
   const top = (
     <>
-      <header className={styles.header}>
-        <TextLink className={styles.back} onClick={onBack}>
-          Back
-        </TextLink>
-        <p className={styles.overline}>{household.name}</p>
-        <h1 className={styles.title}>Household chore history</h1>
-      </header>
+      <Header overline={household.name} title="Household chore history" />
       <TabFilter label="History view" options={VIEWS} selected={view} onSelect={setView} />
     </>
   );

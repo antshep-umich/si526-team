@@ -5,7 +5,7 @@ save you from exploring the codebase. Deeper detail lives in `TECH_SPEC.md` (§ 
 `TECH_DEBT.md` and `README.md`. **If you change anything this file describes, update it in the
 same commit.**
 
-_Last updated: 2026-11-11 (SCRUM-47 monthly household chore history), on `Sprint3_Dev_monthly-history`._
+_Last updated: 2026-11-15 (test household seed, tab bar and Header on every household screen, SCRUM-74 acceptance file), on `Ant-Dev-Sprint4`._
 
 ## The project
 
@@ -40,7 +40,8 @@ npm test               # server + web + scripts unit tests (~10 s, no database)
 npm run test:ui        # the same tests in Vitest's browser UI
 npm run test:report    # the same tests, then a local copy of the test dashboard in test-report/site
 npm run test:e2e       # real browser vs local app + dev DB (run `npx playwright install chromium` once)
-npm run build          # what Vercel builds (plus `prisma migrate deploy` in build:vercel)
+npm run build          # what Vercel builds (plus `prisma migrate deploy` and the test household seed in build:vercel)
+npm run seed:test-house  # reset the test household (Test_User@test.com) in the dev DB; previews get it on every build
 npx prisma migrate deploy               # apply teammates' migrations to the dev DB (never resets)
 npx prisma migrate dev --name <change>   # after editing prisma/schema.prisma; commit the migration folder
 ```
@@ -58,6 +59,7 @@ server/                 Express API (layers below)
   db.ts                 the one Prisma client
   middleware/ routes/ controllers/ services/ models/   the layers
   test/fakeModels.ts    in-memory models for server tests
+  seed/                 Test_House_Data: 3 test accounts and dated chores with history (previews + dev DB, never production)
   architecture.test.ts  enforces the layer rules
 shared/                 imported by both server and frontend
   api.ts                API response types, apiError(), validation (parseHouseholdName, normalizeInviteCode)
@@ -66,7 +68,7 @@ shared/                 imported by both server and frontend
   httpStatus.ts         HttpStatus.CREATED etc. Use these, never bare numbers
 src/                    React app
   App.tsx               which screen to show (session + household state machine)
-  screens/              one file per Figma screen, plus Screen.tsx (shared layout); Home.tsx is the chore list, ChoreHistory.tsx the user's history
+  screens/              one file per Figma screen, plus Screen.tsx (shared layout for the sign-in and household setup screens), TabLayout.tsx (the tab bar under every screen in a household) and Header.tsx (their header: overline, title and the menu); Home.tsx is the chore list, ChoreHistory.tsx the user's history
   chores.ts, dates.ts   chore status/sorting/weekly progress, and "YYYY-MM-DD" dates in the phone's time zone
   history.ts            My chore history's filters, sorts and card wording (SCRUM-44)
   monthlyHistory.ts     Household chore history by month: which chores, the summary, card wording (SCRUM-47)
@@ -129,11 +131,11 @@ A request goes through six layers in order. **Each layer may only use the layers
 - **Chore status is derived, never stored** (`src/chores.ts`): to do (no chip), overdue (not done, past due), done, late (done after the due date). "Today" is the **phone's** date; the server can't know it, so it only rejects due dates before yesterday in UTC and the app enforces "today or later". Weeks run Monday–Sunday: the progress card counts chores due this week, the Done section lists chores done this week, the to-do list shows every open chore.
 - Only a chore's **assignee** can mark it done or undo it (403 `NOT_ASSIGNEE`); others see no checkbox. Chores are looked up inside the membership's household only (404 `CHORE_NOT_FOUND` otherwise).
 - Invite codes: 8 characters from `ABCDEFGHJKMNPQRSTUVWXYZ23456789` (`services/inviteCode.ts`). Users can type them in any case with spaces or hyphens.
-- Neon branches: `main` = production, `dev` = local development (`.env`), and one throwaway `preview/<git-branch>` per Vercel preview. Vercel builds run `prisma migrate deploy`, so a migration in a pull request runs on that pull request's preview database only.
+- Neon branches: `main` = production, `dev` = local development (`.env`), and one throwaway `preview/<git-branch>` per Vercel preview. Vercel builds run `prisma migrate deploy`, so a migration in a pull request runs on that pull request's preview database only. Preview builds then reset a test household, Test_House_Data (`server/seed/`; sign in as `Test_User@test.com`, password in `testHouse.ts`), with chores dated from that day. Production builds skip it.
 
 ## Frontend (TECH_SPEC §3, README "Design system")
 
-- **No router.** `src/App.tsx` picks the screen: signed out → Log in / Sign up / Forgot password; signed in without a household → Your household / Create / Join; just created → Household Created!; otherwise → Home (the chore list), which opens Add chore, and My chore history from its menu.
+- **No router.** `src/App.tsx` picks the screen: signed out → Log in / Sign up / Forgot password; signed in without a household → Your household / Create / Join; just created → Household Created!; otherwise → Home (the chore list), which opens Add chore, and My / Household chore history from its menu. Every screen in a household sits in `TabLayout`: the tab bar fixed to the bottom, the same `Header` (overline, title, and the menu as a dropdown list; it gets the menu's actions from `TabLayout`), and no Back links; Chores returns to the chore list (README Conflicts rows 28 and 29).
 - **Copy comes from the stories.** Error and empty-state messages are the Jira stories' exact words (auth ones in `src/screens/authErrors.ts` `AUTH_MESSAGES`). The current user is always **"You"** (not "Me"). Forms show every error at once.
 - **Screens** use `Screen` (`src/screens/Screen.tsx`): 402px max width, 24px sides, 60px top, 40px between items (`tight` = 24px). `Actions` groups a full-width button with the link under it. Errors go on the field they belong to (`TextField error=…`); others go in `FormError`.
 - **API helpers** (`src/api/`) never throw: `{ ok: true, household } | { ok: false, code }`. `NETWORK_ERROR` when the server can't be reached. Screens map codes to their own wording.

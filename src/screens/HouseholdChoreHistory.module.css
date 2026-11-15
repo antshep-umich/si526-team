@@ -9,29 +9,6 @@
   gap: 26px;
 }
 
-.header {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-}
-
-.back {
-  margin-bottom: 8px;
-}
-
-.overline {
-  font: var(--type-overline);
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.title {
-  font: var(--type-screen-title);
-  color: var(--color-text-default);
-}
-
 .week {
   display: flex;
   flex-direction: column;
