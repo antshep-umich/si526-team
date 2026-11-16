@@ -2,9 +2,10 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useSyncExternalStore } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Household } from "./api/households.ts";
 import App from "./App.tsx";
+import { pendingInviteCode, takeInviteCodeFromAddress } from "./inviteLink.ts";
 
 const {
   useSession,
@@ -103,7 +104,14 @@ beforeEach(() => {
   }
   listChores.mockResolvedValue({ ok: true, chores: [] });
   listChoreHistory.mockResolvedValue({ ok: true, chores: [] });
+  sessionStorage.clear();
 });
+
+/** Opens the app the way an invite link does: /join/<code> in the address bar. */
+function arriveByInviteLink(code = "K7Q2MXAB") {
+  window.history.replaceState(null, "", `/join/${code}`);
+  takeInviteCodeFromAddress();
+}
 
 describe("App when signed out", () => {
   beforeEach(() => {
@@ -227,6 +235,27 @@ describe("App when signed in", () => {
     await userEvent.click(screen.getByRole("button", { name: "Menu" }));
     await userEvent.click(screen.getByRole("menuitem", { name: "My chore history" }));
     expect(await screen.findByRole("heading", { name: "My chore history" })).toBeInTheDocument();
+  });
+
+  it("moves between the Chores and House tabs; House returns from a profile to the House page", async () => {
+    getCurrentHousehold.mockResolvedValue({ ok: true, household });
+    render(<App />);
+    await screen.findByRole("heading", { name: "Maple St House" });
+
+    await userEvent.click(screen.getByRole("button", { name: "House" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Ana Lopez (You)" }));
+    expect(screen.getByRole("heading", { level: 1, name: "Ana Lopez" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "House" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("button", { name: "Menu" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Back/ })).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "House" }));
+    expect(await screen.findByRole("button", { name: "Invite housemates" })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Chores" }));
+    expect(await screen.findByRole("radiogroup", { name: "Show chores" })).toBeInTheDocument();
+    // Schedule has no screen yet.
+    expect(screen.getByRole("button", { name: "Schedule" })).toHaveAttribute("aria-disabled", "true");
   });
 
   it("creates a household, shows Household Created!, then goes Home", async () => {
@@ -391,6 +420,19 @@ describe("App acceptance criteria", () => {
       expect(screen.getAllByRole("textbox")).toEqual([screen.getByLabelText("Invite code")]);
     });
 
+    it('AC3: joining with a valid code opens the Chore List and shows "You joined [Household name]."', async () => {
+      joinHousehold.mockResolvedValue({ ok: true, household });
+      await openYourHousehold();
+      await userEvent.click(screen.getByRole("button", { name: "Join with a code" }));
+
+      await userEvent.type(screen.getByLabelText("Invite code"), "k7q2mxab");
+      await userEvent.click(screen.getByRole("button", { name: "Join" }));
+
+      expect(await screen.findByRole("heading", { name: "Maple St House" })).toBeInTheDocument();
+      expect(screen.getByRole("radiogroup", { name: "Show chores" })).toBeInTheDocument();
+      expect(screen.getByRole("status")).toHaveTextContent("You joined Maple St House.");
+    });
+
     it('AC4: "Back" returns to "Your household"', async () => {
       await openYourHousehold();
       await userEvent.click(screen.getByRole("button", { name: "Join with a code" }));
@@ -460,5 +502,98 @@ describe("App acceptance criteria", () => {
 
       expect(screen.getByRole("heading", { name: "Add chore" })).toBeInTheDocument();
     });
+  });
+
+  describe("House page", { tags: ["SCRUM-74"] }, () => {
+    const housemates: Household = {
+      ...household,
+      members: [...household.members, { userId: "u-sam", name: "Sam Ito", role: "member", joinedAt: "2026-10-18T00:00:00.000Z" }],
+    };
+
+    it('AC1: opening the "House" tab shows the household name, member count and housemates, with the user labeled You', async () => {
+      useSession.mockReturnValue(signedIn);
+      getCurrentHousehold.mockResolvedValue({ ok: true, household: housemates });
+      render(<App />);
+      await screen.findByRole("heading", { name: "Maple St House" });
+
+      await userEvent.click(screen.getByRole("button", { name: "House" }));
+
+      expect(await screen.findByText("2 members")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { level: 1, name: "Maple St House" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "House" })).toHaveAttribute("aria-current", "page");
+      const rows = screen.getAllByRole("listitem");
+      expect(rows.map((row) => row.textContent)).toEqual(["ALAna LopezYou", "SISam Ito"]);
+    });
+
+    it("AC2: selecting a housemate opens their profile", async () => {
+      useSession.mockReturnValue(signedIn);
+      getCurrentHousehold.mockResolvedValue({ ok: true, household: housemates });
+      render(<App />);
+      await screen.findByRole("heading", { name: "Maple St House" });
+      await userEvent.click(screen.getByRole("button", { name: "House" }));
+
+      await userEvent.click(await screen.findByRole("button", { name: "Sam Ito" }));
+
+      expect(screen.getByRole("heading", { level: 1, name: "Sam Ito" })).toBeInTheDocument();
+      expect(screen.getByText("Profiles are coming soon.")).toBeInTheDocument();
+    });
+  });
+});
+
+describe("App with an invite link", () => {
+  afterEach(() => {
+    window.history.replaceState(null, "", "/");
+  });
+
+  it("opens Join with the code filled in for someone without a household; joining forgets the code", async () => {
+    useSession.mockReturnValue(signedIn);
+    getCurrentHousehold.mockResolvedValue({ ok: false, code: "NO_HOUSEHOLD" });
+    joinHousehold.mockResolvedValue({ ok: true, household });
+    arriveByInviteLink();
+    render(<App />);
+
+    expect(await screen.findByRole("heading", { name: "Join a household" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Invite code")).toHaveValue("K7Q2MXAB");
+    expect(joinHousehold).not.toHaveBeenCalled(); // nobody joins without tapping Join
+    expect(window.location.pathname).toBe("/");
+
+    await userEvent.click(screen.getByRole("button", { name: "Join" }));
+
+    expect(joinHousehold).toHaveBeenCalledWith("K7Q2MXAB");
+    expect(await screen.findByRole("status")).toHaveTextContent("You joined Maple St House.");
+    expect(pendingInviteCode()).toBeNull();
+  });
+
+  it("keeps the code through Log in", async () => {
+    liveSession(signedOut);
+    getCurrentHousehold.mockResolvedValue({ ok: false, code: "NO_HOUSEHOLD" });
+    arriveByInviteLink();
+    render(<App />);
+
+    await userEvent.type(screen.getByLabelText("Email"), "ana@example.com");
+    await userEvent.type(screen.getByLabelText("Password"), "correct-horse-1");
+    await userEvent.click(screen.getByRole("button", { name: "Log in" }));
+
+    expect(await screen.findByRole("heading", { name: "Join a household" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Invite code")).toHaveValue("K7Q2MXAB");
+  });
+
+  it("is dropped for someone already in a household, and on Back from Join", async () => {
+    useSession.mockReturnValue(signedIn);
+    getCurrentHousehold.mockResolvedValue({ ok: true, household });
+    arriveByInviteLink();
+    const { unmount } = render(<App />);
+
+    expect(await screen.findByRole("radiogroup", { name: "Show chores" })).toBeInTheDocument();
+    expect(pendingInviteCode()).toBeNull();
+    unmount();
+
+    getCurrentHousehold.mockResolvedValue({ ok: false, code: "NO_HOUSEHOLD" });
+    arriveByInviteLink();
+    render(<App />);
+    await userEvent.click(await screen.findByRole("button", { name: "Back" }));
+
+    expect(screen.getByRole("heading", { name: "Your household" })).toBeInTheDocument();
+    expect(pendingInviteCode()).toBeNull();
   });
 });

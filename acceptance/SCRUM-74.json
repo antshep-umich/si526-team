@@ -18,7 +18,7 @@
       "id": "AC3",
       "text": "The household manager card shows the current household manager. With no manager, it shows “No Household Manager assigned” and a “Become household manager” button (see SCRUM-62).",
       "verify": "test",
-      "note": "Until SCRUM-62 is built there is no household manager: the card shows “No Household Manager assigned” without the “Become household manager” button, so this AC stays open (README Conflicts row 30)."
+      "note": "Until SCRUM-62 is built there is no household manager: the card shows “No Household Manager assigned” without the “Become household manager” button. Its test is written but skipped until then, so this AC stays open (README Conflicts row 30)."
     },
     {
       "id": "AC4",

@@ -4,6 +4,9 @@ import "./styles/tokens.css";
 import "./styles/fonts.css";
 import "./styles/base.css";
 import App from "./App.tsx";
+import { takeInviteCodeFromAddress } from "./inviteLink.ts";
+
+takeInviteCodeFromAddress();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

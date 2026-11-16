@@ -1,0 +1,6 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="icon/share">
+<path id="Arrow" d="M10 12V2.5M6.5 6L10 2.5L13.5 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke="#6B5547"/>
+<path id="Box" d="M7 8.5H5.5C4.67157 8.5 4 9.17157 4 10V16C4 16.8284 4.67157 17.5 5.5 17.5H14.5C15.3284 17.5 16 16.8284 16 16V10C16 9.17157 15.3284 8.5 14.5 8.5H13" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke="#6B5547"/>
+</g>
+</svg>

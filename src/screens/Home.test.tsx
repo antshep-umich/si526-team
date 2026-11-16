@@ -1,9 +1,10 @@
 // The chore list (SCRUM-7 and SCRUM-8) and its header menu (SCRUM-3).
-import { render, screen, within } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Household } from "../api/households.ts";
 import type { Chore } from "../chores.ts";
+import { POLL_INTERVAL_MS } from "../usePolling.ts";
 import Home, { forgetChoreFilter } from "./Home.tsx";
 
 const { listChores, completeChore, undoChore } = vi.hoisted(() => ({
@@ -150,6 +151,42 @@ describe("Home chore list", () => {
     await userEvent.click(screen.getByRole("button", { name: "Add chore" }));
 
     expect(onAddChore).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("Home chore list, kept current", () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date", "setInterval", "clearInterval"] });
+    vi.setSystemTime(NOW);
+  });
+
+  it("shows housemates' changes without a refresh or a Loading message", async () => {
+    renderHome();
+    await screen.findByRole("list", { name: "Chores to do" });
+
+    listChores.mockResolvedValueOnce({ ok: true, chores: [...chores, chore("Water plants", { assignee: sam })] });
+    await act(() => vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS));
+
+    expect(names(openList())).toContain("Water plants");
+    expect(screen.queryByText("Loading chores…")).not.toBeInTheDocument();
+  });
+
+  it("drops a check that started before a tick, so it can't undo it", async () => {
+    completeChore.mockResolvedValue({
+      ok: true,
+      chore: chore("Clean bathroom", { completedAt: NOW.toISOString(), completedBy: ana }),
+    });
+    renderHome();
+    await screen.findByRole("list", { name: "Chores to do" });
+
+    let answerCheck = (_: unknown) => {};
+    listChores.mockReturnValueOnce(new Promise((resolve) => (answerCheck = resolve)));
+    await act(() => vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS)); // the check starts, with the old list
+    await userEvent.click(screen.getByRole("checkbox", { name: "Mark Clean bathroom done" }));
+    await act(async () => answerCheck({ ok: true, chores }));
+
+    expect(names(openList())).not.toContain("Clean bathroom");
+    expect(screen.getByRole("button", { name: "Done (2)" })).toBeInTheDocument();
   });
 });
 
