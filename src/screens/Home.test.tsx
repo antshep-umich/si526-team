@@ -6,12 +6,13 @@ import type { Household } from "../api/households.ts";
 import type { Chore } from "../chores.ts";
 import Home, { forgetChoreFilter } from "./Home.tsx";
 
-const { listChores, completeChore, undoChore } = vi.hoisted(() => ({
+const { listChores, completeChore, undoChore, getChore } = vi.hoisted(() => ({
   listChores: vi.fn(),
   completeChore: vi.fn(),
   undoChore: vi.fn(),
+  getChore: vi.fn(),
 }));
-vi.mock("../api/chores.ts", () => ({ listChores, completeChore, undoChore }));
+vi.mock("../api/chores.ts", () => ({ listChores, completeChore, undoChore, getChore }));
 
 const household: Household = {
   id: "h1",
@@ -69,7 +70,7 @@ function renderHome(props: Partial<Parameters<typeof Home>[0]> = {}) {
 const names = (list: HTMLElement) =>
   within(list)
     .getAllByRole("listitem")
-    .map((item) => item.querySelector("p")?.textContent);
+    .map((item) => item.querySelector(".name")?.textContent);
 
 /** The card for a chore, found by its name. */
 const card = (name: string) => screen.getByText(name).closest("li")!;
@@ -429,5 +430,32 @@ describe("Home menu", () => {
     await userEvent.click(menuButton);
     await userEvent.click(menuButton);
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+  });
+});
+
+describe("Opening a chore from the list", { tags: ["SCRUM-53"] }, () => {
+  it("AC1: selecting a chore in the list opens its details and description", async () => {
+    getChore.mockResolvedValue({ ok: true, chore: { ...chores[1]!, notes: "Scrub the tub too" } });
+    renderHome();
+
+    await userEvent.click(await screen.findByRole("button", { name: /^Clean bathroom/ }));
+
+    expect(await screen.findByRole("heading", { level: 1, name: "Clean bathroom" })).toBeInTheDocument();
+    expect(getChore).toHaveBeenCalledWith("Clean bathroom");
+    expect(screen.getByText("Scrub the tub too")).toBeInTheDocument();
+  });
+
+  it("AC3: Back returns to the chore list as it was", async () => {
+    getChore.mockResolvedValue({ ok: true, chore: chores[1] });
+    renderHome();
+
+    await userEvent.click(await screen.findByRole("radio", { name: "Mine" }));
+    await userEvent.click(screen.getByRole("button", { name: /^Clean bathroom/ }));
+    await screen.findByRole("heading", { level: 1, name: "Clean bathroom" });
+    await userEvent.click(screen.getByRole("button", { name: "Back" }));
+
+    expect(screen.getByRole("radio", { name: "Mine" })).toBeChecked();
+    expect(names(openList())).toEqual(["Clean bathroom"]);
+    expect(listChores).toHaveBeenCalledTimes(1);
   });
 });
