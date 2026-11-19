@@ -1,6 +1,6 @@
 import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { renderSite } from "./render.ts";
+import { renderArchive, renderSite } from "./render.ts";
 import { applyRun, emptySite, parseSite, pruneBranches, referencedReports } from "./site.ts";
 import type { RunSummary } from "./types.ts";
 
@@ -57,6 +57,7 @@ export function updateSiteDir(siteDir: string, inputs: SiteInputs): { accepted: 
   mkdirSync(join(siteDir, "data"), { recursive: true });
   writeFileSync(historyFile, `${JSON.stringify(site, null, 2)}\n`);
   writeFileSync(join(siteDir, "index.html"), renderSite(site));
+  writeFileSync(join(siteDir, "archive.html"), renderArchive(site));
   // Without this file GitHub Pages runs Jekyll, which skips some files.
   writeFileSync(join(siteDir, ".nojekyll"), "");
 
