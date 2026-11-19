@@ -8,7 +8,9 @@ import TextArea from "../components/TextArea.tsx";
 import TextField from "../components/TextField.tsx";
 import type { Chore } from "../chores.ts";
 import { today as localToday } from "../dates.ts";
+import type { HouseholdMember } from "../../shared/api.ts";
 import { CHORE_NAME_MAX_LENGTH, CHORE_NOTES_MAX_LENGTH, type ChoreResponse } from "../../shared/chores.ts";
+import { CHORE_TYPES, type ChoreType } from "../../shared/preferences.ts";
 import Header from "./Header.tsx";
 import styles from "./ChoreForm.module.css";
 import { FormError } from "./Screen.tsx";
@@ -29,6 +31,15 @@ type ChoreFormProps = {
 type Errors = Partial<Record<"name" | "assignee" | "dueDate" | "notes", string>>;
 
 const SAVE_FAILED = "Couldn't save this chore. Please try again.";
+
+/**
+ * SCRUM-61: the Set chore preferences types (Figma "User Profile"), plus a way back to none.
+ * Not in Figma yet: the Add and Edit chore frames have no Category field.
+ */
+const CATEGORY_OPTIONS = [
+  { value: "", label: "No category" },
+  ...CHORE_TYPES.map((t) => ({ value: t.id, label: t.label })),
+];
 
 /**
  * Every problem with the form at once (SCRUM-6), checked before anything is sent.
@@ -58,6 +69,8 @@ export default function ChoreForm({ household: initialHousehold, userId, chore, 
   const [household, setHousehold] = useState(initialHousehold);
   const [name, setName] = useState(chore?.name ?? "");
   const [assigneeId, setAssigneeId] = useState<string | null>(chore?.assignee?.userId ?? null);
+  // SCRUM-61: optional; "" is "No category".
+  const [category, setCategory] = useState<ChoreType | "">(chore?.category ?? "");
   const [dueDate, setDueDate] = useState(chore?.dueDate ?? "");
   const [notes, setNotes] = useState(chore?.notes ?? "");
   const [errors, setErrors] = useState<Errors>({});
@@ -78,9 +91,13 @@ export default function ChoreForm({ household: initialHousehold, userId, chore, 
   // "You" first: the person adding the chore, addressed directly.
   const me = household.members.find((member) => member.userId === userId);
   const others = household.members.filter((member) => member.userId !== userId);
+  // SCRUM-61: with a category picked, people who chose it in Set chore preferences say so.
+  // Not in Figma yet (placeholder): the note is part of the option's label.
+  const labelFor = (member: HouseholdMember, label: string) =>
+    category && member.choreTypes.includes(category) ? `${label} · Prefers this chore` : label;
   const options = [
-    ...(me ? [{ value: me.userId, label: "You" }] : []),
-    ...others.map((member) => ({ value: member.userId, label: member.name })),
+    ...(me ? [{ value: me.userId, label: labelFor(me, "You") }] : []),
+    ...others.map((member) => ({ value: member.userId, label: labelFor(member, member.name) })),
   ];
   const onlyMember = others.length === 0;
 
@@ -96,6 +113,7 @@ export default function ChoreForm({ household: initialHousehold, userId, chore, 
       assigneeId: assigneeId!,
       dueDate,
       ...(notes.trim() ? { notes: notes.trim() } : {}),
+      ...(category ? { category } : {}),
     };
     const result = chore ? await editChore(chore.id, fields) : await createChore(fields);
     setSaving(false);
@@ -133,6 +151,13 @@ export default function ChoreForm({ household: initialHousehold, userId, chore, 
             value={name}
             onChange={(e) => setName(e.target.value)}
             error={errors.name}
+          />
+          <PickerField
+            label="Category (optional)"
+            placeholder="Choose a category"
+            options={CATEGORY_OPTIONS}
+            value={category || null}
+            onChange={(value) => setCategory(value as ChoreType | "")}
           />
           <PickerField
             label="Assigned to"

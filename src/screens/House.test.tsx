@@ -3,6 +3,7 @@
 import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { ChoreType } from "../../shared/preferences.ts";
 import type { Household } from "../api/households.ts";
 import { ToastProvider } from "../components/Toast.tsx";
 import { POLL_INTERVAL_MS } from "../usePolling.ts";
@@ -16,6 +17,7 @@ const member = (userId: string, name: string) => ({
   name,
   role: "member" as const,
   joinedAt: "2026-10-17T00:00:00.000Z",
+  choreTypes: [] as ChoreType[],
 });
 
 const household: Household = {

@@ -1,6 +1,6 @@
 // Types shared by the React app and the API. Zod schemas join these once the team confirms Zod.
 
-import type { AssignmentMethod } from "./preferences.js";
+import type { AssignmentMethod, ChoreType } from "./preferences.js";
 
 /** Shape of every API error response (TECH_SPEC section 6). */
 export interface ApiError {
@@ -27,6 +27,8 @@ export interface HouseholdMember {
   role: MembershipRole;
   /** ISO 8601 timestamp. */
   joinedAt: string;
+  /** SCRUM-61: the chore types they'd like (Set chore preferences), shown when assigning. */
+  choreTypes: ChoreType[];
 }
 
 /** Body of every successful /api/households response. */

@@ -1,6 +1,8 @@
 // Chores: the API's shapes and input rules, shared by the React app and the API
 // (TECH_SPEC sections 5 and 6, Jira SCRUM-6, 7 and 8).
 
+import type { ChoreType } from "./preferences.js";
+
 export const CHORE_NAME_MAX_LENGTH = 60;
 export const CHORE_NOTES_MAX_LENGTH = 200;
 
@@ -25,6 +27,8 @@ export interface ChoreResponse {
   /** ISO 8601 timestamp, or null while the chore isn't done. */
   completedAt: string | null;
   completedBy: ChorePerson | null;
+  /** SCRUM-61: one of CHORE_TYPES, or null for none. The API always sends it. */
+  category?: ChoreType | null;
 }
 
 /** Body of GET /api/chores. */
@@ -39,6 +43,8 @@ export interface NewChoreRequest {
   /** "YYYY-MM-DD" */
   dueDate: string;
   notes?: string;
+  /** SCRUM-61: one of CHORE_TYPES (shared/preferences.ts). Optional. */
+  category?: ChoreType;
 }
 
 /** Body of PATCH /api/chores/:id: the whole form, as on Add chore. */

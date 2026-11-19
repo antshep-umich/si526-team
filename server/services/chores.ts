@@ -6,6 +6,7 @@ import {
   CHORE_NAME_MAX_LENGTH,
   CHORE_NOTES_MAX_LENGTH,
 } from "../../shared/chores.js";
+import { parseChoreType } from "../../shared/preferences.js";
 import {
   createChore as insertChore,
   createChoreHistoryEvent,
@@ -86,7 +87,8 @@ export async function getChoreHistory(membership: Membership, choreId: string) {
   };
 }
 
-type ChoreInput = { name: string; assigneeId: string; dueDate: string; notes: unknown };
+/** `category` (SCRUM-61) is optional: missing, null or "" means none. */
+type ChoreInput = { name: string; assigneeId: string; dueDate: string; notes: unknown; category?: unknown };
 
 /**
  * Checks the Add chore / Edit chore form. The due date can't be in the past: the screen
@@ -116,11 +118,16 @@ async function checkChoreInput(membership: Membership, input: ChoreInput, keptDu
     throw new ServiceError("VALIDATION_ERROR", `Notes must be ${CHORE_NOTES_MAX_LENGTH} characters or fewer.`);
   }
 
+  // SCRUM-61: optional.
+  const noCategory = input.category === undefined || input.category === null || input.category === "";
+  const category = noCategory ? null : parseChoreType(input.category);
+  if (!noCategory && !category) throw new ServiceError("VALIDATION_ERROR", "Choose a category from the list.");
+
   const assignee = await findMembershipByUser(input.assigneeId);
   if (assignee?.householdId !== membership.householdId) {
     throw new ServiceError("ASSIGNEE_NOT_IN_HOUSEHOLD", "That person isn't in your household.");
   }
-  return { name, notes, assigneeId: input.assigneeId, dueDate };
+  return { name, notes, assigneeId: input.assigneeId, dueDate, category };
 }
 
 /** Adds a chore (SCRUM-6). Any member can add one and assign it to any member, including themself. */

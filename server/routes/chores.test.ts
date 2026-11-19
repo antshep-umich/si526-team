@@ -58,11 +58,22 @@ describe("POST /api/chores", () => {
       createdAt: expect.any(String),
       completedAt: null,
       completedBy: null,
+      category: null,
     });
+  });
+
+  it("stores and returns a category (SCRUM-61)", async () => {
+    await household();
+
+    const res = await as("ben").post("/api/chores", { ...newChore, category: "trash" });
+
+    expect(res.status).toBe(201);
+    expect(res.body.category).toBe("trash");
   });
 
   it.each([
     ["a missing name", { ...newChore, name: "" }, "VALIDATION_ERROR"],
+    ["an unknown category", { ...newChore, category: "juggling" }, "VALIDATION_ERROR"],
     ["a past due date", { ...newChore, dueDate: "2026-10-01" }, "DUE_DATE_IN_PAST"],
     ["an assignee outside the household", { ...newChore, assigneeId: "zed" }, "ASSIGNEE_NOT_IN_HOUSEHOLD"],
   ])("answers %s with 422", async (_label, body, code) => {

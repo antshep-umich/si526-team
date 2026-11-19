@@ -1,6 +1,7 @@
 import type { RequestHandler } from "express";
 import type { ChoreListResponse, ChorePerson, ChoreResponse } from "../../shared/chores.js";
 import { HttpStatus } from "../../shared/httpStatus.js";
+import type { ChoreType } from "../../shared/preferences.js";
 import { currentMembership } from "../middleware/household.js";
 import {
   addChore,
@@ -34,6 +35,8 @@ export function toChoreResponse(chore: ChoreWithPeople): ChoreResponse {
     createdAt: chore.createdAt.toISOString(),
     completedAt: chore.completedAt ? chore.completedAt.toISOString() : null,
     completedBy: toPerson(chore.completedBy),
+    // Only CHORE_TYPES ids are ever saved (services/chores.ts).
+    category: chore.category as ChoreType | null,
   };
 }
 
@@ -57,24 +60,26 @@ export const history: RequestHandler = async (_req, res) => {
   res.status(HttpStatus.OK).json(body);
 };
 
-/** POST /api/chores { name, assigneeId, dueDate, notes? }: 201 with the chore and its Location. */
+/** POST /api/chores { name, assigneeId, dueDate, notes?, category? }: 201 with the chore and its Location. */
 export const create: RequestHandler = async (req, res) => {
   const chore = await addChore(currentMembership(res), {
     name: bodyText(req, "name"),
     assigneeId: bodyText(req, "assigneeId"),
     dueDate: bodyText(req, "dueDate"),
     notes: req.body?.notes,
+    category: req.body?.category,
   });
   res.status(HttpStatus.CREATED).location(`/api/chores/${chore.id}`).json(toChoreResponse(chore));
 };
 
-/** PATCH /api/chores/:id { name, assigneeId, dueDate, notes? }: 200 with the edited chore (owner or creator). */
+/** PATCH /api/chores/:id { name, assigneeId, dueDate, notes?, category? }: 200 with the edited chore (owner or creator). */
 export const update: RequestHandler = async (req, res) => {
   const chore = await editChore(currentMembership(res), param(req.params.id), {
     name: bodyText(req, "name"),
     assigneeId: bodyText(req, "assigneeId"),
     dueDate: bodyText(req, "dueDate"),
     notes: req.body?.notes,
+    category: req.body?.category,
   });
   res.status(HttpStatus.OK).json(toChoreResponse(chore));
 };

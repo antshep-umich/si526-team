@@ -24,6 +24,7 @@ interface ChoreRow {
   householdId: string;
   name: string;
   notes: string | null;
+  category: string | null;
   assigneeId: string | null;
   dueDate: Date;
   completedAt: Date | null;
@@ -189,6 +190,7 @@ export const createChore: typeof choresModel.createChore = async (data) => {
   const row: ChoreRow = {
     id: `00000000-0000-4000-9000-${String(db.chores.length + 1).padStart(12, "0")}`,
     ...data,
+    category: data.category ?? null,
     completedAt: null,
     completedById: null,
     createdAt: now,
