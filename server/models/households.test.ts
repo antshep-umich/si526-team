@@ -7,9 +7,10 @@ import {
   createHouseholdWithOwner,
   findHouseholdByInviteCode,
   findHouseholdWithMembers,
+  setAssignmentMethod,
   setInviteCode,
 } from "./households.js";
-import { createMembership, findMembershipByUser } from "./memberships.js";
+import { createMembership, findMembershipByUser, setChorePreferences } from "./memberships.js";
 
 const { prisma } = vi.hoisted(() => ({
   prisma: {
@@ -23,6 +24,7 @@ const { prisma } = vi.hoisted(() => ({
     membership: {
       findUnique: vi.fn(),
       create: vi.fn(),
+      update: vi.fn(),
     },
   },
 }));
@@ -108,5 +110,22 @@ describe("memberships model", () => {
     await expect(createMembership({ userId: "ben", householdId: "h2", role: "member" })).rejects.toBeInstanceOf(
       UniqueConflictError,
     );
+  });
+});
+
+describe("profile preferences (SCRUM-72)", () => {
+  it("saves a member's chore preferences on their membership", async () => {
+    await setChorePreferences("ben", { choreTypes: ["dishes"], weeklyWorkload: "light" });
+
+    expect(prisma.membership.update).toHaveBeenCalledWith({
+      where: { userId: "ben" },
+      data: { choreTypes: ["dishes"], weeklyWorkload: "light" },
+    });
+  });
+
+  it("saves the household's assignment method", async () => {
+    await setAssignmentMethod("h1", "rotate");
+
+    expect(prisma.household.update).toHaveBeenCalledWith({ where: { id: "h1" }, data: { assignmentMethod: "rotate" } });
   });
 });

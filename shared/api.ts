@@ -1,5 +1,7 @@
 // Types shared by the React app and the API. Zod schemas join these once the team confirms Zod.
 
+import type { AssignmentMethod } from "./preferences.js";
+
 /** Shape of every API error response (TECH_SPEC section 6). */
 export interface ApiError {
   error: { code: string; message: string };
@@ -38,6 +40,8 @@ export interface HouseholdResponse {
   role: MembershipRole;
   /** Oldest member first. */
   members: HouseholdMember[];
+  /** SCRUM-72 "Set household manager preferences"; null until the owner picks one. */
+  assignmentMethod: AssignmentMethod | null;
 }
 
 export const HOUSEHOLD_NAME_MAX_LENGTH = 60;

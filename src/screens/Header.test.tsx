@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import Header, { MenuProvider } from "./Header.tsx";
 
 function renderHeader() {
-  const actions = { onChoreHistory: vi.fn(), onHouseholdChoreHistory: vi.fn(), onLogOut: vi.fn() };
+  const actions = { onProfile: vi.fn(), onChoreHistory: vi.fn(), onHouseholdChoreHistory: vi.fn(), onLogOut: vi.fn() };
   render(
     <MenuProvider actions={actions}>
       <Header overline="Maple St House" title="My chore history">
@@ -45,7 +45,7 @@ describe("Header menu", () => {
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();
   });
 
-  it("opens as a list: the two histories, then Log out, with the first item focused", async () => {
+  it("opens as a list: the two histories, My profile, then Log out, with the first item focused", async () => {
     renderHeader();
 
     await openMenu();
@@ -55,6 +55,7 @@ describe("Header menu", () => {
     expect(within(menu).getAllByRole("menuitem").map((item) => item.textContent)).toEqual([
       "My chore history",
       "Household chore history",
+      "My profile",
       "Log out",
     ]);
     expect(within(menu).getByRole("separator")).toBeInTheDocument();
@@ -64,6 +65,7 @@ describe("Header menu", () => {
   it.each([
     ["My chore history", "onChoreHistory"],
     ["Household chore history", "onHouseholdChoreHistory"],
+    ["My profile", "onProfile"],
     ["Log out", "onLogOut"],
   ] as const)("%s does its job and closes the menu", async (item, action) => {
     const actions = renderHeader();
@@ -82,6 +84,8 @@ describe("Header menu", () => {
 
     await userEvent.keyboard("{ArrowDown}");
     expect(item("Household chore history")).toHaveFocus();
+    await userEvent.keyboard("{ArrowDown}");
+    expect(item("My profile")).toHaveFocus();
     await userEvent.keyboard("{ArrowDown}");
     expect(item("Log out")).toHaveFocus();
     await userEvent.keyboard("{ArrowDown}");
