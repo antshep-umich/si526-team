@@ -1,4 +1,5 @@
 import {
+  canEditChore,
   isIsoDate,
   parseChoreName,
   parseChoreNotes,
@@ -13,6 +14,7 @@ import {
   findChoresAssignedTo,
   findChoresForHousehold,
   setChoreCompletion,
+  updateChore,
   type ChoreWithPeople,
 } from "../models/chores.js";
 import { findMembershipByUser, type Membership } from "../models/memberships.js";
@@ -84,16 +86,15 @@ export async function getChoreHistory(membership: Membership, choreId: string) {
   };
 }
 
+type ChoreInput = { name: string; assigneeId: string; dueDate: string; notes: unknown };
+
 /**
- * Adds a chore (SCRUM-6). Any member can add one and assign it to any member,
- * including themself. The due date can't be in the past: the screen checks the
- * person's own "today"; here anything from yesterday (UTC) on is accepted, because
- * a phone west of UTC can still be on yesterday's date.
+ * Checks the Add chore / Edit chore form. The due date can't be in the past: the screen
+ * checks the person's own "today"; here anything from yesterday (UTC) on is accepted,
+ * because a phone west of UTC can still be on yesterday's date. `keptDueDate` is an
+ * edited chore's current due date, which may stay as it is even if it has passed.
  */
-export async function addChore(
-  membership: Membership,
-  input: { name: string; assigneeId: string; dueDate: string; notes: unknown },
-): Promise<ChoreWithPeople> {
+async function checkChoreInput(membership: Membership, input: ChoreInput, keptDueDate?: Date) {
   const name = parseChoreName(input.name);
   if (!name) {
     throw new ServiceError(
@@ -108,7 +109,8 @@ export async function addChore(
   }
   if (!isIsoDate(input.dueDate)) throw new ServiceError("VALIDATION_ERROR", "Choose a due date.");
   const dueDate = utcDate(input.dueDate);
-  if (dueDate < utcDaysAgo(1)) throw new ServiceError("DUE_DATE_IN_PAST", "Due date can't be in the past.");
+  const unchanged = keptDueDate !== undefined && keptDueDate.getTime() === dueDate.getTime();
+  if (!unchanged && dueDate < utcDaysAgo(1)) throw new ServiceError("DUE_DATE_IN_PAST", "Due date can't be in the past.");
   const notes = parseChoreNotes(input.notes);
   if (notes === undefined) {
     throw new ServiceError("VALIDATION_ERROR", `Notes must be ${CHORE_NOTES_MAX_LENGTH} characters or fewer.`);
@@ -118,13 +120,17 @@ export async function addChore(
   if (assignee?.householdId !== membership.householdId) {
     throw new ServiceError("ASSIGNEE_NOT_IN_HOUSEHOLD", "That person isn't in your household.");
   }
+  return { name, notes, assigneeId: input.assigneeId, dueDate };
+}
+
+/** Adds a chore (SCRUM-6). Any member can add one and assign it to any member, including themself. */
+export async function addChore(membership: Membership, input: ChoreInput): Promise<ChoreWithPeople> {
+  const fields = await checkChoreInput(membership, input);
+  const { dueDate } = fields;
 
   const chore = await insertChore({
     householdId: membership.householdId,
-    name,
-    notes,
-    assigneeId: input.assigneeId,
-    dueDate,
+    ...fields,
     createdById: membership.userId,
   });
 
@@ -136,6 +142,29 @@ export async function addChore(
   });
 
   return chore;
+}
+
+/**
+ * Edits a chore (SCRUM-7 AC11, the pencil in its details). Only the household owner or
+ * whoever added it may (canEditChore). A new due date is recorded in its history.
+ */
+export async function editChore(membership: Membership, choreId: string, input: ChoreInput): Promise<ChoreWithPeople> {
+  const chore = await findOwnChore(membership, choreId);
+  if (!canEditChore({ creatorId: chore.createdById }, membership)) {
+    throw new ServiceError("NOT_ALLOWED_TO_EDIT", "Only the household owner or the person who added this chore can edit it.");
+  }
+  const fields = await checkChoreInput(membership, input, chore.dueDate);
+  const updated = await updateChore(chore.id, fields);
+
+  if (fields.dueDate.getTime() !== chore.dueDate.getTime()) {
+    await createChoreHistoryEvent({
+      choreId: chore.id,
+      eventType: "due_date_changed",
+      dueDate: fields.dueDate,
+      actorId: membership.userId,
+    });
+  }
+  return updated;
 }
 
 /** Only the assignee can mark a chore done or undo it (SCRUM-8). */

@@ -1,20 +1,31 @@
-/* Figma: Components / Chore card (148:538). 58px tall in every state. */
+/* Figma: Components / Chore card (148:538). The row is 58px tall in every state. */
 .card {
-  display: flex;
-  align-items: center;
-  gap: 8px;
   width: 100%;
-  padding: 6px 12px 6px 4px;
   border: 1px solid var(--color-border-default);
   border-radius: 14px;
   background: var(--color-surface-card);
 }
 
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px 6px 4px;
+}
+
 /* 2px border; padding drops by 1px so the content stays in place. */
 .overdue {
-  padding: 5px 12px 5px 3px;
   border: 2px solid var(--color-overdue-line);
   background: var(--color-overdue-tint);
+}
+
+.overdue .row {
+  padding: 5px 11px 5px 3px;
+}
+
+/* With a dropdown, the chevron takes the right padding's place (Figma "Schedule", 837:1483). */
+.row:has(.chevron) {
+  padding-right: 0;
 }
 
 /* 44×44 tap target. Pending and overdue show the Figma ring icon; done shows a check. */
@@ -61,7 +72,7 @@
   overflow-wrap: break-word;
 }
 
-/* Not in Figma yet: the text as a button that opens the chore (chore history). */
+/* Not in Figma yet: the name and details as a button that opens the dropdown. */
 .open {
   margin: 0;
   padding: 0;
@@ -102,22 +113,96 @@
   text-decoration: line-through;
 }
 
-.historyButton {
+/* The chevron after the chip: 20px icon in a 40×44 target. It turns as the details open. */
+.chevron {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 44px;
+  padding: 0;
   border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.chevron > span {
+  transition: transform 220ms ease;
+}
+
+.up {
+  transform: rotate(180deg);
+}
+
+/* The dropdown: a divider, the facts, the pencil at the top right, and View history. */
+.panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 52px 12px 16px;
+  border-top: 1px solid var(--color-border-default);
+}
+
+.facts {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+}
+
+.facts dt {
+  font: var(--type-field-label);
+  color: var(--color-text-default);
+}
+
+.facts dd {
+  margin: 2px 0 0;
+  font: var(--type-body);
+  color: var(--color-text-default);
+  overflow-wrap: anywhere;
+}
+
+/* 44×44 around the 20px pencil, in the top right corner as in Figma. */
+.edit {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: none;
+  border-radius: 22px;
+  background: none;
+  cursor: pointer;
+}
+
+.edit:focus-visible,
+.historyButton:focus-visible {
+  outline: 2px solid var(--color-action-focus-ring);
+  outline-offset: -2px;
+}
+
+/* Not in Figma yet: View history, moved here from the card's row (Anthony, 2026-11-19). */
+.historyButton {
+  margin: -6px 0 -4px -6px;
+  padding: 6px;
+  border: none;
+  border-radius: 4px;
   background: transparent;
-  color: inherit;
+  color: var(--color-text-muted);
   text-decoration: underline;
   cursor: pointer;
-  font: inherit;
-  font-size: 13px;
-  padding: 6px;
+  font: var(--type-meta);
 }
 
-.historyButton:hover {
-  opacity: 0.7;
-}
-
-.historyButton:focus-visible {
-  outline: 2px solid currentColor;
-  outline-offset: 2px;
+@media (prefers-reduced-motion: reduce) {
+  .chevron > span {
+    transition: none;
+  }
 }

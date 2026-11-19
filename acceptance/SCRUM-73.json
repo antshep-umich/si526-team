@@ -1,0 +1,63 @@
+{
+  "story": "SCRUM-73",
+  "title": "Schedule Page",
+  "epic": { "key": "SCRUM-52", "title": "Chore history" },
+  "criteria": [
+    {
+      "id": "AC1",
+      "text": "User Action: Opens the “Schedule” tab. Expected System Behavior: The Schedule page opens on the current week with “Week” selected, today highlighted, and the date range in the header (e.g., “Oct 26 to Nov 1”).",
+      "verify": "test"
+    },
+    {
+      "id": "AC2",
+      "text": "The week strip shows seven days. Each day shows a count of chores due that day. A day with an overdue chore is marked.",
+      "verify": "test"
+    },
+    {
+      "id": "AC3",
+      "text": "User Action: Selects a day. Expected System Behavior: That day’s chores are listed below the week strip. Each chore card shows the chore name, assigned housemate (“You” if it is the user), and status (open, “Overdue,” or “Done”), using the same card as the Chore List (see SCRUM-7).",
+      "verify": "test"
+    },
+    {
+      "id": "AC4",
+      "text": "User Action: Clicks the previous or next arrow. Expected System Behavior: The previous or next week is shown.",
+      "verify": "test"
+    },
+    {
+      "id": "AC5",
+      "text": "User Action: Clicks “Today.” Expected System Behavior: The current week opens with today selected.",
+      "verify": "test"
+    },
+    {
+      "id": "AC6",
+      "text": "User Action: Clicks “Month.” Expected System Behavior: The monthly view opens (see SCRUM-47).",
+      "verify": "test"
+    },
+    {
+      "id": "AC7",
+      "text": "User Action: Clicks “Mine” or “All.” Expected System Behavior: The schedule shows only the user’s chores or all household chores. The filter works the same as on the Chore List.",
+      "verify": "test"
+    },
+    {
+      "id": "AC8",
+      "text": "User Action: Selects a chore. Expected System Behavior: Chore Details opens (see SCRUM-53).",
+      "verify": "test"
+    },
+    {
+      "id": "AC9",
+      "text": "Weekly summary and history details: see SCRUM-46.",
+      "verify": "manual",
+      "note": "A pointer to SCRUM-46, whose criteria cover the weekly summary and history."
+    },
+    {
+      "id": "AC10",
+      "text": "Error Condition: The selected day has no chores. Message: “No chores on this day.”",
+      "verify": "test"
+    },
+    {
+      "id": "AC11",
+      "text": "Error Condition: The schedule fails to load. Message: “We couldn’t load the schedule. Please try again.” with a “Retry” button.",
+      "verify": "test"
+    }
+  ]
+}

@@ -6,12 +6,12 @@ import checkDark from "../assets/icons/dark/check.svg";
 import checkboxOverdueDark from "../assets/icons/dark/checkbox-overdue.svg";
 import checkboxPendingDark from "../assets/icons/dark/checkbox-pending.svg";
 import chevronDownDark from "../assets/icons/dark/chevron-down.svg";
-import chevronLeftDark from "../assets/icons/dark/chevron-left.svg";
 import chevronUpDark from "../assets/icons/dark/chevron-up.svg";
 import clockDark from "../assets/icons/dark/clock.svg";
 import eyeOffDark from "../assets/icons/dark/eye-off.svg";
 import eyeOpenDark from "../assets/icons/dark/eye-open.svg";
 import menuDark from "../assets/icons/dark/menu.svg";
+import pencilDark from "../assets/icons/dark/pencil.svg";
 import shareDark from "../assets/icons/dark/share.svg";
 import tabChoresActiveDark from "../assets/icons/dark/tab-chores-active.svg";
 import tabChoresDark from "../assets/icons/dark/tab-chores.svg";
@@ -25,12 +25,12 @@ import checkLight from "../assets/icons/light/check.svg";
 import checkboxOverdueLight from "../assets/icons/light/checkbox-overdue.svg";
 import checkboxPendingLight from "../assets/icons/light/checkbox-pending.svg";
 import chevronDownLight from "../assets/icons/light/chevron-down.svg";
-import chevronLeftLight from "../assets/icons/light/chevron-left.svg";
 import chevronUpLight from "../assets/icons/light/chevron-up.svg";
 import clockLight from "../assets/icons/light/clock.svg";
 import eyeOffLight from "../assets/icons/light/eye-off.svg";
 import eyeOpenLight from "../assets/icons/light/eye-open.svg";
 import menuLight from "../assets/icons/light/menu.svg";
+import pencilLight from "../assets/icons/light/pencil.svg";
 import shareLight from "../assets/icons/light/share.svg";
 import tabChoresActiveLight from "../assets/icons/light/tab-chores-active.svg";
 import tabChoresLight from "../assets/icons/light/tab-chores.svg";
@@ -56,6 +56,7 @@ export const icons = {
   // menu, text/muted #BFAF9E for the rest).
   /** 24×24, text/default */
   menu: { light: menuLight, dark: menuDark },
+  pencil: { light: pencilLight, dark: pencilDark },
   /** 20×20, text/muted */
   chevronDown: { light: chevronDownLight, dark: chevronDownDark },
   /**
@@ -67,7 +68,6 @@ export const icons = {
    * 32×32, text/default. Figma's icon/chevron/left (Chore details header); its asset
    * couldn't be exported, so this is drawn to match the other chevrons.
    */
-  chevronLeft: { light: chevronLeftLight, dark: chevronLeftDark },
   /** 20×20, text/muted */
   calendar: { light: calendarLight, dark: calendarDark },
   /** 24×24, text/muted. The password is hidden; pressing shows it. */

@@ -1,0 +1,32 @@
+{
+  "story": "SCRUM-46",
+  "title": "View household chore history - weekly",
+  "epic": { "key": "SCRUM-52", "title": "Chore history" },
+  "criteria": [
+    {
+      "id": "AC1",
+      "text": "User Action 1: User navigates to the household chore history and selects the weekly view. Expected System Behavior: Displays a summary of household chores for the current week, including chore names, assigned housemates, completion statuses, due dates, and completion dates when applicable.",
+      "verify": "test"
+    },
+    {
+      "id": "AC2",
+      "text": "User Action 2: User navigates to a previous or upcoming week Expected System Behavior: Updates the displayed history to show chores associated with the selected week.",
+      "verify": "test"
+    },
+    {
+      "id": "AC3",
+      "text": "User Action 3: User selects a specific day within the weekly view. Expected System Behavior: Displays the chores associated with that day",
+      "verify": "test"
+    },
+    {
+      "id": "AC4",
+      "text": "User Action 4: The user reviews the weekly chore summary. Expected System Behavior: Displays a summary of completed, incomplete, and overdue chores for the selected week.",
+      "verify": "test"
+    },
+    {
+      "id": "AC5",
+      "text": "User Action 5: The user selects a chore from the weekly history. Expected System Behavior: The system opens the selected chore's details or individual history.",
+      "verify": "test"
+    }
+  ]
+}

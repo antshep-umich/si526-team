@@ -5,6 +5,7 @@ import { currentMembership } from "../middleware/household.js";
 import {
   addChore,
   completeChore,
+  editChore,
   getChore,
   getChoreHistory,
   listChores,
@@ -65,6 +66,17 @@ export const create: RequestHandler = async (req, res) => {
     notes: req.body?.notes,
   });
   res.status(HttpStatus.CREATED).location(`/api/chores/${chore.id}`).json(toChoreResponse(chore));
+};
+
+/** PATCH /api/chores/:id { name, assigneeId, dueDate, notes? }: 200 with the edited chore (owner or creator). */
+export const update: RequestHandler = async (req, res) => {
+  const chore = await editChore(currentMembership(res), param(req.params.id), {
+    name: bodyText(req, "name"),
+    assigneeId: bodyText(req, "assigneeId"),
+    dueDate: bodyText(req, "dueDate"),
+    notes: req.body?.notes,
+  });
+  res.status(HttpStatus.OK).json(toChoreResponse(chore));
 };
 
 /** GET /api/chores/:id: 200 with one of the household's chores. */

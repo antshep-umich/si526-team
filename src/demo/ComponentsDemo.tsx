@@ -93,8 +93,8 @@ export default function ComponentsDemo() {
   const [chores, setChores] = useState<{ name: string; details: string; status: ChoreStatus }[]>([
     { name: "Take out trash", details: "You · due Mon, Oct 5", status: "overdue" },
     { name: "Clean bathroom", details: "You · due today", status: "pending" },
-    { name: "Wash dishes", details: "You · done today · due today", status: "done" },
-    { name: "Buy dish soap", details: "You · done today · due Fri, Oct 9", status: "late" },
+    { name: "Wash dishes", details: "You · done today", status: "done" },
+    { name: "Buy dish soap", details: "You · done today", status: "late" },
   ]);
   const [choreName, setChoreName] = useState("Mop kitchen");
   const [tab, setTab] = useState<TabId>("chores");

@@ -1,0 +1,47 @@
+{
+  "story": "SCRUM-63",
+  "title": "View user chore preference",
+  "epic": { "key": "SCRUM-1", "title": "Chore Tracking" },
+  "criteria": [
+    {
+      "id": "AC1",
+      "text": "User Action: Opens a housemate’s profile from the House tab. Expected System Behavior: A “Preferred chores” section lists the chores that housemate marked as preferred (see SCRUM-61), in alphabetical order. The section is view only.",
+      "verify": "test"
+    },
+    {
+      "id": "AC2",
+      "text": "User Action: Opens their own profile. Expected System Behavior: The “Preferred chores” section shows their own preferences with an “Edit preferences” link.",
+      "verify": "test"
+    },
+    {
+      "id": "AC3",
+      "text": "User Action: Clicks “Edit preferences.” Expected System Behavior: The chore preferences screen from SCRUM-61 opens. After saving, the profile shows the updated list.",
+      "verify": "test"
+    },
+    {
+      "id": "AC4",
+      "text": "System state: A housemate updates their preferences. Expected System Behavior: The change appears on their profile for all housemates.",
+      "verify": "test"
+    },
+    {
+      "id": "AC5",
+      "text": "System state: A preferred chore is deleted from the household. Expected System Behavior: It no longer appears in anyone’s preferred chores.",
+      "verify": "test"
+    },
+    {
+      "id": "AC6",
+      "text": "Error Condition: A housemate has no preferred chores. Message: “[Name] hasn’t picked any preferred chores yet.”",
+      "verify": "test"
+    },
+    {
+      "id": "AC7",
+      "text": "Error Condition: The user has no preferred chores on their own profile. Message: “You haven’t picked any preferred chores yet.” with a “Set preferences” link.",
+      "verify": "test"
+    },
+    {
+      "id": "AC8",
+      "text": "Error Condition: Preferences fail to load. Message: “We couldn’t load preferred chores. Please try again.” with a “Retry” button.",
+      "verify": "test"
+    }
+  ]
+}

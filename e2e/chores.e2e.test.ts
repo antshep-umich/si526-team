@@ -82,7 +82,7 @@ describe("chores", () => {
     ]);
     const doneSection = mate.page.getByRole("button", { name: "Done (1)" });
     await doneSection.click();
-    await card(mate.page, "E2E Mop kitchen").getByText("You · done today · due today").waitFor();
+    await card(mate.page, "E2E Mop kitchen").getByText("You · done today").waitFor();
 
     const listed = (await (await mate.page.request.get("/api/chores")).json()) as ChoreListResponse;
     const mop = listed.chores.find((c) => c.name === "E2E Mop kitchen");

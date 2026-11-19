@@ -1,5 +1,5 @@
 // My chore history (SCRUM-44 View user chore history).
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Household } from "../api/households.ts";
@@ -124,7 +124,9 @@ describe("My chore history", { tags: ["SCRUM-44"] }, () => {
     expect(panel.getByText("Done")).toBeInTheDocument();
 
     await userEvent.click(row("Wash dishes"));
-    expect(screen.queryByText("Hand-wash the knives")).not.toBeInTheDocument();
+    expect(row("Wash dishes")).toHaveAttribute("aria-expanded", "false");
+    // It rolls up, then goes.
+    await waitFor(() => expect(screen.queryByText("Hand-wash the knives")).not.toBeInTheDocument());
   });
 
   it("AC3: filtering by completion status and sorting by date update the list", async () => {

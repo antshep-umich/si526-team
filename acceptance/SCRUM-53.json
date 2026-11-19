@@ -6,7 +6,8 @@
     {
       "id": "AC1",
       "text": "User Action: User selects a specific chore from the chore list or chore history. Expected System Behavior: Displays the chore details, including chore name, assigned housemate, due date, completion status, and description.",
-      "verify": "test"
+      "verify": "test",
+      "note": "Team decision (Anthony, 2026-11-19): the details drop down under the chore's card on the chore list (SCRUM-7 AC11) instead of opening a screen. From the chore histories, a chore still opens single chore history or expands in place (README Conflicts rows 28 and 32)."
     },
     {
       "id": "AC2",
@@ -17,17 +18,19 @@
       "id": "AC3",
       "text": "User Action: User selects \"Back.\" Expected System Behavior: Returns to the previous screen.",
       "verify": "test",
-      "note": "Team decision (Anthony, 2026-11-19): Chore details has the shared header and tab bar like every household screen, so Back is the Chores tab, which returns to the chore list with its filter kept. README Conflicts row 33."
+      "note": "Back is selecting the chore again (its name or the chevron): the details roll up and the list is as it was (team decision, Anthony 2026-11-19; README Conflicts row 28)."
     },
     {
       "id": "AC4",
       "text": "Error Condition: A chore has been deleted or is no longer available. Expected message: \"Chore no longer available.\"",
-      "verify": "test"
+      "verify": "test",
+      "note": "Can't happen yet: chores can't be deleted (no story). The details come with the chore list, so a deleted chore will drop out of the list on its next refresh."
     },
     {
       "id": "AC5",
       "text": "Error Condition: The chore details fail to load. Expected message: The system displays an error message and provides an option to retry loading the details.",
-      "verify": "test"
+      "verify": "test",
+      "note": "The details load with the chore list, so a failure is the list's: “Couldn't load chores.” with “Try again” (SCRUM-7 AC12)."
     }
   ]
 }

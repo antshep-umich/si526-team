@@ -1,6 +1,7 @@
 {
   "story": "SCRUM-47",
   "title": "View household chore history - monthly",
+  "epic": { "key": "SCRUM-52", "title": "Chore history" },
   "criteria": [
     {
       "id": "AC1",

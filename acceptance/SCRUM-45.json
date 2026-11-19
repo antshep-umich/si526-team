@@ -1,11 +1,11 @@
-
 {
   "story": "SCRUM-45",
   "title": "View Single Chore History for Household",
+  "epic": { "key": "SCRUM-52", "title": "Chore history" },
   "criteria": [
     {
       "id": "AC1",
-      "text": "User Action: The user navigates to the household's chore list. Expected System Behavior: Displays the household's available chores.",
+      "text": "User Action: The user navigates to the household's chore list. Expected System Behavior: Display the household's available chores.",
       "verify": "test"
     },
     {
@@ -20,8 +20,9 @@
     },
     {
       "id": "AC4",
-      "text": "Error Condition: The user attempts to view a chore from a household they do not belong to. Expected message: “You are not apart of this household.”",
-      "verify": "test"
+      "text": "Error Condition: The user attempts to view a chore from a household they do not belong to. Expected message: “Chore no longer available.”",
+      "verify": "test",
+      "note": "Corrected to the app's behavior (team decision, Anthony 2026-11-19). Jira still says “You are not apart of this household.” The server answers another household's chore with 404 CHORE_NOT_FOUND, the same as a deleted chore, so it never confirms that the chore exists; the screen then shows “Chore no longer available.” (AC7). README Conflicts row 37."
     },
     {
       "id": "AC5",
@@ -30,7 +31,7 @@
     },
     {
       "id": "AC6",
-      "text": "Error Condition: The chore history fails to load. Expected System Behavior: Displays an error message and provides an option to retry loading the history.",
+      "text": "Error Condition: The chore history fails to load. Expected message: The system displays an error message and provides an option to retry loading the history.",
       "verify": "test"
     },
     {

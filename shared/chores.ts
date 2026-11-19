@@ -41,6 +41,18 @@ export interface NewChoreRequest {
   notes?: string;
 }
 
+/** Body of PATCH /api/chores/:id: the whole form, as on Add chore. */
+export type EditChoreRequest = NewChoreRequest;
+
+/**
+ * Who may edit a chore: the household owner or whoever added it. A stand-in until
+ * household managers exist (SCRUM-62), which will make it the manager (Anthony,
+ * 2026-11-19; TECH_SPEC section 11). The app hides the pencil; the API checks too.
+ */
+export function canEditChore(chore: { creatorId: string | null }, user: { userId: string; role: "owner" | "member" }): boolean {
+  return user.role === "owner" || (chore.creatorId !== null && chore.creatorId === user.userId);
+}
+
 /** Returns the trimmed name, or null if it isn't 1 to 60 characters of text. */
 export function parseChoreName(value: unknown): string | null {
   if (typeof value !== "string") return null;

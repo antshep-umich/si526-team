@@ -1,6 +1,7 @@
 import { useEffect, useId, useState } from "react";
 import { getChore, listChoreHistory } from "../api/chores.ts";
 import type { Household } from "../api/households.ts";
+import Collapse from "../components/Collapse.tsx";
 import PickerField from "../components/PickerField.tsx";
 import TabFilter from "../components/TabFilter.tsx";
 import { choreStatus, type Chore } from "../chores.ts";
@@ -111,7 +112,10 @@ export default function ChoreHistory({ household, userId }: ChoreHistoryProps) {
                       expanded={open}
                       controls={detailsId}
                     >
-                      {open && <ChoreDetails id={detailsId} choreId={chore.id} userId={userId} today={today} />}
+                      {/* Loads when it opens, and rolls down and up (Collapse). */}
+                      <Collapse open={open} lazy>
+                        <ChoreDetails id={detailsId} choreId={chore.id} userId={userId} today={today} />
+                      </Collapse>
                     </HistoryRow>
                   );
                 })}

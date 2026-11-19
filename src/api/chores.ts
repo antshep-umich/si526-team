@@ -2,6 +2,7 @@ import type {
   ChoreHistoryResponse,
   ChoreListResponse,
   ChoreResponse,
+  EditChoreRequest,
   NewChoreRequest,
 } from "../../shared/chores.ts";
 
@@ -57,6 +58,15 @@ export function getChore(id: string): Promise<ChoreResult> {
 export function createChore(chore: NewChoreRequest): Promise<ChoreResult> {
   return choreCall("/api/chores", {
     method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(chore),
+  });
+}
+
+/** PATCH /api/chores/:id: the Edit chore form. Only the household owner or the chore's creator can. */
+export function editChore(id: string, chore: EditChoreRequest): Promise<ChoreResult> {
+  return choreCall(`/api/chores/${encodeURIComponent(id)}`, {
+    method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(chore),
   });

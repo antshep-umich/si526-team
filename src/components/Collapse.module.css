@@ -1,0 +1,33 @@
+/*
+ * A roll-down: the grid row grows from 0 to the content's height. Visibility switches
+ * at the end of a roll-up (and at the start of a roll-down), so closed content can't be
+ * reached. 220ms, the same as COLLAPSE_MS in Collapse.tsx.
+ */
+.collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  visibility: hidden;
+  transition:
+    grid-template-rows 220ms ease,
+    visibility 0s linear 220ms;
+}
+
+.open {
+  grid-template-rows: 1fr;
+  visibility: visible;
+  transition:
+    grid-template-rows 220ms ease,
+    visibility 0s linear 0s;
+}
+
+.inner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .collapse,
+  .open {
+    transition: none;
+  }
+}

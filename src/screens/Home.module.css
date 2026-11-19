@@ -23,6 +23,11 @@
   list-style: none;
 }
 
+/* The done list, the page's 26px below its toggle once it rolls down. */
+.doneList {
+  padding-top: 26px;
+}
+
 /* Not in Figma yet (placeholders): empty, loading and error messages. */
 .message {
   font: var(--type-body);

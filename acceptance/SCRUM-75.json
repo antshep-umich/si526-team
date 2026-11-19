@@ -1,0 +1,62 @@
+{
+  "story": "SCRUM-75",
+  "title": "Leave a household",
+  "epic": { "key": "SCRUM-9", "title": "Account/Household Setup" },
+  "criteria": [
+    {
+      "id": "AC1",
+      "text": "User Action: Clicks “Leave household” on their own profile page. Expected System Behavior: A confirmation appears: “Leave [Household name]? Your open chores will become unassigned.” with “Leave” and “Cancel.”",
+      "verify": "test"
+    },
+    {
+      "id": "AC2",
+      "text": "User Action: Clicks “Cancel.” Expected System Behavior: The confirmation closes, and nothing changes.",
+      "verify": "test"
+    },
+    {
+      "id": "AC3",
+      "text": "User Action: Clicks “Leave.” Expected System Behavior: The user is removed from the household, and the “Your household” screen opens with options to create or join a household.",
+      "verify": "test"
+    },
+    {
+      "id": "AC4",
+      "text": "System state: The user has open chores when they leave. Expected System Behavior: Those chores stay on the Chore List marked “Unassigned.” Any housemate can assign an unassigned chore, the same as a first assignment (see SCRUM-6).",
+      "verify": "test"
+    },
+    {
+      "id": "AC5",
+      "text": "System state: The user has completed chores when they leave. Expected System Behavior: Those chores stay in the household’s chore history with the user’s name.",
+      "verify": "test"
+    },
+    {
+      "id": "AC6",
+      "text": "System state: The user is the household manager. Expected System Behavior: The role passes on following the SCRUM-62 rules: the next highest nominee is invited, or the household returns to the no-manager state.",
+      "verify": "test"
+    },
+    {
+      "id": "AC7",
+      "text": "System state: The user has voted or been nominated for household manager. Expected System Behavior: Their vote and any votes for them are cleared.",
+      "verify": "test"
+    },
+    {
+      "id": "AC8",
+      "text": "System state: The user leaves. Expected System Behavior: Remaining housemates are notified: “[Name] left the household.” The user no longer appears in the House tab roster or the “Assigned to” list.",
+      "verify": "test"
+    },
+    {
+      "id": "AC9",
+      "text": "System state: The user is the only member of the household. Expected System Behavior: The confirmation instead reads: “You’re the last member of [Household name]. Leaving will delete the household and all of its chores.” Confirming deletes the household.",
+      "verify": "test"
+    },
+    {
+      "id": "AC10",
+      "text": "User Action: A former member opens a new invite link to the same household. Expected System Behavior: They can rejoin as a new member. Their past completed chores remain in history.",
+      "verify": "test"
+    },
+    {
+      "id": "AC11",
+      "text": "Error Condition: Leaving fails. Message: “Something went wrong. Please try again.” The user stays in the household.",
+      "verify": "test"
+    }
+  ]
+}

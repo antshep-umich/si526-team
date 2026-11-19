@@ -71,6 +71,31 @@
   /* The card color on the page color: dark mode's card is a see-through tint, and a list floating over the screen needs to be solid. */
   background: linear-gradient(var(--color-surface-card), var(--color-surface-card)), var(--color-background-bottom);
   box-shadow: 0 8px 24px rgb(0 0 0 / 14%);
+  /* Closed: faded, a little higher, and hidden once the fade ends. */
+  opacity: 0;
+  transform: translateY(-6px);
+  visibility: hidden;
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease,
+    visibility 0s linear 180ms;
+}
+
+.menuOpen {
+  opacity: 1;
+  transform: none;
+  visibility: visible;
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease,
+    visibility 0s linear 0s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu,
+  .menuOpen {
+    transition: none;
+  }
 }
 
 /* One row per item, 44px tall so it's easy to tap. */

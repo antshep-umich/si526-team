@@ -30,13 +30,14 @@ export const isMine = (chore: Chore, userId: string) => chore.assignee?.userId =
 
 /**
  * The card's second line. "You" for the user's own chores, so the line speaks to the
- * person responsible. Open: "You · due today". Done: "Sam · done today · due Mon, Oct 5".
+ * person responsible. Open: "You · due today". Done: "Sam · done today", the day it was
+ * done instead of the due date (SCRUM-8 AC1).
  */
 export function choreDetails(chore: Chore, userId: string, today: string): string {
   const who = !chore.assignee ? "Unassigned" : isMine(chore, userId) ? "You" : chore.assignee.name;
   const due = `due ${describeDay(chore.dueDate, today)}`;
   const completed = doneOn(chore);
-  return completed ? `${who} · done ${describeDay(completed, today)} · ${due}` : `${who} · ${due}`;
+  return completed ? `${who} · done ${describeDay(completed, today)}` : `${who} · ${due}`;
 }
 
 /** Chores still to do: overdue ones first, then the soonest due. */

@@ -6,6 +6,7 @@ import {
   findChoresAssignedTo,
   findChoresForHousehold,
   setChoreCompletion,
+  updateChore,
 } from "./chores.js";
 
 const { prisma } = vi.hoisted(() => ({
@@ -68,6 +69,18 @@ describe("chores model", () => {
     await createChore(data);
 
     expect(prisma.chore.create).toHaveBeenCalledWith({ data, include: people });
+  });
+
+  it("updates what the Edit chore form changes", async () => {
+    const dueDate = new Date("2026-11-02T00:00:00Z");
+
+    await updateChore("c1", { name: "Recycling", notes: null, assigneeId: "ben", dueDate });
+
+    expect(prisma.chore.update).toHaveBeenCalledWith({
+      where: { id: "c1" },
+      data: { name: "Recycling", notes: null, assigneeId: "ben", dueDate },
+      include: people,
+    });
   });
 
   it("sets and clears completion", async () => {

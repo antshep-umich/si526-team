@@ -110,26 +110,32 @@ function Menu() {
       >
         <ThemedIcon name="menu" />
       </button>
-      {open && (
-        // Not in Figma yet: the designs show Log out alone, as a button (SCRUM-44 and 46 need a way in).
-        <div className={styles.menu} role="menu" aria-label="Menu" ref={listRef} onKeyDown={moveFocus}>
-          <button type="button" role="menuitem" className={styles.item} onClick={choose(actions.onChoreHistory)}>
-            My chore history
-          </button>
-          <button type="button" role="menuitem" className={styles.item} onClick={choose(actions.onHouseholdChoreHistory)}>
-            Household chore history
-          </button>
-          <div role="separator" className={styles.separator} />
-          <button
-            type="button"
-            role="menuitem"
-            className={`${styles.item} ${styles.logOut}`}
-            onClick={choose(actions.onLogOut)}
-          >
-            Log out
-          </button>
-        </div>
-      )}
+      {/* Not in Figma yet: the designs show Log out alone, as a button (SCRUM-44 and 46 need a way in).
+          Always there, so it can fade in and out; closed, it's hidden and can't be reached. */}
+      <div
+        className={`${styles.menu} ${open ? styles.menuOpen : ""}`}
+        role="menu"
+        aria-label="Menu"
+        ref={listRef}
+        onKeyDown={moveFocus}
+        inert={!open}
+      >
+        <button type="button" role="menuitem" className={styles.item} onClick={choose(actions.onChoreHistory)}>
+          My chore history
+        </button>
+        <button type="button" role="menuitem" className={styles.item} onClick={choose(actions.onHouseholdChoreHistory)}>
+          Household chore history
+        </button>
+        <div role="separator" className={styles.separator} />
+        <button
+          type="button"
+          role="menuitem"
+          className={`${styles.item} ${styles.logOut}`}
+          onClick={choose(actions.onLogOut)}
+        >
+          Log out
+        </button>
+      </div>
     </div>
   );
 }
