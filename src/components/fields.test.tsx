@@ -101,6 +101,52 @@ describe("PickerField", () => {
   });
 });
 
+describe("PickerField's list", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  /** Lays the page out: the field's top and bottom, and the list's full height. */
+  function layout(field: { top: number; bottom: number }, listHeight: number) {
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (this: HTMLElement) {
+      return (this.getAttribute("role") === "combobox" ? field : { top: 0, bottom: 0 }) as DOMRect;
+    });
+    vi.spyOn(HTMLElement.prototype, "scrollHeight", "get").mockImplementation(function (this: HTMLElement) {
+      return this.getAttribute("role") === "listbox" ? listHeight : 0;
+    });
+  }
+
+  it("opens over the page instead of pushing it down", async () => {
+    render(<Picker />);
+    const field = screen.getByRole("combobox", { name: "Assigned to" });
+
+    await userEvent.click(field);
+
+    // The list sits in the roll-down (Collapse), which is the popup.
+    const popup = screen.getByRole("listbox").parentElement!.parentElement!;
+    expect(popup).toHaveClass("popup");
+    expect(getComputedStyle(popup).position).toBe("absolute");
+  });
+
+  it("opens above the field when there isn't room below", async () => {
+    layout({ top: 600, bottom: 648 }, 160); // 768 - 648 = 120px below, 600px above
+    render(<Picker />);
+
+    await userEvent.click(screen.getByRole("combobox", { name: "Assigned to" }));
+
+    expect(screen.getByRole("combobox").parentElement).toHaveClass("above");
+  });
+
+  it("opens below when it fits", async () => {
+    layout({ top: 100, bottom: 148 }, 160);
+    render(<Picker />);
+
+    await userEvent.click(screen.getByRole("combobox", { name: "Assigned to" }));
+
+    expect(screen.getByRole("combobox").parentElement).not.toHaveClass("above");
+  });
+});
+
 describe("DateField", () => {
   afterEach(() => {
     vi.useRealTimers();

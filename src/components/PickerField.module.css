@@ -1,6 +1,42 @@
 /* Figma: Components / Picker field (454:2772). Styled like Text field. */
 .picker {
+  position: relative;
   width: 100%;
+}
+
+/*
+ * The list opens over whatever follows the field instead of pushing it down, at the
+ * field's width; .above puts it over the field when there isn't room below.
+ */
+.popup {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  left: 0;
+  z-index: 20;
+}
+
+.above .popup {
+  top: auto;
+  bottom: 100%;
+}
+
+/* The shadow goes on the popup: the list's own would be cut off while it rolls. */
+.popup {
+  border-radius: 0 0 12px 12px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 14%);
+}
+
+.above .popup {
+  border-radius: 12px 12px 0 0;
+  box-shadow: 0 -8px 24px rgb(0 0 0 / 14%);
+}
+
+/* Upward, the list unrolls from the field outward: its end stays against the field. */
+.above .popup > div {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
 }
 
 .trigger {
@@ -41,6 +77,13 @@
   border-radius: 12px 12px 0 0;
 }
 
+/* Opened upward, it's mirrored: square on top, with the rule there. */
+.open.above .trigger {
+  border-top-width: 3px;
+  border-bottom-width: 1.5px;
+  border-radius: 0 0 12px 12px;
+}
+
 /* Figma turns the down chevron 180° for "up"; it turns smoothly (reduced motion: at once). */
 .chevron {
   transition: transform 220ms ease;
@@ -62,11 +105,13 @@
   list-style: none;
 }
 
+/* The card color on the page color: dark mode's card is a see-through tint, and a list
+   over the page needs to be solid (as the header menu is). */
 .option {
   padding: 14px;
   border: 1.5px solid var(--color-border-input);
   border-top: none;
-  background: var(--color-surface-card);
+  background: linear-gradient(var(--color-surface-card), var(--color-surface-card)), var(--color-background-bottom);
   color: var(--color-text-muted);
   font: var(--type-body);
   cursor: pointer;
@@ -74,6 +119,19 @@
 
 .option:last-child {
   border-radius: 0 0 12px 12px;
+}
+
+.above .option {
+  border-top: 1.5px solid var(--color-border-input);
+  border-bottom: none;
+}
+
+.above .option:first-child {
+  border-radius: 12px 12px 0 0;
+}
+
+.above .option:last-child {
+  border-radius: 0;
 }
 
 /* Not in Figma yet: the picked option and the keyboard highlight. */
