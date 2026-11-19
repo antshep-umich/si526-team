@@ -376,6 +376,13 @@ const MARKS_LEGEND = `<ul class="legend marks" aria-label="What the checkboxes m
   .map((s) => `<li>${box(s)}${STATUS_LABEL[s]}</li>`)
   .join("")}</ul>`;
 
+/**
+ * Above and below the stories: Expand all opens every epic and story, so every AC shows
+ * (each AC's own tests stay closed); Collapse all closes everything. The page script
+ * does the work.
+ */
+const TREE_CONTROLS = `<div class="tree-controls"><button type="button" data-tree="expand">Expand all</button><button type="button" data-tree="collapse">Collapse all</button></div>`;
+
 function storiesSection(site: SiteData): string {
   const heading = `<h2>Stories</h2>`;
   const latest = site.main[0];
@@ -415,9 +422,11 @@ function storiesSection(site: SiteData): string {
 ${heading}
 <p class="intro">The acceptance criteria our tests can check, from the latest run on main, ${time(latest.summary.startedAt)}. Jira is still where stories are tracked.</p>
 <div class="stories-head"><p class="total">${storiesTotal(stories)}</p>${MARKS_LEGEND}</div>
+${TREE_CONTROLS}
 <div class="tree">
 ${body}
 </div>
+${TREE_CONTROLS}
 </section>`;
 }
 
@@ -589,6 +598,9 @@ p { margin: 0 0 0.5rem; max-width: 42rem; }
 .intro, .empty, .note { color: var(--ink-2); }
 section > .intro { margin-bottom: 1.25rem; }
 section > .more { margin-top: 1rem; }
+.tree-controls { display: flex; gap: 0.5rem; margin: 0.75rem 0; }
+.tree-controls button { font: inherit; font-size: 0.85rem; color: var(--ink); background: var(--panel); border: 1px solid var(--rule-strong); border-radius: 6px; padding: 0.3rem 0.75rem; cursor: pointer; }
+.tree-controls button:hover { background: var(--band); }
 .note { font-size: 0.85rem; }
 .muted { color: var(--ink-3); }
 .glyph { width: 1.05em; height: 1.05em; flex: none; }
@@ -715,6 +727,18 @@ const SCRIPT = `
     } catch {}
   };
   document.addEventListener("click", remember);
+
+  // Expand all / Collapse all, above and below the stories.
+  document.addEventListener("click", (event) => {
+    const button = event.target.closest && event.target.closest("[data-tree]");
+    if (!button) return;
+    const expand = button.dataset.tree === "expand";
+    const all = document.querySelectorAll("#stories details");
+    for (const d of all) {
+      if (!expand) d.open = false;
+      else if (!d.closest(".ac")) d.open = true;
+    }
+  });
   document.addEventListener("auxclick", remember);
 
   const format = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });

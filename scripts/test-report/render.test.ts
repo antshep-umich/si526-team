@@ -253,6 +253,17 @@ describe("the Stories section", () => {
   const storiesHtml = section(html, "stories");
 
   /** The opening tag of a story's or epic's collapsible block. */
+  it("has Expand all and Collapse all above and below the stories", () => {
+    const controls = storiesHtml.match(/<div class="tree-controls">.*?<\/div>/g) ?? [];
+    expect(controls).toHaveLength(2);
+    for (const c of controls) {
+      expect(c).toContain('<button type="button" data-tree="expand">Expand all</button>');
+      expect(c).toContain('<button type="button" data-tree="collapse">Collapse all</button>');
+    }
+    expect(storiesHtml.indexOf("tree-controls")).toBeLessThan(storiesHtml.indexOf('class="tree"'));
+    expect(storiesHtml.lastIndexOf("tree-controls")).toBeGreaterThan(storiesHtml.lastIndexOf("</details>"));
+  });
+
   const openingTag = (kind: "story" | "epic", key: string, within = storiesHtml) => {
     const match = new RegExp(`<details class="${kind}" data-key="${key}"[^>]*>`).exec(within);
     if (!match) throw new Error(`no ${kind} ${key}`);

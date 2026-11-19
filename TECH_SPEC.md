@@ -461,7 +461,7 @@ The `Tests` workflow (`.github/workflows/tests.yml`) runs the typecheck and the 
 | Pull request into `main` opened or updated | The merge result (branch + current `main`) | Nothing; it's the pull request's check |
 | Pull request merged | The branch's final commit | A row under "Merged branches", kept permanently |
 
-"Merged branches" and "History of main" show their newest 5 (`DASHBOARD_LIST_LENGTH` in `render.ts`), with a "See all" link under each to `archive.html`, which lists every merged branch and every run on main. Both pages are rendered from the same `data/history.json` on every publish; the trend chart still uses every run.
+"Merged branches" and "History of main" show their newest 5 (`DASHBOARD_LIST_LENGTH` in `render.ts`), with a "See all" link under each to `archive.html`, which lists every merged branch and every run on main. Both pages are rendered from the same `data/history.json` on every publish; the trend chart still uses every run. The Stories section has **Expand all** and **Collapse all** above and below it: Expand all opens every epic and story (each AC's own tests stay closed), Collapse all closes everything.
 | Push to `main` (each merge) | The new `main` | The latest result, the chart, the Stories section and `main`'s history |
 
 Failing runs are published too. A run whose typecheck or tests failed, or whose AC files or tags have problems, fails its check. Every run uploads `test-report` (results, summary and HTML report) and `test-report.html` (the HTML report alone) as artifacts for 30 days.
