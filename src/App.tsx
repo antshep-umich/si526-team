@@ -210,7 +210,12 @@ function SignedIn({ userId }: { userId: string }) {
     };
     const tab = view.name === "house" || view.name === "housemate" ? "house" : "chores";
     return (
-      <TabLayout selected={tab} onSelect={(next) => setView(next === "house" ? { name: "house" } : { name: "chores" })} menu={menu}>
+      <TabLayout
+        selected={tab}
+        onSelect={(next) => setView(next === "house" ? { name: "house" } : { name: "chores" })}
+        menu={menu}
+        screen={view}
+      >
         {content}
       </TabLayout>
     );

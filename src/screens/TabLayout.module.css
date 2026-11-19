@@ -1,19 +1,25 @@
 /*
- * The tab bar fixed to the bottom of the view (Figma "Home - Chores (All)"), on every
- * screen inside a household. The bottom padding lets each screen scroll clear of the
- * 81px bar.
+ * Every screen inside a household, with the tab bar under it (Figma "Home - Chores (All)").
+ * The layout fills the view and only the screen above the bar scrolls, so the page itself
+ * never does. That keeps phone browsers from sliding their toolbars over the bar while
+ * scrolling (Firefox for Android: Mozilla bugs 1797964 and 1880375).
  */
 .layout {
-  min-height: 100dvh;
-  padding-bottom: 81px;
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+}
+
+.content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  /* A scroll that reaches the end stays here instead of moving the page. */
+  overscroll-behavior-y: contain;
 }
 
 .tabBar {
-  position: fixed;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  z-index: 5;
+  flex-shrink: 0;
   width: 100%;
   max-width: 402px;
   margin: 0 auto;
