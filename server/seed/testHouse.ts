@@ -20,11 +20,16 @@ export type TestPerson = keyof typeof TEST_PEOPLE;
 const PEOPLE = Object.keys(TEST_PEOPLE) as TestPerson[];
 
 /**
- * Where this run may write: a Vercel preview's own database, or the dev database when
- * run by hand with --local. Never production, and nothing on Vercel unless it says preview.
+ * Where this run may write: the database of a Vercel preview or production build, or the
+ * dev database when run by hand with --local. Production gets it too so the team can demo
+ * the deployed app (Anthony, 2026-11-19); seedTestHouse never touches a household real
+ * people have joined. Nothing on Vercel's other environments (a `vercel dev` run).
  */
-export function seedTarget(env: Record<string, string | undefined>, args: readonly string[]): "preview" | "local" | null {
-  if (env.VERCEL) return env.VERCEL_ENV === "preview" ? "preview" : null;
+export function seedTarget(
+  env: Record<string, string | undefined>,
+  args: readonly string[],
+): "preview" | "production" | "local" | null {
+  if (env.VERCEL) return env.VERCEL_ENV === "preview" || env.VERCEL_ENV === "production" ? env.VERCEL_ENV : null;
   return args.includes("--local") ? "local" : null;
 }
 

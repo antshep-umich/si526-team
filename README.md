@@ -179,10 +179,11 @@ share them outside the team.
 
 ### Test household
 
-Every preview build resets a household called **Test_House_Data** with chores dated from the day
-of the build: some to do, overdue, done and done late, with a few weeks of history.
-Run `npm run seed:test-house` to reset the same household in the dev database. Production never
-gets it. The code is in `server/seed/`.
+Every preview and production build resets a household called **Test_House_Data** with chores
+dated from the day of the build: some to do, overdue, done and done late, with a few weeks of
+history. Production has it so the team can demo the deployed app; it never touches a household
+a real person has joined, and nobody else's data changes. Run `npm run seed:test-house` to reset
+the same household in the dev database. The code is in `server/seed/`.
 
 | Account | Email | Password |
 |---|---|---|
@@ -190,7 +191,9 @@ gets it. The code is in `server/seed/`.
 | Test_Housemate_1 | `Test_Housemate_1@test.com` | `password2` |
 | Test_Housemate_2 | `Test_Housemate_2@test.com` | `password2` |
 
-These are made-up test accounts, not secrets. Don't use the password anywhere else.
+These are made-up test accounts, not secrets. Don't use the password anywhere else. They work on
+the production site too, so don't share them with research participants, and leave them out
+when counting users or chores in the production database.
 
 ## How to…
 

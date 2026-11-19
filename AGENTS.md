@@ -41,7 +41,7 @@ npm run test:ui        # the same tests in Vitest's browser UI
 npm run test:report    # the same tests, then a local copy of the test dashboard in test-report/site
 npm run test:e2e       # real browser vs local app + dev DB (run `npx playwright install chromium` once)
 npm run build          # what Vercel builds (plus `prisma migrate deploy` and the test household seed in build:vercel)
-npm run seed:test-house  # reset the test household (Test_User@test.com) in the dev DB; previews get it on every build
+npm run seed:test-house  # reset the test household (Test_User@test.com) in the dev DB; previews and production get it on every build
 npx prisma migrate deploy               # apply teammates' migrations to the dev DB (never resets)
 npx prisma migrate dev --name <change>   # after editing prisma/schema.prisma; commit the migration folder
 ```
@@ -59,7 +59,7 @@ server/                 Express API (layers below)
   db.ts                 the one Prisma client
   middleware/ routes/ controllers/ services/ models/   the layers
   test/fakeModels.ts    in-memory models for server tests
-  seed/                 Test_House_Data: 3 test accounts and dated chores with history (previews + dev DB, never production)
+  seed/                 Test_House_Data: 3 test accounts and dated chores with history (previews, production and the dev DB)
   architecture.test.ts  enforces the layer rules
 shared/                 imported by both server and frontend
   api.ts                API response types, apiError(), validation (parseHouseholdName, normalizeInviteCode)
@@ -133,7 +133,7 @@ A request goes through six layers in order. **Each layer may only use the layers
 - **Chore status is derived, never stored** (`src/chores.ts`): to do (no chip), overdue (not done, past due), done, late (done after the due date). "Today" is the **phone's** date; the server can't know it, so it only rejects due dates before yesterday in UTC and the app enforces "today or later". Weeks run Monday–Sunday: the progress card counts chores due this week, the Done section lists chores done this week, the to-do list shows every open chore.
 - Only a chore's **assignee** can mark it done or undo it (403 `NOT_ASSIGNEE`); others see no checkbox. Chores are looked up inside the membership's household only (404 `CHORE_NOT_FOUND` otherwise).
 - Invite codes: 8 characters from `ABCDEFGHJKMNPQRSTUVWXYZ23456789` (`services/inviteCode.ts`). Users can type them in any case with spaces or hyphens.
-- Neon branches: `main` = production, `dev` = local development (`.env`), and one throwaway `preview/<git-branch>` per Vercel preview. Vercel builds run `prisma migrate deploy`, so a migration in a pull request runs on that pull request's preview database only. Preview builds then reset a test household, Test_House_Data (`server/seed/`; sign in as `Test_User@test.com`, password in `testHouse.ts`), with chores dated from that day. Production builds skip it.
+- Neon branches: `main` = production, `dev` = local development (`.env`), and one throwaway `preview/<git-branch>` per Vercel preview. Vercel builds run `prisma migrate deploy`, so a migration in a pull request runs on that pull request's preview database only. Preview and production builds then reset a test household, Test_House_Data (`server/seed/`; sign in as `Test_User@test.com`, password in `testHouse.ts`), with chores dated from that day. Production has it for demos (Anthony, 2026-11-19); it never touches a household real people joined. Leave its three accounts out when counting production users or chores.
 
 ## Frontend (TECH_SPEC §3, README "Design system")
 
