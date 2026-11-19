@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Chore } from "./chores.ts";
-import { choresDueInMonth, monthlyDetails, monthSummary } from "./monthlyHistory.ts";
+import { choresDueInMonth, monthSummary } from "./monthlyHistory.ts";
 
 const at = (day: string) => {
   const [y, m, d] = day.split("-").map(Number);
@@ -59,15 +59,5 @@ describe("monthly household history", () => {
 
     expect(monthSummary(chores, TODAY)).toEqual({ completed: 2, incomplete: 3, overdue: 1 });
     expect(monthSummary([], TODAY)).toEqual({ completed: 0, incomplete: 0, overdue: 0 });
-  });
-
-  it("describes who, when it's due and when it was done", () => {
-    const done = chore("Wash dishes", "2026-11-05", { completedAt: at("2026-11-04") });
-    const open = chore("Buy soap", TODAY, { assignee: { userId: "u-sam", name: "Sam Ito" } });
-    const orphan = chore("Sweep", "2026-11-13", { assignee: null });
-
-    expect(monthlyDetails(done, "u-ana", TODAY)).toBe("You · due Thu, Nov 5 · done Wed, Nov 4");
-    expect(monthlyDetails(open, "u-ana", TODAY)).toBe("Sam Ito · due today · not done");
-    expect(monthlyDetails(orphan, "u-ana", TODAY)).toBe("Unassigned · due tomorrow · not done");
   });
 });

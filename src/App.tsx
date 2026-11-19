@@ -180,7 +180,7 @@ function SignedIn({ userId }: { userId: string }) {
         content = <ChoreDetails household={household} userId={userId} choreId={view.choreId} />;
         break;
       case "chore":
-        content = <SingleChoreHistory choreId={view.choreId} />;
+        content = <SingleChoreHistory choreId={view.choreId} userId={userId} />;
         break;
       case "house":
         content = <House userId={userId} onOpenHousemate={(member) => setView({ name: "housemate", member })} />;
