@@ -10,7 +10,13 @@ import {
   type WeeklyWorkload,
 } from "../../shared/preferences.ts";
 import { getCurrentHousehold, type Household } from "../api/households.ts";
-import { getChorePreferences, saveAssignmentMethod, saveChorePreferences } from "../api/preferences.ts";
+import {
+  getChorePreferences,
+  getPreferredChores,
+  saveAssignmentMethod,
+  saveChorePreferences,
+  savePreferredChores,
+} from "../api/preferences.ts";
 import { authClient } from "../auth.ts";
 import Avatar from "../components/Avatar.tsx";
 import Button from "../components/Button.tsx";
@@ -24,6 +30,7 @@ import { FormError } from "./Screen.tsx";
 // Your profile (Jira SCRUM-72 User profile page; Figma "User Profile", 637:197): your
 // name and email, your chore preferences, and how the household assigns chores.
 // Opened from the header menu. Each section saves on its own, with its own Save and Cancel.
+// "Preferred chores" (SCRUM-61) has no design yet; it reuses this page's parts.
 
 /** The story's words for any failed save. */
 export const NOT_SAVED = "Changes not saved. Please try again.";
@@ -40,6 +47,7 @@ export default function Profile({ household, onHouseholdChange }: ProfileProps) 
       <Header title={household.name} />
       <ProfileInformation household={household} onHouseholdChange={onHouseholdChange} />
       <ChorePreferencesSection />
+      <PreferredChoresSection onHouseholdChange={onHouseholdChange} />
       <ManagerPreferencesSection household={household} onHouseholdChange={onHouseholdChange} />
     </main>
   );
@@ -265,6 +273,139 @@ function ChorePreferencesSection() {
               onClick={() => {
                 show(loaded.saved);
                 setError(null);
+              }}
+            >
+              Cancel
+            </Button>
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
+type PreferredLoaded = { status: "loading" } | { status: "failed" } | { status: "ready"; saved: string[]; all: string[] };
+
+/**
+ * SCRUM-61: mark the household's own chores (by name) you'd most like to do.
+ * Housemates see it in Add chore's "Assigned to" list. Not in Figma yet (placeholder).
+ */
+function PreferredChoresSection({ onHouseholdChange }: Pick<ProfileProps, "onHouseholdChange">) {
+  const showToast = useToast();
+  const [loaded, setLoaded] = useState<PreferredLoaded>({ status: "loading" });
+  const [attempt, setAttempt] = useState(0);
+  const [chosen, setChosen] = useState<string[]>([]);
+  const [failed, setFailed] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const show = (chores: { name: string; preferred: boolean }[]) => {
+    const saved = chores.filter((c) => c.preferred).map((c) => c.name);
+    setLoaded({ status: "ready", saved, all: chores.map((c) => c.name) });
+    setChosen(saved);
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    getPreferredChores().then((result) => {
+      if (cancelled) return;
+      if (result.ok) show(result.chores);
+      else setLoaded({ status: "failed" });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [attempt]);
+
+  const toggle = (name: string) =>
+    setChosen((names) => (names.includes(name) ? names.filter((n) => n !== name) : [...names, name]));
+
+  async function save() {
+    setSaving(true);
+    setFailed(false);
+    const result = await savePreferredChores(chosen);
+    setSaving(false);
+    if (!result.ok) return setFailed(true);
+    show(result.chores);
+    // Not in Figma yet: the story asks for "a confirmation message" without its words.
+    showToast("Preferred chores saved.");
+    // Add chore reads housemates' preferred chores from the household.
+    const refreshed = await getCurrentHousehold();
+    if (refreshed.ok) onHouseholdChange(refreshed.household);
+  }
+
+  return (
+    <section className={styles.section} aria-labelledby="preferred-chores-heading">
+      <div className={styles.sectionHeader}>
+        <h2 id="preferred-chores-heading" className={styles.sectionTitle}>
+          Preferred chores
+        </h2>
+        <p className={styles.intro}>
+          Mark the household's chores you would most like to do. Housemates see this when they assign chores.
+        </p>
+      </div>
+
+      {loaded.status === "loading" && (
+        <p className={styles.message} role="status">
+          Loading chores…
+        </p>
+      )}
+      {loaded.status === "failed" && (
+        <div className={styles.form}>
+          <FormError message="Couldn't load the household's chores." />
+          <div>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setLoaded({ status: "loading" });
+                setAttempt((n) => n + 1);
+              }}
+            >
+              Try again
+            </Button>
+          </div>
+        </div>
+      )}
+      {loaded.status === "ready" && loaded.all.length === 0 && (
+        <p className={styles.message}>No chores to choose from yet.</p>
+      )}
+      {loaded.status === "ready" && loaded.all.length > 0 && (
+        <>
+          <div className={styles.preferredList} role="group" aria-label="Preferred chores">
+            {loaded.all.map((name) => {
+              const on = chosen.includes(name);
+              return (
+                <button
+                  key={name}
+                  type="button"
+                  aria-pressed={on}
+                  className={`${styles.option} ${styles.preferredOption} ${on ? styles.selected : ""}`}
+                  onClick={() => toggle(name)}
+                >
+                  <span>{name}</span>
+                  <span className={styles.preferredMark} aria-hidden="true">
+                    {on ? "Preferred" : "Mark as preferred"}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          {failed && (
+            <div className={styles.failed}>
+              <FormError message={NOT_SAVED} />
+              <Button variant="outline" onClick={save} disabled={saving}>
+                Try saving again
+              </Button>
+            </div>
+          )}
+          <div className={styles.buttons}>
+            <Button onClick={save} disabled={saving}>
+              {saving ? "Saving…" : "Save"}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setChosen(loaded.saved);
+                setFailed(false);
               }}
             >
               Cancel

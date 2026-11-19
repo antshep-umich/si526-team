@@ -10,7 +10,7 @@ import {
   setAssignmentMethod,
   setInviteCode,
 } from "./households.js";
-import { createMembership, findMembershipByUser, setChorePreferences } from "./memberships.js";
+import { createMembership, findMembershipByUser, setChorePreferences, setPreferredChores } from "./memberships.js";
 
 const { prisma } = vi.hoisted(() => ({
   prisma: {
@@ -129,3 +129,15 @@ describe("profile preferences (SCRUM-72)", () => {
     expect(prisma.household.update).toHaveBeenCalledWith({ where: { id: "h1" }, data: { assignmentMethod: "rotate" } });
   });
 });
+
+describe("preferred chores (SCRUM-61)", () => {
+  it("saves a member's preferred chore keys on their membership", async () => {
+    await setPreferredChores("ben", ["take out trash"]);
+
+    expect(prisma.membership.update).toHaveBeenCalledWith({
+      where: { userId: "ben" },
+      data: { preferredChores: ["take out trash"] },
+    });
+  });
+});
+

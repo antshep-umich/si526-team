@@ -64,7 +64,15 @@ export const db = {
   now: () => new Date(Date.UTC(2026, 9, 8, 12, 0, db.clock++)),
   addMembership(userId: string, householdId: string, role: MembershipRole): Membership {
     if (db.memberships.some((m) => m.userId === userId)) throw new UniqueConflictError();
-    const row: Membership = { userId, householdId, role, joinedAt: db.now(), choreTypes: [], weeklyWorkload: null };
+    const row: Membership = {
+      userId,
+      householdId,
+      role,
+      joinedAt: db.now(),
+      choreTypes: [],
+      weeklyWorkload: null,
+      preferredChores: [],
+    };
     db.memberships.push(row);
     return row;
   },
@@ -88,6 +96,13 @@ export const setChorePreferences: typeof membershipsModel.setChorePreferences = 
   const row = db.memberships.find((m) => m.userId === userId);
   if (!row) throw new Error("No Membership found");
   Object.assign(row, data);
+  return row;
+};
+
+export const setPreferredChores: typeof membershipsModel.setPreferredChores = async (userId, preferredChores) => {
+  const row = db.memberships.find((m) => m.userId === userId);
+  if (!row) throw new Error("No Membership found");
+  row.preferredChores = preferredChores;
   return row;
 };
 
@@ -172,6 +187,12 @@ export const findChoresForHousehold: typeof choresModel.findChoresForHousehold =
     )
     .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime() || a.createdAt.getTime() - b.createdAt.getTime())
     .map(withPeople);
+
+export const findChoreNames: typeof choresModel.findChoreNames = async (householdId) =>
+  db.chores
+    .filter((c) => c.householdId === householdId)
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+    .map((c) => ({ name: c.name }));
 
 export const findChoresAssignedTo: typeof choresModel.findChoresAssignedTo = async (householdId, assigneeId) =>
   db.chores

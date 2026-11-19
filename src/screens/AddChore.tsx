@@ -7,7 +7,9 @@ import PickerField from "../components/PickerField.tsx";
 import TextArea from "../components/TextArea.tsx";
 import TextField from "../components/TextField.tsx";
 import { today as localToday } from "../dates.ts";
+import type { HouseholdMember } from "../../shared/api.ts";
 import { CHORE_NAME_MAX_LENGTH, CHORE_NOTES_MAX_LENGTH, type ChoreResponse } from "../../shared/chores.ts";
+import { choreKey } from "../../shared/preferences.ts";
 import Header from "./Header.tsx";
 import styles from "./AddChore.module.css";
 import { FormError } from "./Screen.tsx";
@@ -63,9 +65,14 @@ export default function AddChore({ household: initialHousehold, userId, onAdded,
   // "You" first: the person adding the chore, addressed directly.
   const me = household.members.find((member) => member.userId === userId);
   const others = household.members.filter((member) => member.userId !== userId);
+  // SCRUM-61: once the name matches one of the household's chores, people who prefer it say so.
+  // Not in Figma yet (placeholder): the note is part of the option's label.
+  const key = name.trim() ? choreKey(name) : null;
+  const labelFor = (member: HouseholdMember, label: string) =>
+    key && member.preferredChores.includes(key) ? `${label} · Prefers this chore` : label;
   const options = [
-    ...(me ? [{ value: me.userId, label: "You" }] : []),
-    ...others.map((member) => ({ value: member.userId, label: member.name })),
+    ...(me ? [{ value: me.userId, label: labelFor(me, "You") }] : []),
+    ...others.map((member) => ({ value: member.userId, label: labelFor(member, member.name) })),
   ];
   const onlyMember = others.length === 0;
 

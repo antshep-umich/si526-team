@@ -27,6 +27,8 @@ export interface HouseholdMember {
   role: MembershipRole;
   /** ISO 8601 timestamp. */
   joinedAt: string;
+  /** SCRUM-61: choreKey()s of the chores they'd most like to do, shown when assigning. */
+  preferredChores: string[];
 }
 
 /** Body of every successful /api/households response. */

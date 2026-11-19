@@ -30,3 +30,8 @@ export function setChorePreferences(
 ): Promise<Membership> {
   return getPrisma().membership.update({ where: { userId }, data });
 }
+
+/** Saves the member's preferred chores, as chore keys (SCRUM-61). */
+export function setPreferredChores(userId: string, preferredChores: string[]): Promise<Membership> {
+  return getPrisma().membership.update({ where: { userId }, data: { preferredChores } });
+}

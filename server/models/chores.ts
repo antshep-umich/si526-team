@@ -41,6 +41,11 @@ export function findChoresAssignedTo(householdId: string, assigneeId: string): P
   });
 }
 
+/** The name of every chore in the household, newest first (SCRUM-61 preferred chores). */
+export function findChoreNames(householdId: string): Promise<{ name: string }[]> {
+  return getPrisma().chore.findMany({ where: { householdId }, select: { name: true }, orderBy: { createdAt: "desc" } });
+}
+
 /** One chore, only if it belongs to this household. */
 export function findChoreInHousehold(householdId: string, choreId: string): Promise<ChoreWithPeople | null> {
   return getPrisma().chore.findFirst({ where: { id: choreId, householdId }, include: people });

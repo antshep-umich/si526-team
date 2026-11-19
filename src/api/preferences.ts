@@ -1,4 +1,4 @@
-import type { AssignmentMethod, ChorePreferences } from "../../shared/preferences.ts";
+import type { AssignmentMethod, ChorePreferences, PreferredChoresResponse } from "../../shared/preferences.ts";
 import type { Household, HouseholdResult } from "./households.ts";
 
 // SCRUM-72 profile preferences. Never throws: failures come back as { ok: false, code }.
@@ -39,4 +39,18 @@ export function saveAssignmentMethod(assignmentMethod: AssignmentMethod): Promis
   return send("/api/households/current/assignment-method", put({ assignmentMethod }), (body) => ({
     household: body as Household,
   }));
+}
+
+export type PreferredChoresResult = { ok: true; chores: PreferredChoresResponse["chores"] } | { ok: false; code: string };
+
+const asPreferredChores = (body: unknown) => ({ chores: (body as PreferredChoresResponse).chores });
+
+/** GET /api/households/current/preferred-chores (SCRUM-61). */
+export function getPreferredChores(): Promise<PreferredChoresResult> {
+  return send("/api/households/current/preferred-chores", undefined, asPreferredChores);
+}
+
+/** PUT /api/households/current/preferred-chores with the names of the chores to prefer. */
+export function savePreferredChores(names: string[]): Promise<PreferredChoresResult> {
+  return send("/api/households/current/preferred-chores", put({ names }), asPreferredChores);
 }

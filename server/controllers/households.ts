@@ -10,7 +10,13 @@ import {
   regenerateInviteCode,
   type HouseholdWithMembers,
 } from "../services/households.js";
-import { chorePreferencesOf, saveAssignmentMethod, saveChorePreferences } from "../services/preferences.js";
+import {
+  chorePreferencesOf,
+  listPreferredChores,
+  saveAssignmentMethod,
+  saveChorePreferences,
+  savePreferredChores,
+} from "../services/preferences.js";
 import { bodyText } from "./body.js";
 
 // Household endpoints (TECH_SPEC section 6): read the request, call the service,
@@ -36,6 +42,7 @@ export function toHouseholdResponse(household: HouseholdWithMembers, userId: str
       name: m.user.name,
       role: m.role,
       joinedAt: m.joinedAt.toISOString(),
+      preferredChores: m.preferredChores,
     })),
   };
 }
@@ -86,4 +93,14 @@ export const assignmentMethod: RequestHandler = async (req, res) => {
   const membership = currentMembership(res);
   const household = await saveAssignmentMethod(membership, bodyText(req, "assignmentMethod"));
   res.status(HttpStatus.OK).json(toHouseholdResponse(household, membership.userId));
+};
+
+/** GET /api/households/current/preferred-chores: 200 with the household's chores, the caller's marked (SCRUM-61). */
+export const preferredChores: RequestHandler = async (_req, res) => {
+  res.status(HttpStatus.OK).json(await listPreferredChores(currentMembership(res)));
+};
+
+/** PUT /api/households/current/preferred-chores { names }: 200 with the list as saved. */
+export const savePreferred: RequestHandler = async (req, res) => {
+  res.status(HttpStatus.OK).json(await savePreferredChores(currentMembership(res), req.body));
 };

@@ -66,3 +66,28 @@ export function parseChorePreferences(value: unknown): ChorePreferences | null {
 export function parseAssignmentMethod(value: unknown): AssignmentMethod | null {
   return isOneOf(ASSIGNMENT_METHODS, value) ? value : null;
 }
+
+// SCRUM-61 preferred chores: specific chores in the household (by name) that a member
+// would most like to do. Separate from the chore types above, which are a general taste.
+
+/**
+ * Chores are matched by name, ignoring case and extra spaces, so every "Take out trash"
+ * (one per due date) counts as one chore. This is the key that's stored.
+ */
+export function choreKey(name: string): string {
+  return name.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+/** Body of GET and PUT /api/households/current/preferred-chores. */
+export interface PreferredChoresResponse {
+  /** The household's chores, one per name, A to Z. Empty if it has none yet. */
+  chores: { name: string; preferred: boolean }[];
+}
+
+/** Checks a PUT body `{ names }`: returns the chore keys, without repeats, or null. */
+export function parsePreferredChoreNames(value: unknown): string[] | null {
+  if (typeof value !== "object" || value === null) return null;
+  const { names } = value as Record<string, unknown>;
+  if (!Array.isArray(names) || !names.every((n) => typeof n === "string" && n.trim() !== "")) return null;
+  return [...new Set(names.map((n: string) => choreKey(n)))];
+}

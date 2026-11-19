@@ -17,6 +17,7 @@ const member = (userId: string, name: string) => ({
   name,
   role: "member" as const,
   joinedAt: "2026-10-17T00:00:00.000Z",
+  preferredChores: [] as string[],
 });
 
 const household: Household = {
@@ -281,3 +282,38 @@ describe("AddChore acceptance criteria", { tags: ["SCRUM-6"] }, () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("Couldn't save this chore. Please try again.");
   });
 });
+
+describe("Housemates' preferred chores", { tags: ["SCRUM-61"] }, () => {
+  it("AC3: shows who prefers the chore being assigned in the Assigned to options", async () => {
+    const withPreferences: Household = {
+      ...household,
+      members: [
+        member("u-ana", "Ana Lopez"),
+        { ...member("u-ben", "Ben Ito"), preferredChores: ["take out trash"] },
+      ],
+    };
+    getCurrentHousehold.mockResolvedValue({ ok: true, household: withPreferences });
+    renderAddChore({ household: withPreferences });
+
+    await userEvent.type(screen.getByLabelText("Chore name"), "Take out  Trash ");
+    await userEvent.click(screen.getByRole("combobox", { name: "Assigned to" }));
+
+    expect(screen.getByRole("option", { name: "Ben Ito · Prefers this chore" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "You" })).toBeInTheDocument();
+  });
+
+  it("AC3: says nothing for a chore nobody prefers", async () => {
+    const withPreferences: Household = {
+      ...household,
+      members: [member("u-ana", "Ana Lopez"), { ...member("u-ben", "Ben Ito"), preferredChores: ["take out trash"] }],
+    };
+    getCurrentHousehold.mockResolvedValue({ ok: true, household: withPreferences });
+    renderAddChore({ household: withPreferences });
+
+    await userEvent.type(screen.getByLabelText("Chore name"), "Mop kitchen");
+    await userEvent.click(screen.getByRole("combobox", { name: "Assigned to" }));
+
+    expect(screen.getByRole("option", { name: "Ben Ito" })).toBeInTheDocument();
+  });
+});
+

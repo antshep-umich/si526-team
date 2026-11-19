@@ -56,7 +56,9 @@ const household: Household = {
   assignmentMethod: null,
   createdAt: "2026-10-17T00:00:00.000Z",
   role: "owner",
-  members: [{ userId: "u-ana", name: "Ana Lopez", role: "owner", joinedAt: "2026-10-17T00:00:00.000Z" }],
+  members: [
+    { userId: "u-ana", name: "Ana Lopez", role: "owner", joinedAt: "2026-10-17T00:00:00.000Z", preferredChores: [] },
+  ],
 };
 
 const signedIn = { data: { user: { id: "u-ana", name: "Ana Lopez", email: "ana@example.com" } }, isPending: false };
@@ -542,7 +544,10 @@ describe("App acceptance criteria", () => {
   describe("House page", { tags: ["SCRUM-74"] }, () => {
     const housemates: Household = {
       ...household,
-      members: [...household.members, { userId: "u-sam", name: "Sam Ito", role: "member", joinedAt: "2026-10-18T00:00:00.000Z" }],
+      members: [
+        ...household.members,
+        { userId: "u-sam", name: "Sam Ito", role: "member", joinedAt: "2026-10-18T00:00:00.000Z", preferredChores: [] },
+      ],
     };
 
     it('AC1: opening the "House" tab shows the household name, member count and housemates, with the user labeled You', async () => {

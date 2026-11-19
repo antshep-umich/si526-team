@@ -5,18 +5,35 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Household } from "../api/households.ts";
 import Profile, { NOT_SAVED } from "./Profile.tsx";
 
-const { useSession, updateUser, getChorePreferences, saveChorePreferences, saveAssignmentMethod, getCurrentHousehold, showToast } =
-  vi.hoisted(() => ({
-    useSession: vi.fn(),
-    updateUser: vi.fn(),
-    getChorePreferences: vi.fn(),
-    saveChorePreferences: vi.fn(),
-    saveAssignmentMethod: vi.fn(),
-    getCurrentHousehold: vi.fn(),
-    showToast: vi.fn(),
-  }));
+const {
+  useSession,
+  updateUser,
+  getChorePreferences,
+  saveChorePreferences,
+  saveAssignmentMethod,
+  getPreferredChores,
+  savePreferredChores,
+  getCurrentHousehold,
+  showToast,
+} = vi.hoisted(() => ({
+  useSession: vi.fn(),
+  updateUser: vi.fn(),
+  getChorePreferences: vi.fn(),
+  saveChorePreferences: vi.fn(),
+  saveAssignmentMethod: vi.fn(),
+  getPreferredChores: vi.fn(),
+  savePreferredChores: vi.fn(),
+  getCurrentHousehold: vi.fn(),
+  showToast: vi.fn(),
+}));
 vi.mock("../auth.ts", () => ({ authClient: { useSession, updateUser } }));
-vi.mock("../api/preferences.ts", () => ({ getChorePreferences, saveChorePreferences, saveAssignmentMethod }));
+vi.mock("../api/preferences.ts", () => ({
+  getChorePreferences,
+  saveChorePreferences,
+  saveAssignmentMethod,
+  getPreferredChores,
+  savePreferredChores,
+}));
 vi.mock("../api/households.ts", () => ({ getCurrentHousehold }));
 vi.mock("../components/Toast.tsx", () => ({ useToast: () => showToast }));
 
@@ -27,10 +44,22 @@ const household: Household = {
   createdAt: "2026-10-17T00:00:00.000Z",
   role: "owner",
   assignmentMethod: null,
-  members: [{ userId: "u-sarah", name: "Sarah Cameron", role: "owner", joinedAt: "2026-10-17T00:00:00.000Z" }],
+  members: [
+    {
+      userId: "u-sarah",
+      name: "Sarah Cameron",
+      role: "owner",
+      joinedAt: "2026-10-17T00:00:00.000Z",
+      preferredChores: [],
+    },
+  ],
 };
 
 const saved = { choreTypes: ["dishes"], weeklyWorkload: "medium" };
+const householdChores = [
+  { name: "Clean bathroom", preferred: false },
+  { name: "Take out trash", preferred: true },
+];
 
 function renderProfile(overrides: Partial<Household> = {}) {
   const onHouseholdChange = vi.fn();
@@ -46,6 +75,7 @@ beforeEach(() => {
   vi.resetAllMocks();
   useSession.mockReturnValue({ data: { user: { id: "u-sarah", name: "Sarah Cameron", email: "sarah.cameron@gmail.com" } } });
   getChorePreferences.mockResolvedValue({ ok: true, preferences: saved });
+  getPreferredChores.mockResolvedValue({ ok: true, chores: householdChores });
 });
 
 describe("Profile information", { tags: ["SCRUM-72"] }, () => {
@@ -228,3 +258,68 @@ describe("Set household manager preferences", { tags: ["SCRUM-72"] }, () => {
     expect(screen.getByText("Household Member")).toBeInTheDocument();
   });
 });
+
+describe("Preferred chores", { tags: ["SCRUM-61"] }, () => {
+  const preferred = () => within(section("Preferred chores"));
+
+  it("AC1: lists the household's chores, each one markable, with saved ones marked", async () => {
+    renderProfile();
+
+    expect(await preferred().findByRole("button", { name: /Take out trash/, pressed: true })).toBeInTheDocument();
+    expect(preferred().getByRole("button", { name: /Clean bathroom/ })).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("AC2: saves marked and unmarked chores and confirms", async () => {
+    savePreferredChores.mockResolvedValue({
+      ok: true,
+      chores: [
+        { name: "Clean bathroom", preferred: true },
+        { name: "Take out trash", preferred: false },
+      ],
+    });
+    getCurrentHousehold.mockResolvedValue({ ok: true, household });
+    const { onHouseholdChange } = renderProfile();
+
+    await userEvent.click(await preferred().findByRole("button", { name: /Clean bathroom/ }));
+    await userEvent.click(preferred().getByRole("button", { name: /Take out trash/ }));
+    await userEvent.click(preferred().getByRole("button", { name: "Save" }));
+
+    expect(savePreferredChores).toHaveBeenCalledWith(["Clean bathroom"]);
+    expect(showToast).toHaveBeenCalledWith("Preferred chores saved.");
+    expect(preferred().getByRole("button", { name: /Clean bathroom/ })).toHaveAttribute("aria-pressed", "true");
+    expect(onHouseholdChange).toHaveBeenCalledWith(household);
+  });
+
+  it("AC4: a household with no chores says \"No chores to choose from yet.\"", async () => {
+    getPreferredChores.mockResolvedValue({ ok: true, chores: [] });
+    renderProfile();
+
+    expect(await preferred().findByText("No chores to choose from yet.")).toBeInTheDocument();
+    expect(preferred().queryByRole("button", { name: "Save" })).not.toBeInTheDocument();
+  });
+
+  it("AC5: a failed save shows an error and a way to try saving again", async () => {
+    savePreferredChores.mockResolvedValueOnce({ ok: false, code: "NETWORK_ERROR" });
+    savePreferredChores.mockResolvedValueOnce({ ok: true, chores: householdChores });
+    getCurrentHousehold.mockResolvedValue({ ok: true, household });
+    renderProfile();
+
+    await userEvent.click(await preferred().findByRole("button", { name: "Save" }));
+    expect(preferred().getByRole("alert")).toHaveTextContent(NOT_SAVED);
+
+    await userEvent.click(preferred().getByRole("button", { name: "Try saving again" }));
+    expect(savePreferredChores).toHaveBeenCalledTimes(2);
+    expect(showToast).toHaveBeenCalledWith("Preferred chores saved.");
+    expect(preferred().queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("Cancel goes back to the saved marks", async () => {
+    renderProfile();
+
+    await userEvent.click(await preferred().findByRole("button", { name: /Take out trash/ }));
+    await userEvent.click(preferred().getByRole("button", { name: "Cancel" }));
+
+    expect(preferred().getByRole("button", { name: /Take out trash/ })).toHaveAttribute("aria-pressed", "true");
+  });
+});
+

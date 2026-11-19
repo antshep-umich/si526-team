@@ -171,3 +171,33 @@
 .selected .methodDescription {
   color: var(--color-action-on-primary);
 }
+
+/* SCRUM-61 preferred chores. Not in Figma yet (placeholder): one full-width row per
+   household chore, using the same choice style as the chore types above. */
+.preferredList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.preferredOption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 52px;
+  padding: 14px 22px;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.preferredMark {
+  flex-shrink: 0;
+  font: var(--type-small);
+}
+
+.failed {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}

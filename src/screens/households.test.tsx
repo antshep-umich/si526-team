@@ -22,8 +22,8 @@ const household: Household = {
   createdAt: "2026-10-17T00:00:00.000Z",
   role: "owner",
   members: [
-    { userId: "u-ana", name: "Ana Lopez", role: "owner", joinedAt: "2026-10-17T00:00:00.000Z" },
-    { userId: "u-ben", name: "Ben Ito", role: "member", joinedAt: "2026-10-17T00:01:00.000Z" },
+    { userId: "u-ana", name: "Ana Lopez", role: "owner", joinedAt: "2026-10-17T00:00:00.000Z", preferredChores: [] },
+    { userId: "u-ben", name: "Ben Ito", role: "member", joinedAt: "2026-10-17T00:01:00.000Z", preferredChores: [] },
   ],
 };
 

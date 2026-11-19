@@ -16,6 +16,7 @@ const member = (userId: string, name: string) => ({
   name,
   role: "member" as const,
   joinedAt: "2026-10-17T00:00:00.000Z",
+  preferredChores: [] as string[],
 });
 
 const household: Household = {

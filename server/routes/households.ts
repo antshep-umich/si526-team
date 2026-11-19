@@ -19,6 +19,11 @@ householdsRouter
   .put(requireHousehold, households.savePreferences)
   .all(methodNotAllowed);
 householdsRouter
+  .route("/current/preferred-chores")
+  .get(requireHousehold, households.preferredChores)
+  .put(requireHousehold, households.savePreferred)
+  .all(methodNotAllowed);
+householdsRouter
   .route("/current/assignment-method")
   .put(requireHousehold, households.assignmentMethod)
   .all(methodNotAllowed);

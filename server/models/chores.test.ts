@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   createChore,
   findChoreInHousehold,
+  findChoreNames,
   findChoresAssignedTo,
   findChoresForHousehold,
   setChoreCompletion,
@@ -88,3 +89,17 @@ describe("chores model", () => {
     });
   });
 });
+
+describe("findChoreNames (SCRUM-61)", () => {
+  it("reads only the names of the household's chores, newest first", async () => {
+    prisma.chore.findMany.mockResolvedValue([]);
+    await findChoreNames("h1");
+
+    expect(prisma.chore.findMany).toHaveBeenCalledWith({
+      where: { householdId: "h1" },
+      select: { name: true },
+      orderBy: { createdAt: "desc" },
+    });
+  });
+});
+

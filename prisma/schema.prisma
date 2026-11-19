@@ -48,6 +48,8 @@ model Membership {
   // SCRUM-72 "Set chore preferences": ids from shared/preferences.ts CHORE_TYPES.
   choreTypes     String[]        @default([])
   weeklyWorkload WeeklyWorkload?
+  // SCRUM-61 preferred chores: choreKey()s of the household's chore names (shared/preferences.ts).
+  preferredChores String[] @default([])
 
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
