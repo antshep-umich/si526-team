@@ -16,7 +16,8 @@
     {
       "id": "AC3",
       "text": "User Action: User selects \"Back.\" Expected System Behavior: Returns to the previous screen.",
-      "verify": "test"
+      "verify": "test",
+      "note": "Team decision (Anthony, 2026-11-19): Chore details has the shared header and tab bar like every household screen, so Back is the Chores tab, which returns to the chore list with its filter kept. README Conflicts row 33."
     },
     {
       "id": "AC4",

@@ -5,7 +5,6 @@ import Button from "../components/Button.tsx";
 import ChoreCard from "../components/ChoreCard.tsx";
 import PickerField from "../components/PickerField.tsx";
 import TabFilter from "../components/TabFilter.tsx";
-import TextLink from "../components/TextLink.tsx";
 import { choreStatus, type Chore } from "../chores.ts";
 import { formatDate, localDateOf, today as localToday } from "../dates.ts";
 import {
@@ -20,6 +19,7 @@ import {
   type HistorySort,
 } from "../history.ts";
 import styles from "./ChoreHistory.module.css";
+import Header from "./Header.tsx";
 
 // The person's own chore history (Jira SCRUM-44 View user chore history), opened from
 // the Home menu. Not in Figma yet: the whole screen is a placeholder built from the
@@ -28,12 +28,11 @@ import styles from "./ChoreHistory.module.css";
 type ChoreHistoryProps = {
   household: Household;
   userId: string;
-  onBack: () => void;
 };
 
 type ListState = { status: "loading" } | { status: "failed" } | { status: "ready"; chores: Chore[] };
 
-export default function ChoreHistory({ household, userId, onBack }: ChoreHistoryProps) {
+export default function ChoreHistory({ household, userId }: ChoreHistoryProps) {
   const [list, setList] = useState<ListState>({ status: "loading" });
   const [attempt, setAttempt] = useState(0);
   const [filter, setFilter] = useState<HistoryFilter>("all");
@@ -121,13 +120,7 @@ export default function ChoreHistory({ household, userId, onBack }: ChoreHistory
 
   return (
     <main className={styles.page}>
-      <div className={styles.header}>
-        <TextLink className={styles.back} onClick={onBack}>
-          Back
-        </TextLink>
-        <p className={styles.overline}>{household.name}</p>
-        <h1 className={styles.title}>My chore history</h1>
-      </div>
+      <Header overline={household.name} title="My chore history" />
       {body()}
     </main>
   );

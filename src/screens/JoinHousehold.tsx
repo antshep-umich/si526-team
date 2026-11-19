@@ -17,12 +17,14 @@ const FIELD_ERRORS: Record<string, string> = {
 const SERVER_ERROR = "Something went wrong. Please try again.";
 
 type JoinHouseholdProps = {
+  /** The code from an invite link (/join/CODE), already filled in. */
+  initialCode?: string;
   onJoined: (household: Household) => void;
   onBack: () => void;
 };
 
-export default function JoinHousehold({ onJoined, onBack }: JoinHouseholdProps) {
-  const [code, setCode] = useState("");
+export default function JoinHousehold({ initialCode = "", onJoined, onBack }: JoinHouseholdProps) {
+  const [code, setCode] = useState(initialCode);
   const [error, setError] = useState<{ onField: boolean; message: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
 

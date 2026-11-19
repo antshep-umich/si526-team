@@ -5,7 +5,7 @@ save you from exploring the codebase. Deeper detail lives in `TECH_SPEC.md` (§ 
 `TECH_DEBT.md` and `README.md`. **If you change anything this file describes, update it in the
 same commit.**
 
-_Last updated: 2026-11-18 (SCRUM-53 Chore details), on `Sprint4_Dev_chore-details`._
+_Last updated: 2026-11-19 (merged main's SCRUM-53 Chore details into the tab layout; earlier: test household seed, tab bar and Header on every household screen, SCRUM-74 House tab, invite links, toasts, polling), on `Ant-Dev-Sprint4`._
 
 ## The project
 
@@ -40,7 +40,8 @@ npm test               # server + web + scripts unit tests (~10 s, no database)
 npm run test:ui        # the same tests in Vitest's browser UI
 npm run test:report    # the same tests, then a local copy of the test dashboard in test-report/site
 npm run test:e2e       # real browser vs local app + dev DB (run `npx playwright install chromium` once)
-npm run build          # what Vercel builds (plus `prisma migrate deploy` in build:vercel)
+npm run build          # what Vercel builds (plus `prisma migrate deploy` and the test household seed in build:vercel)
+npm run seed:test-house  # reset the test household (Test_User@test.com) in the dev DB; previews get it on every build
 npx prisma migrate deploy               # apply teammates' migrations to the dev DB (never resets)
 npx prisma migrate dev --name <change>   # after editing prisma/schema.prisma; commit the migration folder
 ```
@@ -58,6 +59,7 @@ server/                 Express API (layers below)
   db.ts                 the one Prisma client
   middleware/ routes/ controllers/ services/ models/   the layers
   test/fakeModels.ts    in-memory models for server tests
+  seed/                 Test_House_Data: 3 test accounts and dated chores with history (previews + dev DB, never production)
   architecture.test.ts  enforces the layer rules
 shared/                 imported by both server and frontend
   api.ts                API response types, apiError(), validation (parseHouseholdName, normalizeInviteCode)
@@ -66,11 +68,13 @@ shared/                 imported by both server and frontend
   httpStatus.ts         HttpStatus.CREATED etc. Use these, never bare numbers
 src/                    React app
   App.tsx               which screen to show (session + household state machine)
-  screens/              one file per Figma screen, plus Screen.tsx (shared layout); Home.tsx is the chore list, ChoreHistory.tsx the user's history, ChoreDetails.tsx one chore (SCRUM-53)
+  screens/              one file per Figma screen, plus Screen.tsx (shared layout for the sign-in and household setup screens), TabLayout.tsx (the tab bar under every screen in a household) and Header.tsx (their header: overline, title and the menu); Home.tsx is the chore list, ChoreDetails.tsx one chore (SCRUM-53), ChoreHistory.tsx the user's history; House.tsx the House tab (SCRUM-74) and HousemateProfile.tsx its profile placeholder
   chores.ts, dates.ts   chore status/sorting/weekly progress, and "YYYY-MM-DD" dates in the phone's time zone
   history.ts            My chore history's filters, sorts and card wording (SCRUM-44)
+  inviteLink.ts         /join/<code> invite links: build one, read it at startup, keep the code until it's used
+  usePolling.ts         refresh a screen every 10 s while visible (instead of WebSockets)
   monthlyHistory.ts     Household chore history by month: which chores, the summary, card wording (SCRUM-47)
-  components/           design-system components (from Figma), each with a .module.css
+  components/           design-system components (from Figma), each with a .module.css; Toast.tsx (ToastProvider + useToast) is a placeholder, not in Figma
   styles/               tokens.css (colors, type), fonts.css, base.css
   api/                  fetch helpers that never throw: return { ok: true, … } | { ok: false, code }
   auth.ts               Better Auth React client (authClient)
@@ -129,11 +133,14 @@ A request goes through six layers in order. **Each layer may only use the layers
 - **Chore status is derived, never stored** (`src/chores.ts`): to do (no chip), overdue (not done, past due), done, late (done after the due date). "Today" is the **phone's** date; the server can't know it, so it only rejects due dates before yesterday in UTC and the app enforces "today or later". Weeks run Monday–Sunday: the progress card counts chores due this week, the Done section lists chores done this week, the to-do list shows every open chore.
 - Only a chore's **assignee** can mark it done or undo it (403 `NOT_ASSIGNEE`); others see no checkbox. Chores are looked up inside the membership's household only (404 `CHORE_NOT_FOUND` otherwise).
 - Invite codes: 8 characters from `ABCDEFGHJKMNPQRSTUVWXYZ23456789` (`services/inviteCode.ts`). Users can type them in any case with spaces or hyphens.
-- Neon branches: `main` = production, `dev` = local development (`.env`), and one throwaway `preview/<git-branch>` per Vercel preview. Vercel builds run `prisma migrate deploy`, so a migration in a pull request runs on that pull request's preview database only.
+- Neon branches: `main` = production, `dev` = local development (`.env`), and one throwaway `preview/<git-branch>` per Vercel preview. Vercel builds run `prisma migrate deploy`, so a migration in a pull request runs on that pull request's preview database only. Preview builds then reset a test household, Test_House_Data (`server/seed/`; sign in as `Test_User@test.com`, password in `testHouse.ts`), with chores dated from that day. Production builds skip it.
 
 ## Frontend (TECH_SPEC §3, README "Design system")
 
-- **No router.** `src/App.tsx` picks the screen: signed out → Log in / Sign up / Forgot password; signed in without a household → Your household / Create / Join; just created → Household Created!; otherwise → Home (the chore list), which opens Add chore, and My chore history from its menu.
+- **No router.** `src/App.tsx` picks the screen: signed out → Log in / Sign up / Forgot password; signed in without a household → Your household / Create / Join; just created → Household Created!; otherwise → Home (the chore list), which opens Add chore and Chore details (tap a chore), and My / Household chore history from its menu. Every screen in a household sits in `TabLayout`: the tab bar fixed to the bottom, the same `Header` (overline, title, and the menu as a dropdown list; it gets the menu's actions from `TabLayout`), and no Back links. The Chores and House tabs work and always open their first screen; Schedule does nothing yet (README Conflicts rows 20, 33 and 34).
+- **Invite links** `/join/<code>`: the only address the app reads (`src/inviteLink.ts`, called from `main.tsx`). The code is kept in `sessionStorage` through Log in or Sign up, then Join opens with it filled in; it's dropped once used, on Back, on log out, or if the user already has a household.
+- **Polling, not WebSockets:** the chore list and House tab refresh every 10 s while visible (`usePolling`). Refreshes replace data in place and never show Loading or an error; the chore list drops a refresh that started before a tick or untick.
+- **Toasts:** `useToast()` from `ToastProvider` (wrapped around the signed-in app). Only for messages a story asks for: "You joined [Household name]." and "Invite link copied." (README Conflicts row 9).
 - **Copy comes from the stories.** Error and empty-state messages are the Jira stories' exact words (auth ones in `src/screens/authErrors.ts` `AUTH_MESSAGES`). The current user is always **"You"** (not "Me"). Forms show every error at once.
 - **Screens** use `Screen` (`src/screens/Screen.tsx`): 402px max width, 24px sides, 60px top, 40px between items (`tight` = 24px). `Actions` groups a full-width button with the link under it. Errors go on the field they belong to (`TextField error=…`); others go in `FormError`.
 - **API helpers** (`src/api/`) never throw: `{ ok: true, household } | { ok: false, code }`. `NETWORK_ERROR` when the server can't be reached. Screens map codes to their own wording.
@@ -177,15 +184,14 @@ A request goes through six layers in order. **Each layer may only use the layers
 - The team develops on Windows: PowerShell and Git Bash. CRLF warnings from git are harmless.
 - Some contributors have two GitHub accounts. A 403 on push usually means the wrong one is active (`gh auth switch`, then `gh auth setup-git`).
 
-## Current state (2026-11-05)
+## Current state (2026-11-15)
 
-**Done:** Feasibility spikes 1–3 (Vercel + Express + Prisma deploy, Better Auth, teammate deploys) · design tokens and all Figma components · Sprint 2 screens (SCRUM-2 Sign Up, SCRUM-3 Log in/Log out, SCRUM-4 Create a Household, SCRUM-32 Join a Household) + stand-in Forgot password · household API with member names · six-layer server · status codes · unit, component and e2e tests in CI · test dashboard · **chores**: the `Chore` table, `/api/chores`, the chore list ("Home - Chores (All)") and Add chore ("Home - Add Chore (refined)") screens (SCRUM-6, 7, 8) · sign-up, log-in and join messages and rules aligned with SCRUM-2, 3 and 32 · acceptance files for the six Done stories (SCRUM-2, 3, 6, 7, 8, 32), every AC tagged to tests or marked manual; SCRUM-32 AC3 (the "You joined…" message) has no test yet because the message isn't built · **Sprint 3, SCRUM-44 My chore history** (on `Sprint3_Dev_chore-history`): `GET /api/chores/history`, the history screen from the Home menu with filter, sort and an in-place expanded chore; no Figma design yet (README Conflicts rows 19–23) · **SCRUM-47 monthly household chore history** (on `Sprint3_Dev_monthly-history`, built on the SCRUM-46 weekly view): a Weekly / Monthly switch in `HouseholdChoreHistory.tsx`, and `MonthlyChoreHistory.tsx` with month navigation, a completed / incomplete / overdue summary and the chores due that month. It reuses `GET /api/chores?since=` (no new endpoint); no Figma design yet (README Conflicts rows 24–27). · **Sprint 4, SCRUM-53 Chore details** (on `Sprint4_Dev_chore-details`): `ChoreDetails.tsx` from Figma "Home - Chore Details", opened by tapping a chore's name on Home; loads `GET /api/chores/:id` fresh (no new endpoint), with a placeholder Status field and no Edit button yet (README Conflicts rows 28–32).
+**Done:** Feasibility spikes 1–3 (Vercel + Express + Prisma deploy, Better Auth, teammate deploys) · design tokens and all Figma components · Sprint 2 screens (SCRUM-2 Sign Up, SCRUM-3 Log in/Log out, SCRUM-4 Create a Household, SCRUM-32 Join a Household) + stand-in Forgot password · household API with member names · six-layer server · status codes · unit, component and e2e tests in CI · test dashboard · **chores**: the `Chore` table, `/api/chores`, the chore list ("Home - Chores (All)") and Add chore ("Home - Add Chore (refined)") screens (SCRUM-6, 7, 8) · sign-up, log-in and join messages and rules aligned with SCRUM-2, 3 and 32 · acceptance files for the six Done stories (SCRUM-2, 3, 6, 7, 8, 32), every AC tagged to tests or marked manual · **Sprint 3, SCRUM-44 My chore history** (on `Sprint3_Dev_chore-history`): `GET /api/chores/history`, the history screen from the Home menu with filter, sort and an in-place expanded chore; no Figma design yet (README Conflicts rows 19–23) · **SCRUM-47 monthly household chore history** (on `Sprint3_Dev_monthly-history`, built on the SCRUM-46 weekly view): a Weekly / Monthly switch in `HouseholdChoreHistory.tsx`, and `MonthlyChoreHistory.tsx` with month navigation, a completed / incomplete / overdue summary and the chores due that month. It reuses `GET /api/chores?since=` (no new endpoint); no Figma design yet (README Conflicts rows 24–27). · **Sprint 4 (on `Ant-Dev-Sprint4`):** the tab bar and `Header` on every household screen and the test household (from `chore-history-design`, without its history redesign) · **SCRUM-74 House tab** (placeholder design, `docs/superpowers/specs/2026-11-15-house-tab-design.md`): members, a "No Household Manager assigned" card, a profile placeholder, the invite code with a share button (`/join/<code>` links), a toast component, and polling for the chore list and House tab. AC3 waits on SCRUM-62 (its test is skipped); AC8 can't happen (README Conflicts rows 35–36). · **SCRUM-53 Chore details** (Ankun, on `Sprint4_Dev_chore-details`, merged): `ChoreDetails.tsx` from Figma "Home - Chore Details", opened by tapping a chore's name on Home; loads `GET /api/chores/:id` fresh (no new endpoint), with a placeholder Status field and no Edit button yet (README Conflicts rows 28–32). In the tab layout it has the shared Header instead of a Back chevron (row 33).
 
 **Next (MVP, TECH_SPEC §4):**
-1. The team reviews README "Conflicts to resolve" (stories vs. Figma vs. build, Figma design issues, placeholder names). Several rows wait on UX designs: a card without a checkbox, the expanded chore row, toasts ("Chore added.", "Marked done. Undo"), empty/loading/error states.
+1. The team reviews README "Conflicts to resolve" (stories vs. Figma vs. build, Figma design issues, placeholder names). Several rows wait on UX designs: a card without a checkbox, the expanded chore row, the toast (placeholder), empty/loading/error states.
 2. Edit and delete chores (no screens designed yet; who may do it is TECH_SPEC §11).
 3. Gaps found while building Sprint 2:
-   - The invite code is only shown on Household Created!, and in Add chore's hint while you're the only member. There is no other way to see it again (suggest an item in the Home menu).
    - "Your household" has no Log out.
    - Invite codes are 8 characters, but Figma shows 6.
 4. Undesigned states (pressed, loading, disabled, empty states, toasts) are listed for UX in the Figma frame "UX Please Read". Code standing in for them has a `Not in Figma yet` or `Not designed yet` comment; search for those before redesigning.

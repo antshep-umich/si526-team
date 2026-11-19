@@ -69,6 +69,7 @@ Vercel project (one deployment)
 - **Express runs as a serverless function**, which means:
   - Nothing can be kept in server memory between requests. Sessions and caches live in Postgres.
   - No background timers (`setInterval` or node-cron). Scheduled work uses Vercel Cron or GitHub Actions (later cycles).
+  - No server push (WebSockets): the app polls instead. The chore list and the House tab ask for fresh data every 10 seconds while they're on screen and when the user returns to the app (`src/usePolling.ts`), and apply it in place, without a reload.
   - The app must use Neon's **pooled** connection string so that function cold starts don't use up all the database connections.
 - **Mobile later:** a mobile client calls the same `/api` routes. Better Auth supports bearer-token sessions for clients that can't use cookies.
 
@@ -140,7 +141,7 @@ Vercel project (one deployment)
 }
 ```
 
-The first rewrite sends all API paths to the Express function. The second lets React Router handle all other paths. `framework` and `outputDirectory` are set here because the Vercel project's dashboard preset is "Other". `build:vercel` runs `prisma generate && prisma migrate deploy && npm run build`. Spike 1 confirmed this setup (PR #4).
+The first rewrite sends all API paths to the Express function. The second serves the app for every other path. There's no router: the app reads only one path, `/join/<invite code>` (the House tab's invite link, `src/inviteLink.ts`), keeps the code for the tab's session and puts `/` back in the address bar. `framework` and `outputDirectory` are set here because the Vercel project's dashboard preset is "Other". `build:vercel` runs `prisma generate && prisma migrate deploy && tsx server/seed/run.ts && npm run build`. Spike 1 confirmed this setup (PR #4). The seed step resets a test household (Test_House_Data, signed in as `Test_User@test.com`) on **preview** builds only, since preview databases are copied from production, which has no test data. Production builds skip it, and a failed seed doesn't fail the preview. `npm run seed:test-house` does the same for the dev database.
 
 ### Local development
 

@@ -1,0 +1,188 @@
+/*
+ * Not in Figma yet (placeholder): the House tab (SCRUM-74), from the design system only.
+ * Spacing follows the other household screens (56px top, 24px sides); cards use the chore
+ * card's 14px corners and border; the invite card is Household Created!'s code card.
+ */
+.page {
+  width: 100%;
+  max-width: 402px;
+  margin: 0 auto;
+  padding: 56px 24px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.count {
+  font: var(--type-meta);
+  color: var(--color-text-muted);
+}
+
+.card {
+  border: 1px solid var(--color-border-default);
+  border-radius: 14px;
+  background: var(--color-surface-card);
+}
+
+/* Household manager: one line under a small label, with an empty avatar. */
+.manager {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+}
+
+.managerAvatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 22px;
+  background: var(--color-progress-track);
+  color: var(--color-text-muted);
+  font: var(--type-button);
+}
+
+.managerLabel {
+  font: var(--type-meta);
+  color: var(--color-text-muted);
+}
+
+.managerName {
+  font: var(--type-body);
+  color: var(--color-text-default);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sectionTitle {
+  font: var(--type-section-title);
+  color: var(--color-text-default);
+}
+
+/* Housemates: one card, rows divided by rules. */
+.rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow: hidden;
+}
+
+.row + .row {
+  border-top: 1px solid var(--color-border-default);
+}
+
+.rowButton {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 12px 12px 14px;
+  border: none;
+  background: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.rowButton:hover {
+  background: var(--color-background-top);
+}
+
+.rowButton:focus-visible {
+  outline: 2px solid var(--color-action-focus-ring);
+  outline-offset: -2px;
+}
+
+.name {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: break-word;
+  font: var(--type-chore-name);
+  color: var(--color-text-default);
+}
+
+.you {
+  font: var(--type-meta);
+  color: var(--color-text-muted);
+}
+
+/* The one chevron icon, turned to point forward (as in the chore histories). */
+.chevron {
+  transform: rotate(-90deg);
+  opacity: 0.7;
+}
+
+/* Invite card: Household Created!'s code card, with the share icon in its corner. */
+.invite {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 20px;
+}
+
+.overline {
+  font: var(--type-overline);
+  letter-spacing: var(--tracking-overline);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+/* As on Household Created!: no text style in Figma for this. */
+.code {
+  font: 700 34px/normal var(--font-sans);
+  letter-spacing: 8px;
+  color: var(--color-text-default);
+  white-space: nowrap;
+  user-select: all;
+}
+
+.hint {
+  font: var(--type-meta);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+/* 20×20 icon in a 44×44 button. */
+.share {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: flex;
+  padding: 12px;
+  border: none;
+  border-radius: 12px;
+  background: none;
+  cursor: pointer;
+}
+
+.share:hover {
+  background: var(--color-progress-track);
+}
+
+.share:focus-visible {
+  outline: 2px solid var(--color-action-focus-ring);
+  outline-offset: -2px;
+}
+
+/* Not in Figma yet (placeholders): loading and error messages. */
+.message {
+  font: var(--type-body);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.failed {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}

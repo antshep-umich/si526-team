@@ -12,6 +12,7 @@ import clockDark from "../assets/icons/dark/clock.svg";
 import eyeOffDark from "../assets/icons/dark/eye-off.svg";
 import eyeOpenDark from "../assets/icons/dark/eye-open.svg";
 import menuDark from "../assets/icons/dark/menu.svg";
+import shareDark from "../assets/icons/dark/share.svg";
 import tabChoresActiveDark from "../assets/icons/dark/tab-chores-active.svg";
 import tabChoresDark from "../assets/icons/dark/tab-chores.svg";
 import tabHouseActiveDark from "../assets/icons/dark/tab-house-active.svg";
@@ -30,6 +31,7 @@ import clockLight from "../assets/icons/light/clock.svg";
 import eyeOffLight from "../assets/icons/light/eye-off.svg";
 import eyeOpenLight from "../assets/icons/light/eye-open.svg";
 import menuLight from "../assets/icons/light/menu.svg";
+import shareLight from "../assets/icons/light/share.svg";
 import tabChoresActiveLight from "../assets/icons/light/tab-chores-active.svg";
 import tabChoresLight from "../assets/icons/light/tab-chores.svg";
 import tabHouseActiveLight from "../assets/icons/light/tab-house-active.svg";
@@ -72,6 +74,11 @@ export const icons = {
   eyeOff: { light: eyeOffLight, dark: eyeOffDark },
   /** 24×24, text/muted. The password is shown; pressing hides it. */
   eyeOpen: { light: eyeOpenLight, dark: eyeOpenDark },
+
+  // Not in Figma yet (placeholder for the House tab's invite card): drawn by hand in the
+  // same style, a box open at the top with an arrow rising out of it.
+  /** 20×20, text/muted */
+  share: { light: shareLight, dark: shareDark },
 
   // Tab bar icons, 24×24: active tabs in action/primary, inactive tabs in text/muted.
   // Figma had no dark export for dark/tab-chores, dark/tab-schedule-active and

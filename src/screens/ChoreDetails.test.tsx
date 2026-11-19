@@ -40,9 +40,7 @@ function chore(fields: Partial<Chore> = {}): Chore {
 }
 
 function renderDetails() {
-  const onBack = vi.fn();
-  render(<ChoreDetails household={household} userId="u-ana" choreId="c1" onBack={onBack} />);
-  return { onBack };
+  render(<ChoreDetails household={household} userId="u-ana" choreId="c1" />);
 }
 
 /** The value shown under a field label. */
@@ -97,22 +95,22 @@ describe("Chore details", { tags: ["SCRUM-53"] }, () => {
     expect(field("Notes")).toHaveTextContent("No description added.");
   });
 
-  it("AC3: Back returns to the previous screen", async () => {
+  // AC3 (Back) is the Chores tab, tested in App.test.tsx (README Conflicts row 33).
+  it("has the shared header with the menu and no Back link", async () => {
     getChore.mockResolvedValue({ ok: true, chore: chore() });
-    const { onBack } = renderDetails();
+    renderDetails();
 
-    await userEvent.click(screen.getByRole("button", { name: "Back" }));
-    expect(onBack).toHaveBeenCalledOnce();
+    expect(await screen.findByRole("heading", { level: 1, name: "Take out trash" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Back/ })).not.toBeInTheDocument();
   });
 
   it("AC4: a deleted chore shows \"Chore no longer available.\"", async () => {
     getChore.mockResolvedValue({ ok: false, code: "CHORE_NOT_FOUND" });
-    const { onBack } = renderDetails();
+    renderDetails();
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Chore no longer available.");
     expect(screen.queryByText("Assigned to")).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: "Back" }));
-    expect(onBack).toHaveBeenCalledOnce();
+    expect(screen.getByRole("heading", { level: 1, name: "Chore details" })).toBeInTheDocument();
   });
 
   it("AC5: when the details fail to load it shows an error and retries", async () => {
@@ -132,7 +130,7 @@ describe("Chore details", { tags: ["SCRUM-53"] }, () => {
     renderDetails();
 
     expect(screen.getByRole("status")).toHaveTextContent("Loading chore…");
-    expect(screen.getByRole("button", { name: "Back" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "Chore details" })).toBeInTheDocument();
   });
 
   it("says \"Someone who left\" when the assignee has left the household", async () => {

@@ -1,5 +1,5 @@
 /* Figma "Home - Chore Details" (634:192): 56px from the top, 24px from the sides,
-   28px between the header and the fields. */
+   28px between the header and the fields. The header is Header.tsx. */
 .page {
   display: flex;
   flex-direction: column;
@@ -8,55 +8,6 @@
   max-width: 402px;
   margin: 0 auto;
   padding: 56px 24px 24px;
-}
-
-/* Chevron, then the overline and title, 20px apart. */
-.header {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-/* 32×32 icon in a 44×44 tap target; the negative margin keeps the icon where Figma has it. */
-.back {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 44px;
-  height: 44px;
-  margin: -6px;
-  padding: 0;
-  border: none;
-  border-radius: 22px;
-  background: none;
-  cursor: pointer;
-}
-
-.back:focus-visible {
-  outline: 2px solid var(--color-action-focus-ring);
-  outline-offset: -2px;
-}
-
-.titles {
-  display: flex;
-  flex: 1 0 0;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 1px;
-  overflow-wrap: break-word;
-}
-
-.overline {
-  font: var(--type-overline);
-  letter-spacing: var(--tracking-overline);
-  text-transform: uppercase;
-  color: var(--color-text-muted);
-}
-
-.title {
-  font: var(--type-screen-title);
-  color: var(--color-text-default);
 }
 
 /* Read-only fields drawn like the Text field and Text area components. */

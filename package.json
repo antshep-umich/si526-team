@@ -9,7 +9,8 @@
   "scripts": {
     "dev": "concurrently -k -n web,api -c cyan,magenta \"vite\" \"tsx watch --env-file=.env server/dev.ts\"",
     "build": "tsc -b && vite build",
-    "build:vercel": "prisma generate && prisma migrate deploy && npm run build",
+    "build:vercel": "prisma generate && prisma migrate deploy && tsx server/seed/run.ts && npm run build",
+    "seed:test-house": "tsx --env-file=.env server/seed/run.ts --local",
     "preview": "vite preview",
     "postinstall": "prisma generate",
     "test": "vitest run --project server --project web --project scripts",

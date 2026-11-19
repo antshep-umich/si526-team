@@ -2,14 +2,16 @@ import { useEffect, useState } from "react";
 import { getChore } from "../api/chores.ts";
 import type { Household } from "../api/households.ts";
 import Button from "../components/Button.tsx";
-import ThemedIcon from "../components/ThemedIcon.tsx";
 import type { Chore } from "../chores.ts";
 import { localDateOf, today as localToday } from "../dates.ts";
 import { statusLabel } from "../history.ts";
 import styles from "./ChoreDetails.module.css";
+import Header from "./Header.tsx";
 
 // One chore's details and description (Jira SCRUM-53 View chore details & description;
-// Figma "Home - Chore Details", 634:192). Opened by selecting a chore on Home.
+// Figma "Home - Chore Details", 634:192). Opened by selecting a chore on Home. Like every
+// screen in a household it has the shared Header and the tab bar instead of Figma's Back
+// chevron; Chores goes back to the list (README Conflicts row 33).
 // The chore is loaded fresh, so one deleted since the list loaded shows
 // "Chore no longer available." instead of stale details.
 
@@ -17,8 +19,6 @@ type ChoreDetailsProps = {
   household: Household;
   userId: string;
   choreId: string;
-  /** Back to the screen the chore was opened from. */
-  onBack: () => void;
 };
 
 type State = { status: "loading" } | { status: "gone" } | { status: "failed" } | { status: "ready"; chore: Chore };
@@ -33,7 +33,7 @@ function longDate(iso: string): string {
   });
 }
 
-export default function ChoreDetails({ household, userId, choreId, onBack }: ChoreDetailsProps) {
+export default function ChoreDetails({ household, userId, choreId }: ChoreDetailsProps) {
   const [state, setState] = useState<State>({ status: "loading" });
   const [attempt, setAttempt] = useState(0);
 
@@ -119,15 +119,7 @@ export default function ChoreDetails({ household, userId, choreId, onBack }: Cho
 
   return (
     <main className={styles.page}>
-      <div className={styles.header}>
-        <button type="button" className={styles.back} aria-label="Back" onClick={onBack}>
-          <ThemedIcon name="chevronLeft" />
-        </button>
-        <div className={styles.titles}>
-          <p className={styles.overline}>{household.name}</p>
-          <h1 className={styles.title}>{state.status === "ready" ? state.chore.name : "Chore details"}</h1>
-        </div>
-      </div>
+      <Header overline={household.name} title={state.status === "ready" ? state.chore.name : "Chore details"} />
       {body()}
     </main>
   );
