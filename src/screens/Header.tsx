@@ -12,6 +12,8 @@ export type MenuActions = {
   onChoreHistory: () => void;
   /** Opens Household chore history (SCRUM-46, 47). */
   onHouseholdChoreHistory: () => void;
+  /** Opens your profile and preferences (SCRUM-72). */
+  onProfile: () => void;
   onLogOut: () => void;
 };
 
@@ -125,6 +127,9 @@ function Menu() {
         </button>
         <button type="button" role="menuitem" className={styles.item} onClick={choose(actions.onHouseholdChoreHistory)}>
           Household chore history
+        </button>
+        <button type="button" role="menuitem" className={styles.item} onClick={choose(actions.onProfile)}>
+          My profile
         </button>
         <div role="separator" className={styles.separator} />
         <button

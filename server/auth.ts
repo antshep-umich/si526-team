@@ -40,6 +40,19 @@ export function signUpRuleError(body: unknown): { code: string; message: string 
   return null;
 }
 
+/**
+ * SCRUM-72: editing your name on the profile page keeps the sign-up name rule
+ * (1 to 30 characters). Better Auth's /update-user doesn't check it. Returns the error
+ * to send, or null. A body without a name (another field changing) passes.
+ */
+export function updateUserRuleError(body: unknown): { code: string; message: string } | null {
+  const { name } = (body ?? {}) as { name?: unknown };
+  if (name === undefined) return null;
+  if (typeof name !== "string" || name.trim() === "") return { code: "NAME_REQUIRED", message: "Name is required." };
+  if (!userNameMeetsRules(name)) return { code: "NAME_INVALID", message: "Name must be 30 characters or fewer." };
+  return null;
+}
+
 function createAuth() {
   const onVercel = Boolean(process.env.VERCEL);
   return betterAuth({
@@ -50,8 +63,12 @@ function createAuth() {
     emailAndPassword: { enabled: true },
     hooks: {
       before: createAuthMiddleware(async (ctx) => {
-        if (ctx.path !== "/sign-up/email") return;
-        const error = signUpRuleError(ctx.body);
+        const error =
+          ctx.path === "/sign-up/email"
+            ? signUpRuleError(ctx.body)
+            : ctx.path === "/update-user"
+              ? updateUserRuleError(ctx.body)
+              : null;
         if (error) throw new APIError("BAD_REQUEST", error);
       }),
     },

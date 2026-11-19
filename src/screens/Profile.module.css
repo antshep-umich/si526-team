@@ -1,0 +1,173 @@
+/*
+ * Figma "User Profile" (637:197). Sides are 24px like the other household screens
+ * (Figma has 33px on the left and 23px on the right); sections are 60px apart.
+ * The bottom padding clears the fixed tab bar, as on the other tabs.
+ */
+.page {
+  width: 100%;
+  max-width: 402px;
+  margin: 0 auto;
+  padding: 56px 24px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 60px;
+}
+
+/* The header's own 28px to the first section, as in Figma. */
+.page > header {
+  margin-bottom: -32px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+/* Avatar, then "Profile Information" and the role, 18px apart. */
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.identityText {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.identityTitle {
+  font: var(--type-section-title);
+  color: var(--color-text-default);
+}
+
+.role {
+  font: var(--type-small);
+  color: var(--color-text-default);
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+}
+
+.details > div,
+.readOnly {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font: var(--type-field-label);
+  color: var(--color-text-default);
+}
+
+.value {
+  margin: 0;
+  font: var(--type-small);
+  color: var(--color-text-default);
+  overflow-wrap: anywhere;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.sectionHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sectionTitle {
+  font: var(--type-screen-title);
+  color: var(--color-text-default);
+}
+
+.intro {
+  font: var(--type-small);
+  color: var(--color-text-default);
+}
+
+.message {
+  font: var(--type-small);
+  color: var(--color-text-muted);
+}
+
+/* Save and Cancel side by side, equal widths, 28px apart. */
+.buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+}
+
+/* Chore choices: two columns of outline buttons, 28px across and 18px down. */
+.choreGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px 28px;
+}
+
+/* The outline button's look (Button.module.css), for choices that stay selected. */
+.option {
+  border: 2px solid var(--color-action-primary);
+  border-radius: 12px;
+  background: var(--color-background-bottom);
+  color: var(--color-action-primary);
+  font: var(--type-button);
+  cursor: pointer;
+}
+
+.option:focus-visible {
+  outline: 2px solid var(--color-action-focus-ring);
+  outline-offset: 3px;
+}
+
+.option:disabled {
+  cursor: default;
+}
+
+.choreOption {
+  min-height: 52px;
+  padding: 14px 12px;
+  text-align: center;
+}
+
+/* Not in Figma yet (placeholder): a selected choice, filled like the primary button. */
+.selected {
+  background: var(--color-action-primary);
+  color: var(--color-action-on-primary);
+}
+
+.methods {
+  display: flex;
+  flex-direction: column;
+  gap: 19px;
+}
+
+.methodOption {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 14px 22px;
+  text-align: left;
+}
+
+.methodName {
+  font: var(--type-button);
+}
+
+.methodDescription {
+  font: var(--type-small);
+  color: var(--color-text-default);
+}
+
+.selected .methodDescription {
+  color: var(--color-action-on-primary);
+}

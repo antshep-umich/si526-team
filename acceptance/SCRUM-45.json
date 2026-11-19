@@ -22,7 +22,7 @@
       "id": "AC4",
       "text": "Error Condition: The user attempts to view a chore from a household they do not belong to. Expected message: “Chore no longer available.”",
       "verify": "test",
-      "note": "Corrected to the app's behavior (team decision, Anthony 2026-11-19). Jira still says “You are not apart of this household.” The server answers another household's chore with 404 CHORE_NOT_FOUND, the same as a deleted chore, so it never confirms that the chore exists; the screen then shows “Chore no longer available.” (AC7). README Conflicts row 37."
+      "note": "Corrected to the app's behavior (team decision, Anthony 2026-11-19). Jira still says “You are not apart of this household.” The server answers another household's chore with 404 CHORE_NOT_FOUND, the same as a deleted chore, so it never confirms that the chore exists; the screen then shows “Chore no longer available.” (AC7). README Conflicts row 44."
     },
     {
       "id": "AC5",

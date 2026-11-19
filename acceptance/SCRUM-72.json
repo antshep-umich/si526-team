@@ -1,0 +1,81 @@
+{
+  "story": "SCRUM-72",
+  "title": "User profile page",
+  "criteria": [
+    {
+      "id": "AC1",
+      "text": "The profile page displays the user's name and email address.",
+      "verify": "test"
+    },
+    {
+      "id": "AC2",
+      "text": "Users can edit their profile information.",
+      "verify": "test"
+    },
+    {
+      "id": "AC3",
+      "text": "The page includes a Set Chore Preferences section.",
+      "verify": "test"
+    },
+    {
+      "id": "AC4",
+      "text": "The page includes a Set Household Manager Preferences section.",
+      "verify": "test"
+    },
+    {
+      "id": "AC5",
+      "text": "Users can save changes to their profile and preferences.",
+      "verify": "test"
+    },
+    {
+      "id": "AC6",
+      "text": "User Action: The user opens their profile page. Expected System Behavior: The system displays their current profile information and saved preferences.",
+      "verify": "test"
+    },
+    {
+      "id": "AC7",
+      "text": "User Action: The user edits their name and clicks Save. Expected System Behavior: The system saves the updated information and displays: “Profile updated successfully.”",
+      "verify": "test"
+    },
+    {
+      "id": "AC8",
+      "text": "User Action: The user clicks Cancel while editing. Expected System Behavior: The system discards unsaved changes.",
+      "verify": "test"
+    },
+    {
+      "id": "AC9",
+      "text": "User Action: The user opens the Chore Preferences section. Expected System Behavior: The system displays available chore preferences for the user to select.",
+      "verify": "test"
+    },
+    {
+      "id": "AC10",
+      "text": "User Action: The user selects or updates their chore preferences and clicks Save. Expected System Behavior: The system saves the selected preferences and displays a confirmation message.",
+      "verify": "test"
+    },
+    {
+      "id": "AC11",
+      "text": "User Action: The user opens the Household Manager Preferences section. Expected System Behavior: The system displays available preferences related to how household chores are managed.",
+      "verify": "test"
+    },
+    {
+      "id": "AC12",
+      "text": "User Action: The user updates their preferences and clicks Save. Expected System Behavior: The system saves the preferences and displays a confirmation message.",
+      "verify": "test"
+    },
+    {
+      "id": "AC13",
+      "text": "Error Condition: The user's name is left blank. Expected Message: “Name is required.”",
+      "verify": "test"
+    },
+    {
+      "id": "AC14",
+      "text": "Error Condition: The user tries to save preferences but the update fails. Expected Message: “Changes not saved. Please try again.”",
+      "verify": "test"
+    },
+    {
+      "id": "AC15",
+      "text": "Error Condition: The user cancels while editing. Expected Behavior: Unsaved changes are discarded, and previously saved information remains unchanged.",
+      "verify": "test"
+    }
+  ]
+}

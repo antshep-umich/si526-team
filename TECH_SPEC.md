@@ -234,6 +234,9 @@ Every route except `/api/auth/*` and `/api/health` requires a session. **Authori
 | POST | `/api/households/join` | join a household with `{ inviteCode }` |
 | GET | `/api/households/current` | household details and members |
 | POST | `/api/households/current/invite-code` | regenerate the invite code (owner only) |
+| GET, PUT | `/api/households/current/preferences` | the caller's own chore preferences (SCRUM-72): `{ choreTypes, weeklyWorkload }`, ids from `shared/preferences.ts` |
+| PUT | `/api/households/current/assignment-method` | how the household's chores get assigned, `{ assignmentMethod }` (owner only; SCRUM-72). Returns the household |
+| POST | `/api/auth/update-user` | Better Auth: change your name (SCRUM-72). Our hook keeps the sign-up name rule and answers `NAME_REQUIRED` for a blank name |
 | GET | `/api/chores?since=YYYY-MM-DD` | the household's chores: every open one, plus those done or due since `since` (the app sends the Monday of this week). Without `since`, the last 8 days |
 | POST | `/api/chores` | add a chore: `{ name, assigneeId, dueDate, notes? }` |
 | GET | `/api/chores/history` | the caller's chore history (SCRUM-44): every chore in the household assigned to them, done or not and however old, latest due first. The app filters and sorts it |
@@ -264,7 +267,7 @@ Named in `shared/httpStatus.ts` (`HttpStatus.CREATED` rather than `201`) and use
 |---|---|
 | `POST /api/households` | **201 Created**, with `Location: /api/households/current` |
 | `POST /api/households/join` | **201 Created** with `Location` when it adds the user; **200 OK** when they were already in that household (a repeat tap) |
-| `GET /api/households/current`, `POST …/invite-code`, `GET /api/health` | **200 OK** |
+| `GET /api/households/current`, `POST …/invite-code`, `GET` and `PUT …/preferences`, `PUT …/assignment-method`, `GET /api/health` | **200 OK** |
 | `POST /api/chores` | **201 Created**, with `Location: /api/chores/<id>` |
 | `GET /api/chores`, `GET /api/chores/history`, `GET` and `PATCH /api/chores/:id`, `POST` and `DELETE /api/chores/:id/complete` | **200 OK**, with the chore (or `{ chores }`) |
 | `POST /api/password-reset` | **204 No Content** |

@@ -1,7 +1,7 @@
 import request from "supertest";
 import { describe, expect, it, vi } from "vitest";
 import { createApp } from "./app.js";
-import { signUpRuleError } from "./auth.js";
+import { signUpRuleError, updateUserRuleError } from "./auth.js";
 
 // These requests never reach the database, so a stand-in client is enough.
 vi.mock("./db.js", () => ({ getPrisma: () => ({}) }));
@@ -49,5 +49,31 @@ describe("sign-up rules", { tags: ["SCRUM-2"] }, () => {
       code: "PASSWORD_INVALID",
       message: "Password must be at least 8 characters long and include 1 number.",
     });
+  });
+});
+
+describe("editing your name", { tags: ["SCRUM-72"] }, () => {
+  it("AC13: a blank name gets \"Name is required.\"", () => {
+    expect(updateUserRuleError({ name: "   " })).toEqual({ code: "NAME_REQUIRED", message: "Name is required." });
+  });
+
+  it("keeps the sign-up limit of 30 characters", () => {
+    expect(updateUserRuleError({ name: "x".repeat(31) })?.code).toBe("NAME_INVALID");
+    expect(updateUserRuleError({ name: "x".repeat(30) })).toBeNull();
+  });
+
+  it("lets other profile changes through", () => {
+    expect(updateUserRuleError({ image: null })).toBeNull();
+  });
+
+  it("AC13: stops a blank name before Better Auth saves it", async () => {
+    const res = await request(createApp())
+      .post("/api/auth/update-user")
+      .set("Origin", "http://localhost:5173")
+      .send({ name: "" });
+
+    // The hook runs before Better Auth looks for a session, so no account is needed.
+    expect(res.status).toBe(400);
+    expect(res.body).toMatchObject({ code: "NAME_REQUIRED", message: "Name is required." });
   });
 });

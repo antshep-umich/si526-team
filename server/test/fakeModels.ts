@@ -64,7 +64,7 @@ export const db = {
   now: () => new Date(Date.UTC(2026, 9, 8, 12, 0, db.clock++)),
   addMembership(userId: string, householdId: string, role: MembershipRole): Membership {
     if (db.memberships.some((m) => m.userId === userId)) throw new UniqueConflictError();
-    const row = { userId, householdId, role, joinedAt: db.now() };
+    const row: Membership = { userId, householdId, role, joinedAt: db.now(), choreTypes: [], weeklyWorkload: null };
     db.memberships.push(row);
     return row;
   },
@@ -83,6 +83,13 @@ export const db = {
 
 export const findMembershipByUser: typeof membershipsModel.findMembershipByUser = async (userId) =>
   db.memberships.find((m) => m.userId === userId) ?? null;
+
+export const setChorePreferences: typeof membershipsModel.setChorePreferences = async (userId, data) => {
+  const row = db.memberships.find((m) => m.userId === userId);
+  if (!row) throw new Error("No Membership found");
+  Object.assign(row, data);
+  return row;
+};
 
 export const createMembership: typeof membershipsModel.createMembership = async ({ userId, householdId, role }) =>
   db.addMembership(userId, householdId, role);
@@ -113,11 +120,12 @@ export const createHouseholdWithOwner: typeof householdsModel.createHouseholdWit
 }) => {
   if (db.memberships.some((m) => m.userId === ownerId)) throw new UniqueConflictError();
   db.checkCode(inviteCode);
-  const row = {
+  const row: Household = {
     id: `00000000-0000-4000-8000-${String(db.households.length + 1).padStart(12, "0")}`,
     name,
     inviteCode,
     createdAt: db.now(),
+    assignmentMethod: null,
   };
   db.households.push(row);
   db.addMembership(ownerId, row.id, "owner");
@@ -129,6 +137,13 @@ export const setInviteCode: typeof householdsModel.setInviteCode = async (househ
   if (!row) throw new Error("No Household found");
   db.checkCode(inviteCode, row.id);
   row.inviteCode = inviteCode;
+  return row;
+};
+
+export const setAssignmentMethod: typeof householdsModel.setAssignmentMethod = async (householdId, assignmentMethod) => {
+  const row = db.households.find((h) => h.id === householdId);
+  if (!row) throw new Error("No Household found");
+  row.assignmentMethod = assignmentMethod;
   return row;
 };
 
