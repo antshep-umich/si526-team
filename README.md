@@ -5,6 +5,12 @@ Ankun, Anthony, Louise) for SI 526. Housemates sign up, create or join a househo
 invite code, and keep track of who's doing which chore.
 
 - **Live app:** https://si526-team.vercel.app (the `main` branch)
+- **Your branch's preview:** `https://si526-team-git-<branch>-si-526.vercel.app`, always the
+  branch's latest push, on its own copy of the database. Vercel lowercases the branch name, turns
+  `/` into `-` and drops other symbols, so `Sprint4_Dev_profile` is `sprint4devprofile`. The
+  [test dashboard](https://antshep-umich.github.io/si526-team/#branches) links every branch's
+  preview, and Vercel's bot comments it on each pull request. Previews are public: keep them
+  within the team
 - **Design:** Figma "App Design" file (Colors & Fonts, Components, and Mock up pages)
 - **Design and decisions in depth:** [TECH_SPEC.md](TECH_SPEC.md) · **Known issues:** [TECH_DEBT.md](TECH_DEBT.md)
 - **Test dashboard:** https://antshep-umich.github.io/si526-team/ (results, history and Jira acceptance criteria; see [Tests](#tests))

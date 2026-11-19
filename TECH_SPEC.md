@@ -457,7 +457,7 @@ The `Tests` workflow (`.github/workflows/tests.yml`) runs the typecheck and the 
 
 | Event | Tests run on | Goes on the dashboard as |
 |---|---|---|
-| Push to any branch except `main` | The pushed commit | That branch's row under "Branches in progress" (replaced on each push) |
+| Push to any branch except `main` | The pushed commit | That branch's row under "Branches in progress" (replaced on each push), with a link to the branch's Vercel preview (`previewUrl` in `render.ts` builds it from the branch name; a name too long for Vercel to keep links to its pull request instead) |
 | Pull request into `main` opened or updated | The merge result (branch + current `main`) | Nothing; it's the pull request's check |
 | Pull request merged | The branch's final commit | A row under "Merged branches", kept permanently |
 | Push to `main` (each merge) | The new `main` | The latest result, the chart, the Stories section and `main`'s history |
