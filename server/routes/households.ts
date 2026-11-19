@@ -14,6 +14,15 @@ householdsRouter.route("/").post(households.create).all(methodNotAllowed);
 householdsRouter.route("/join").post(households.join).all(methodNotAllowed);
 householdsRouter.route("/current").get(requireHousehold, households.current).all(methodNotAllowed);
 householdsRouter
+  .route("/current/preferences")
+  .get(requireHousehold, households.preferences)
+  .put(requireHousehold, households.savePreferences)
+  .all(methodNotAllowed);
+householdsRouter
+  .route("/current/assignment-method")
+  .put(requireHousehold, households.assignmentMethod)
+  .all(methodNotAllowed);
+householdsRouter
   .route("/current/invite-code")
   .post(requireHousehold, households.newInviteCode)
   .all(methodNotAllowed);

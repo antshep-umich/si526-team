@@ -7,6 +7,7 @@ import { translateUniqueConflict } from "./errors.js";
 
 export type { Membership };
 export type MembershipRole = Membership["role"];
+export type WeeklyWorkload = NonNullable<Membership["weeklyWorkload"]>;
 
 /** The user's membership, or null if they haven't joined a household. */
 export function findMembershipByUser(userId: string): Promise<Membership | null> {
@@ -20,4 +21,12 @@ export function createMembership(data: {
   role: MembershipRole;
 }): Promise<Membership> {
   return translateUniqueConflict(() => getPrisma().membership.create({ data }));
+}
+
+/** Saves the member's chore preferences (SCRUM-72). */
+export function setChorePreferences(
+  userId: string,
+  data: { choreTypes: string[]; weeklyWorkload: WeeklyWorkload | null },
+): Promise<Membership> {
+  return getPrisma().membership.update({ where: { userId }, data });
 }

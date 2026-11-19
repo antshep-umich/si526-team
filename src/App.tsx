@@ -16,6 +16,7 @@ import House from "./screens/House.tsx";
 import HouseholdCreated from "./screens/HouseholdCreated.tsx";
 import HouseholdChoreHistory from "./screens/HouseholdChoreHistory.tsx";
 import HousemateProfile from "./screens/HousemateProfile.tsx";
+import Profile from "./screens/Profile.tsx";
 import JoinHousehold from "./screens/JoinHousehold.tsx";
 import LogIn from "./screens/LogIn.tsx";
 import Screen, { Actions, FormError, Loading } from "./screens/Screen.tsx";
@@ -81,7 +82,7 @@ type HouseholdState =
   | { status: "failed" }
   | { status: "ready"; household: Household };
 
-/** The screens inside a household: the House tab's two, and the Chores tab's others. */
+/** The screens inside a household: the House tab's two, and the Chores tab's others (profile is under Chores until it has a tab). */
 type View =
   | { name: "chores" }
   | { name: "add-chore" }
@@ -90,7 +91,8 @@ type View =
   | { name: "chore-details"; choreId: string }
   | { name: "chore"; choreId: string }
   | { name: "house" }
-  | { name: "housemate"; member: HouseholdMember };
+  | { name: "housemate"; member: HouseholdMember }
+  | { name: "profile" };
 
 function SignedIn({ userId }: { userId: string }) {
   const [state, setState] = useState<HouseholdState>({ status: "loading" });
@@ -188,6 +190,11 @@ function SignedIn({ userId }: { userId: string }) {
       case "housemate":
         content = <HousemateProfile member={view.member} />;
         break;
+      case "profile":
+        content = (
+          <Profile household={household} onHouseholdChange={(next) => setState({ status: "ready", household: next })} />
+        );
+        break;
       case "chores":
         content = (
           <Home
@@ -203,6 +210,7 @@ function SignedIn({ userId }: { userId: string }) {
     const menu = {
       onChoreHistory: () => setView({ name: "my-history" }),
       onHouseholdChoreHistory: () => setView({ name: "household-history" }),
+      onProfile: () => setView({ name: "profile" }),
       onLogOut: logOut,
     };
     const tab = view.name === "house" || view.name === "housemate" ? "house" : "chores";

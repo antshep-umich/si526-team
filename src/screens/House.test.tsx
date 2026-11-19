@@ -22,6 +22,7 @@ const household: Household = {
   id: "h1",
   name: "Maple St House",
   inviteCode: "K7Q2MXAB",
+  assignmentMethod: null,
   createdAt: "2026-10-17T00:00:00.000Z",
   role: "member",
   members: [member("u-sam", "Sam Ito"), member("u-ana", "Ana Lopez"), member("u-priya", "Priya Shah")],

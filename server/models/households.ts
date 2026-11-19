@@ -5,6 +5,7 @@ import { translateUniqueConflict } from "./errors.js";
 // The Household table. inviteCode is unique.
 
 export type { Household };
+export type AssignmentMethod = NonNullable<Household["assignmentMethod"]>;
 
 /** A household with its members, oldest first, and each member's name. */
 export type HouseholdWithMembers = Awaited<ReturnType<typeof findHouseholdWithMembers>>;
@@ -47,6 +48,11 @@ export function setInviteCode(householdId: string, inviteCode: string): Promise<
   return translateUniqueConflict(() =>
     getPrisma().household.update({ where: { id: householdId }, data: { inviteCode } }),
   );
+}
+
+/** Saves how the household's chores get assigned (SCRUM-72). */
+export function setAssignmentMethod(householdId: string, assignmentMethod: AssignmentMethod): Promise<Household> {
+  return getPrisma().household.update({ where: { id: householdId }, data: { assignmentMethod } });
 }
 
 /**
