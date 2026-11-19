@@ -2,9 +2,10 @@ import { describe, expect, it } from "vitest";
 import { seedTarget, teamToday, testHouseChores, type SeedChore } from "./testHouse.js";
 
 describe("test household seed", () => {
-  it("only writes to a preview's database, or to the dev database when asked", () => {
+  it("writes to a preview's or production's database, or to the dev database when asked", () => {
     expect(seedTarget({ VERCEL: "1", VERCEL_ENV: "preview" }, [])).toBe("preview");
-    expect(seedTarget({ VERCEL: "1", VERCEL_ENV: "production" }, [])).toBeNull();
+    expect(seedTarget({ VERCEL: "1", VERCEL_ENV: "production" }, [])).toBe("production");
+    expect(seedTarget({ VERCEL: "1", VERCEL_ENV: "development" }, [])).toBeNull();
     expect(seedTarget({ VERCEL: "1" }, ["--local"])).toBeNull();
     expect(seedTarget({}, [])).toBeNull();
     expect(seedTarget({}, ["--local"])).toBe("local");
