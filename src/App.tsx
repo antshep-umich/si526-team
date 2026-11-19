@@ -1,15 +1,21 @@
 
 import { useEffect, useState } from "react";
+import type { HouseholdMember } from "../shared/api.ts";
 import { getCurrentHousehold, type Household } from "./api/households.ts";
 import { authClient } from "./auth.ts";
+import { ToastProvider, useToast } from "./components/Toast.tsx";
+import { forgetInviteCode, pendingInviteCode } from "./inviteLink.ts";
 import AddChore from "./screens/AddChore.tsx";
+import ChoreDetails from "./screens/ChoreDetails.tsx";
 import ChoreHistory from "./screens/ChoreHistory.tsx";
 import ChooseHousehold from "./screens/ChooseHousehold.tsx";
 import CreateHousehold from "./screens/CreateHousehold.tsx";
 import ForgotPassword from "./screens/ForgotPassword.tsx";
 import Home, { forgetChoreFilter } from "./screens/Home.tsx";
+import House from "./screens/House.tsx";
 import HouseholdCreated from "./screens/HouseholdCreated.tsx";
 import HouseholdChoreHistory from "./screens/HouseholdChoreHistory.tsx";
+import HousemateProfile from "./screens/HousemateProfile.tsx";
 import JoinHousehold from "./screens/JoinHousehold.tsx";
 import LogIn from "./screens/LogIn.tsx";
 import Screen, { Actions, FormError, Loading } from "./screens/Screen.tsx";
@@ -26,7 +32,11 @@ export default function App() {
   if (isPending) return <Loading />;
   if (!session) return <SignedOut />;
   // key: a different person signing in starts from a clean slate
-  return <SignedIn key={session.user.id} userId={session.user.id} />;
+  return (
+    <ToastProvider key={session.user.id}>
+      <SignedIn userId={session.user.id} />
+    </ToastProvider>
+  );
 }
 
 function SignedOut() {
@@ -71,20 +81,30 @@ type HouseholdState =
   | { status: "failed" }
   | { status: "ready"; household: Household };
 
-/** The screens inside a household, all under the tab bar's Chores tab. */
+/** The screens inside a household: the House tab's two, and the Chores tab's others. */
 type View =
   | { name: "chores" }
   | { name: "add-chore" }
   | { name: "my-history" }
   | { name: "household-history" }
-  | { name: "chore"; choreId: string };
+  | { name: "chore-details"; choreId: string }
+  | { name: "chore"; choreId: string }
+  | { name: "house" }
+  | { name: "housemate"; member: HouseholdMember };
 
 function SignedIn({ userId }: { userId: string }) {
   const [state, setState] = useState<HouseholdState>({ status: "loading" });
-  const [screen, setScreen] = useState<"choose" | "create" | "join">("choose");
+  // An invite link (/join/CODE) opens Join with its code filled in (src/inviteLink.ts).
+  const [screen, setScreen] = useState<"choose" | "create" | "join">(() => (pendingInviteCode() ? "join" : "choose"));
   const [view, setView] = useState<View>({ name: "chores" });
   const [justCreated, setJustCreated] = useState<Household | null>(null);
   const [attempt, setAttempt] = useState(0);
+  const showToast = useToast();
+
+  // Someone already in a household can't use an invite link, so it's dropped.
+  useEffect(() => {
+    if (state.status === "ready") forgetInviteCode();
+  }, [state.status]);
 
   useEffect(() => {
     let cancelled = false;
@@ -100,6 +120,7 @@ function SignedIn({ userId }: { userId: string }) {
 
   const logOut = () => {
     forgetChoreFilter();
+    forgetInviteCode();
     return authClient.signOut();
   };
 
@@ -155,8 +176,17 @@ function SignedIn({ userId }: { userId: string }) {
       case "household-history":
         content = <HouseholdChoreHistory household={household} userId={userId} />;
         break;
+      case "chore-details":
+        content = <ChoreDetails household={household} userId={userId} choreId={view.choreId} />;
+        break;
       case "chore":
         content = <SingleChoreHistory choreId={view.choreId} userId={userId} />;
+        break;
+      case "house":
+        content = <House userId={userId} onOpenHousemate={(member) => setView({ name: "housemate", member })} />;
+        break;
+      case "housemate":
+        content = <HousemateProfile member={view.member} />;
         break;
       case "chores":
         content = (
@@ -164,6 +194,7 @@ function SignedIn({ userId }: { userId: string }) {
             household={household}
             userId={userId}
             onAddChore={() => setView({ name: "add-chore" })}
+            onOpenDetails={(choreId) => setView({ name: "chore-details", choreId })}
             onOpenChore={(choreId) => setView({ name: "chore", choreId })}
           />
         );
@@ -174,8 +205,9 @@ function SignedIn({ userId }: { userId: string }) {
       onHouseholdChoreHistory: () => setView({ name: "household-history" }),
       onLogOut: logOut,
     };
+    const tab = view.name === "house" || view.name === "housemate" ? "house" : "chores";
     return (
-      <TabLayout onChores={showChores} menu={menu}>
+      <TabLayout selected={tab} onSelect={(next) => setView(next === "house" ? { name: "house" } : { name: "chores" })} menu={menu}>
         {content}
       </TabLayout>
     );
@@ -187,8 +219,16 @@ function SignedIn({ userId }: { userId: string }) {
   if (screen === "join") {
     return (
       <JoinHousehold
-        onJoined={(household) => setState({ status: "ready", household })}
-        onBack={() => setScreen("choose")}
+        initialCode={pendingInviteCode() ?? ""}
+        onJoined={(household) => {
+          forgetInviteCode();
+          setState({ status: "ready", household });
+          showToast(`You joined ${household.name}.`); // SCRUM-32 AC3
+        }}
+        onBack={() => {
+          forgetInviteCode();
+          setScreen("choose");
+        }}
       />
     );
   }

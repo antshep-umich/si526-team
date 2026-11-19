@@ -60,6 +60,46 @@ describe("households", () => {
     await owner.context.close();
   });
 
+  it("shares an invite link from the House tab; a new housemate follows it, signs up and joins", async () => {
+    // The owner shares the link. The phone's share sheet is stood in for, to read what it got.
+    const owner = await newPhone(browser);
+    await owner.context.addInitScript(() => {
+      Object.defineProperty(navigator, "share", {
+        value: async (data: ShareData) => Object.assign(window, { shared: data }),
+      });
+    });
+    await signUp(owner.page, "E2E Sharer", uniqueEmail("sharer"));
+    await expectHeading(owner.page, "Your household");
+    const inviteCode = await createHousehold(owner.page, "E2E Linden Ave");
+    await owner.page.getByRole("button", { name: "Go to household" }).click();
+    await owner.page.getByRole("button", { name: "House" }).click();
+    await owner.page.getByText("1 member", { exact: true }).waitFor();
+    await owner.page.getByRole("button", { name: "Invite housemates" }).click();
+    await owner.page.getByRole("button", { name: "Share invite link" }).click();
+    const shared = (await owner.page.evaluate(() => (window as unknown as { shared: ShareData }).shared))!;
+    expect(new URL(shared.url!).pathname).toBe(`/join/${inviteCode}`);
+
+    // The housemate opens it signed out, signs up, and lands on Join with the code filled in.
+    const mate = await newPhone(browser);
+    await mate.page.goto(new URL(shared.url!).pathname);
+    await mate.page.getByRole("button", { name: "Log in" }).waitFor();
+    expect(new URL(mate.page.url()).pathname).toBe("/");
+    await signUp(mate.page, "E2E Newcomer", uniqueEmail("newcomer"));
+    await expectHeading(mate.page, "Join a household");
+    expect(await mate.page.getByLabel("Invite code").inputValue()).toBe(inviteCode);
+
+    await mate.page.getByRole("button", { name: "Join", exact: true }).click();
+    await expectHeading(mate.page, "E2E Linden Ave");
+    await mate.page.getByRole("status").filter({ hasText: "You joined E2E Linden Ave." }).waitFor();
+
+    // The owner's House tab shows the newcomer without a refresh.
+    await owner.page.getByText("2 members", { exact: true }).waitFor({ timeout: 30_000 });
+    await owner.page.getByRole("button", { name: "E2E Newcomer" }).waitFor();
+
+    await mate.context.close();
+    await owner.context.close();
+  });
+
   it("goes Back from Create and Join without creating anything", async () => {
     const { context, page } = await newPhone(browser);
     await signUp(page, "E2E Undecided", uniqueEmail("undecided"));

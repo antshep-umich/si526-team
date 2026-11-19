@@ -4,7 +4,7 @@ import styles from "./Header.module.css";
 
 // The header of every screen in a household: an optional overline, the title, and the
 // menu button on the title's right (Figma "Home - Header menu"). The menu opens as a
-// dropdown list (README Conflicts row 29). TabLayout provides what its items do, so
+// dropdown list (README Conflicts row 34). TabLayout provides what its items do, so
 // screens don't pass them around; outside a household the header has no menu.
 
 export type MenuActions = {

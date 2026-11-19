@@ -1,17 +1,19 @@
 // The chore list (SCRUM-7 and SCRUM-8) and its header menu (SCRUM-3).
-import { render, screen, within } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Household } from "../api/households.ts";
 import type { Chore } from "../chores.ts";
+import { POLL_INTERVAL_MS } from "../usePolling.ts";
 import Home, { forgetChoreFilter } from "./Home.tsx";
 
-const { listChores, completeChore, undoChore } = vi.hoisted(() => ({
+const { listChores, completeChore, undoChore, getChore } = vi.hoisted(() => ({
   listChores: vi.fn(),
   completeChore: vi.fn(),
   undoChore: vi.fn(),
+  getChore: vi.fn(),
 }));
-vi.mock("../api/chores.ts", () => ({ listChores, completeChore, undoChore }));
+vi.mock("../api/chores.ts", () => ({ listChores, completeChore, undoChore, getChore }));
 
 const household: Household = {
   id: "h1",
@@ -55,7 +57,7 @@ const chores = [
 ];
 
 function renderHome(props: Partial<Parameters<typeof Home>[0]> = {}) {
-  const callbacks = { onAddChore: vi.fn(), onOpenChore: vi.fn() };
+  const callbacks = { onAddChore: vi.fn(), onOpenDetails: vi.fn(), onOpenChore: vi.fn() };
   render(<Home household={household} userId="u-ana" {...callbacks} {...props} />);
   return callbacks;
 }
@@ -64,7 +66,7 @@ function renderHome(props: Partial<Parameters<typeof Home>[0]> = {}) {
 const names = (list: HTMLElement) =>
   within(list)
     .getAllByRole("listitem")
-    .map((item) => item.querySelector("p")?.textContent);
+    .map((item) => item.querySelector(".name")?.textContent);
 
 /** The card for a chore, found by its name. */
 const card = (name: string) => screen.getByText(name).closest("li")!;
@@ -106,6 +108,7 @@ describe("Home chore list", () => {
         household={household}
         userId="u-ana"
         onAddChore={() => {}}
+        onOpenDetails={() => {}}
         onOpenChore={() => {}}
       />,
     );
@@ -150,6 +153,42 @@ describe("Home chore list", () => {
     await userEvent.click(screen.getByRole("button", { name: "Add chore" }));
 
     expect(onAddChore).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("Home chore list, kept current", () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date", "setInterval", "clearInterval"] });
+    vi.setSystemTime(NOW);
+  });
+
+  it("shows housemates' changes without a refresh or a Loading message", async () => {
+    renderHome();
+    await screen.findByRole("list", { name: "Chores to do" });
+
+    listChores.mockResolvedValueOnce({ ok: true, chores: [...chores, chore("Water plants", { assignee: sam })] });
+    await act(() => vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS));
+
+    expect(names(openList())).toContain("Water plants");
+    expect(screen.queryByText("Loading chores…")).not.toBeInTheDocument();
+  });
+
+  it("drops a check that started before a tick, so it can't undo it", async () => {
+    completeChore.mockResolvedValue({
+      ok: true,
+      chore: chore("Clean bathroom", { completedAt: NOW.toISOString(), completedBy: ana }),
+    });
+    renderHome();
+    await screen.findByRole("list", { name: "Chores to do" });
+
+    let answerCheck = (_: unknown) => {};
+    listChores.mockReturnValueOnce(new Promise((resolve) => (answerCheck = resolve)));
+    await act(() => vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS)); // the check starts, with the old list
+    await userEvent.click(screen.getByRole("checkbox", { name: "Mark Clean bathroom done" }));
+    await act(async () => answerCheck({ ok: true, chores }));
+
+    expect(names(openList())).not.toContain("Clean bathroom");
+    expect(screen.getByRole("button", { name: "Done (2)" })).toBeInTheDocument();
   });
 });
 
@@ -357,5 +396,16 @@ describe("SCRUM-8 acceptance criteria", { tags: ["SCRUM-8"] }, () => {
     for (const sams of ["Buy dish soap", "Take out trash", "Vacuum"]) {
       expect(within(card(sams)).queryByRole("checkbox")).not.toBeInTheDocument();
     }
+  });
+});
+
+describe("Opening a chore from the list", { tags: ["SCRUM-53"] }, () => {
+  it("AC1: selecting a chore in the list opens its details", async () => {
+    const { onOpenDetails, onOpenChore } = renderHome();
+
+    await userEvent.click(await screen.findByRole("button", { name: /^Clean bathroom/ }));
+
+    expect(onOpenDetails).toHaveBeenCalledWith("Clean bathroom");
+    expect(onOpenChore).not.toHaveBeenCalled();
   });
 });

@@ -16,10 +16,13 @@ phone's light or dark setting.
 ## What works today
 
 - Sign up, log in and log out
-- Create a household and get an invite code, or join one with a code
+- Create a household and get an invite code, or join one with a code or an invite link (`/join/<code>`)
+- **House tab:** the household's members, a household manager card (no managers yet), and the invite
+  code with a share button that sends an invite link (placeholder design, SCRUM-74)
 - **Chores:** add a chore (name, who it's for, due date, notes), see the household's chore list
   with All / Mine, this week's progress, and the chores done this week; the person a chore is
-  assigned to can mark it done or undo it
+  assigned to can mark it done or undo it. The chore list and the House tab pick up housemates'
+  changes every 10 seconds, without a reload
 - A stand-in "Forgot your password?" (it doesn't send email yet; see TECH_DEBT #7)
 - The full design system from Figma: colors, fonts and components, viewable at `/components`
 
@@ -157,7 +160,7 @@ Status numbers in code use named constants from `shared/httpStatus.ts`.
 
 ### The frontend
 
-- **Screens** (`src/screens/`) match the Figma mockups. There's no router yet; `App.tsx` picks the screen from whether you're signed in and whether you're in a household. Home is the chore list; Add chore opens from it.
+- **Screens** (`src/screens/`) match the Figma mockups. There's no router; `App.tsx` picks the screen from whether you're signed in and whether you're in a household. The only address it reads is an invite link, `/join/<code>` (`src/inviteLink.ts`). Home is the chore list; Add chore opens from it. The House tab is `House.tsx`.
 - **Chore logic** (`src/chores.ts`, `src/dates.ts`): a chore's status (to do, overdue, done, late) isn't stored; it's worked out from its dates, using the phone's own date. Weeks run Monday to Sunday.
 - **Components** (`src/components/`) are the Figma components, each with its own CSS Module.
 - **Styles** come only from design tokens in `src/styles/tokens.css`, named after the Figma variables (for example `--color-action-primary`). Don't hard-code colors or fonts.
@@ -173,6 +176,21 @@ Status numbers in code use named constants from `shared/httpStatus.ts`.
 Vercel runs database migrations as part of each build, so a schema change in a pull request only
 touches that pull request's preview database until it's merged. **Preview links are public:** don't
 share them outside the team.
+
+### Test household
+
+Every preview build resets a household called **Test_House_Data** with chores dated from the day
+of the build: some to do, overdue, done and done late, with a few weeks of history.
+Run `npm run seed:test-house` to reset the same household in the dev database. Production never
+gets it. The code is in `server/seed/`.
+
+| Account | Email | Password |
+|---|---|---|
+| Test_User (owner; sign in as this one) | `Test_User@test.com` | `password2` |
+| Test_Housemate_1 | `Test_Housemate_1@test.com` | `password2` |
+| Test_Housemate_2 | `Test_Housemate_2@test.com` | `password2` |
+
+These are made-up test accounts, not secrets. Don't use the password anywhere else.
 
 ## How to…
 
@@ -288,7 +306,7 @@ update the story or Figma to match and delete the row.
 | 6 | SCRUM-7 | Time span | All the household's chores; Done section shows them all | Figma's progress card ("5 of 8 chores done") has no time span | **Weekly**, Monday to Sunday | Built: the progress card counts chores due this week; the Done section lists chores done this week; the to-do list shows every open chore | Update the stories |
 | 7 | SCRUM-6 | Save button | "Save" | Figma: "Add chore" | "Add chore" | Built | Update the story |
 | 8 | SCRUM-7 | Tapping a chore | The row expands to show notes, who created it and when | No design for an expanded row | Wait for a design | Not built (the API already returns notes, creator and created date) | UX: design the expanded row |
-| 9 | SCRUM-6, SCRUM-8, SCRUM-32 | Pop-up messages | "Chore added." · "Marked done. Undo" for 5 seconds · "You joined [Household name]." | No design for these messages | Wait for a design | Not built. Undo still works: untick the chore in the Done section | UX: design the message |
+| 9 | SCRUM-32, SCRUM-74 | Pop-up messages | "You joined [Household name]." (SCRUM-32 AC3) · "Invite link copied." (SCRUM-74 AC5). "Chore added." and "Marked done. Undo" were dropped from SCRUM-6 and SCRUM-8 | No design for these messages | A placeholder toast (`src/components/Toast.tsx`): reverse colors, 16px above the tab bar, 4 seconds, announced to screen readers; only the two messages the stories ask for (Anthony, 2026-11-15) | Built (placeholder) | UX: design the message |
 | 10 | SCRUM-3 | Logging in | Log in with **Name** and password; "Name is required.", "Name or password is incorrect." | The build logs in with email | Keep email | Built, with the story's messages reworded for email: "Email is required.", "Password is required.", "Email or password is incorrect.", "Something went wrong. Please try again." | Change the story to email |
 | 11 | SCRUM-2 | Sign-up rules | Name 30 characters or fewer; password 8+ characters with a number; all errors at once; Name and Email kept and both passwords cleared; the story's exact messages; server errors in a banner above the form | The build checked only password length, one error at a time, in its own words | Make the build follow the story | Built. The server checks the same rules (Better Auth sign-up hook), and Forgot password uses the same password rule | None |
 | 12 | SCRUM-32 | Join messages | "Enter an invite code." · "We couldn't find a household with that code. Check with your housemate and try again." · "Something went wrong. Please try again." | The build had its own wording | Make the build follow the story | Built (the "You joined…" message is row 9) | None |
@@ -304,13 +322,20 @@ update the story or Figma to match and delete the row.
 | 22 | SCRUM-44 | "Chore no longer available." | Shown when a chore was deleted | Chores can't be deleted yet | Show it when the opened chore comes back `CHORE_NOT_FOUND` | Built | None |
 | 23 | Single chore history story | Several completions of one chore | "Displays completion records in chronological order, with the most recent record shown first" | A chore has one due date and one completion; there are no recurring chores | None yet | Not built | Team: recurring chores (TECH_SPEC §11) decide whether this story has more than one record |
 | 19 | SCRUM-6 | Picking a due date | "Date picker, today or later" | Figma has the field (calendar icon) but no calendar | Use the phone's own date picker | Built: dates before today can't be picked | None |
-| 20 | — | Schedule and House tabs | No stories yet | Figma's tab bar has them, with no screens behind them | Show them as designed | Built (placeholder): visible but do nothing | Stories and screens for these tabs |
+| 20 | — | Schedule tab | No story yet | Figma's tab bar has it, with no screen behind it | Show it as designed | Built (placeholder): visible but does nothing. House has its screen (SCRUM-74, rows 35–36) | A story and screen for Schedule |
 | 24 | SCRUM-47 | Monthly household history screen | "Selects the monthly view" of the household chore history | Not in Figma (the "Chore History" frame is the personal history) | A Weekly / Monthly switch (Tab Filter) at the top of Household chore history; the monthly view reuses the weekly view's layout: a month bar with arrows ("Go to current month" when away from it), three summary numbers, then the chores, latest due first ("Due Fri, Nov 6 · Done Sun, Nov 8" over "Sam") | Built (placeholder) | UX: design both views and the switch |
 | 25 | SCRUM-46, SCRUM-47 | Which week or month a chore belongs to | "Chores from the selected month" | The weekly view shows a chore in the week it's due **and** the week it was done | Monthly: the month it's due only, as the Home progress card counts weeks, so a chore never shows in two months | Built | Team: pick one rule for both views |
 | 26 | SCRUM-46, SCRUM-47 | Summary numbers | "The number of completed, incomplete, and overdue chores" | Not designed | Overdue chores are also counted as incomplete, in both views | Built | Team: should the three numbers add up to the total instead? |
 | 27 | SCRUM-47, SCRUM-53 | Selecting a chore in the monthly history | "Opens the selected chore's details and description" | The SCRUM-53 Chore details screen (Figma "Home - Chore Details") isn't built | Tapping a chore opens the single chore history screen (SCRUM-45), which shows the chore's details and notes, as the weekly view does | Built (placeholder) | Open the SCRUM-53 screen instead once it exists |
-| 28 | SCRUM-7, SCRUM-44–47 | Getting around inside a household | "Opens the Chores tab" | Figma shows the tab bar on the chore list, and a Back link on "Home - Chore Details" | The tab bar is fixed to the bottom of every screen in a household (chore list, Add chore, all three histories), and the header menu (Log out, My chore history, Household chore history) sits beside each of their titles; none of them has a Back link, and Chores always returns to the chore list (Anthony, 2026-11-12). Log in and household setup keep their Back links (SCRUM-32 AC4) and have no tab bar or menu | Built | UX: update Figma; decide whether a chore opened from Household chore history needs a way back to that week or month |
-| 29 | SCRUM-3, SCRUM-44, SCRUM-46 | The header menu | "Log out" in the header menu | Figma "Home - Menu open" shows Log out alone, as a primary button (kept as a button on 2026-10-17) | A dropdown list on every household screen: My chore history, Household chore history, a divider, then Log out in the primary color; arrow keys move between items (Anthony, 2026-11-12) | Built | UX: design the list in Figma |
+| 28 | SCRUM-53 | Two designs for Chore details | Selecting a chore "displays the chore details"; Back returns to the previous screen | The Jira story's attachment expands the chore card in place (Assigned To, Chore Details); Figma "Home - Chore Details" (634:192) is its own screen | The Figma screen, since the story's Back, retry and "no longer available" criteria describe a screen (team decision, 2026-11-18) | Built | UX: retire one of the two designs |
+| 29 | SCRUM-53 | Completion status | "Completion status" is one of the details | The Figma frame has Assigned to, Due date and Notes only | A read-only Status field under Due date: To do, Overdue, Done or Done late, with the date it was done | Built (placeholder) | UX: design the status field |
+| 30 | SCRUM-53 | Edit chore button | No story yet (editing chores) | Figma has an "Edit chore" button under the fields | Left out until editing exists | Not built | Add with the edit story |
+| 31 | SCRUM-53 | How a chore is opened from Home | "Selects a specific chore from the chore list" | Not designed (the card's tappable area was asked about in "UX Please Read") | Tapping the chore's name and details opens Chore details; the checkbox and "View history" keep their own jobs | Built (placeholder) | UX: confirm the tap area and a pressed state |
+| 32 | SCRUM-53 | Opening from the history screens | "From the chore list or chore history" | `chore-history-design` is redesigning the history screens | My chore history still expands the chore in place (with the same details and messages); the household history still opens single chore history. Rows 21 and 27 stay open | Not built yet | Switch them to Chore details once the redesign is merged |
+| 33 | SCRUM-7, SCRUM-44–47, SCRUM-53 | Getting around inside a household | "Opens the Chores tab"; SCRUM-53 AC3: "Back" returns to the previous screen | Figma shows the tab bar on the chore list, and a Back link on "Home - Chore Details" | The tab bar is fixed to the bottom of every screen in a household (chore list, Add chore, all three histories, Chore details), and the header menu (Log out, My chore history, Household chore history) sits beside each of their titles; none of them has a Back link, and Chores always returns to the chore list (Anthony, 2026-11-12). Chore details follows the same rule, so its Back is the Chores tab, which returns to the list with its filter kept (Anthony, 2026-11-19). Log in and household setup keep their Back links (SCRUM-32 AC4) and have no tab bar or menu | Built | UX: update Figma; team: update SCRUM-53 AC3 in Jira; decide whether a chore opened from Household chore history needs a way back to that week or month |
+| 34 | SCRUM-3, SCRUM-44, SCRUM-46 | The header menu | "Log out" in the header menu | Figma "Home - Menu open" shows Log out alone, as a primary button (kept as a button on 2026-10-17) | A dropdown list on every household screen: My chore history, Household chore history, a divider, then Log out in the primary color; arrow keys move between items (Anthony, 2026-11-12) | Built | UX: design the list in Figma |
+| 35 | SCRUM-74 | House tab: manager card and housemate profiles | AC3: the manager card, or “No Household Manager assigned” with a “Become household manager” button; AC2: selecting a housemate opens their profile | Not in Figma; SCRUM-62 (manager election) and SCRUM-72/63 (profiles) aren't built | Until they are, the card only says “No Household Manager assigned” (no button), nobody gets the “Household manager” chip, and a housemate opens a stand-in profile (Anthony, 2026-11-15) | Built (placeholder) | Replace the placeholders when SCRUM-62, 72 and 63 are built |
+| 36 | SCRUM-74 | Inviting housemates | AC4: the invite code and link with “Copy” and “Share” buttons; AC5: Copy shows “Invite link copied.”; AC8: “Couldn't create an invite link. Please try again.” | Not in Figma | The invite code with one share icon at its top right, which opens the phone's share sheet with a `/join/CODE` link; no Copy button. Where there's no share sheet, the icon copies the link and shows “Invite link copied.” The link comes from the code, so AC8 can't happen (Anthony, 2026-11-15) | Built (placeholder) | Team: update SCRUM-74's AC4, AC5 and AC8 in Jira |
 
 ### Design issues in Figma
 

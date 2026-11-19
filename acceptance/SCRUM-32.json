@@ -16,8 +16,7 @@
     {
       "id": "AC3",
       "text": "User Action: Enters a valid code and clicks “Join.” Expected System Behavior: The user is added to the household, the Chore List opens, and a message shows: “You joined [Household name].”",
-      "verify": "test",
-      "note": "Not met yet: joining and opening the Chore List work, but the “You joined…” message isn't built until a message design exists (README “Conflicts to resolve”, row 9)."
+      "verify": "test"
     },
     {
       "id": "AC4",

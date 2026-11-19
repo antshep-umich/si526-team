@@ -1,0 +1,52 @@
+{
+  "story": "SCRUM-74",
+  "title": "House Page",
+  "epic": { "key": "SCRUM-1", "title": "Chore Tracking" },
+  "criteria": [
+    {
+      "id": "AC1",
+      "text": "User Action: Opens the “House” tab. Expected System Behavior: The House page opens with the household name, member count, and a roster of housemates. Each row shows an avatar with initials and the housemate’s name. The user is labeled “You,” and the household manager has a “Household manager” chip.",
+      "verify": "test"
+    },
+    {
+      "id": "AC2",
+      "text": "User Action: Selects a housemate. Expected System Behavior: That housemate’s profile opens (see SCRUM-72 and SCRUM-63).",
+      "verify": "test",
+      "note": "Placeholder until SCRUM-72 and SCRUM-63 are built: a housemate opens a stand-in profile screen (README Conflicts row 35)."
+    },
+    {
+      "id": "AC3",
+      "text": "The household manager card shows the current household manager. With no manager, it shows “No Household Manager assigned” and a “Become household manager” button (see SCRUM-62).",
+      "verify": "test",
+      "note": "Until SCRUM-62 is built there is no household manager: the card shows “No Household Manager assigned” without the “Become household manager” button. Its test is written but skipped until then, so this AC stays open (README Conflicts row 35)."
+    },
+    {
+      "id": "AC4",
+      "text": "User Action: Clicks “Invite housemates.” Expected System Behavior: The household invite code and link appear with “Copy” and “Share” buttons.",
+      "verify": "test",
+      "note": "Team decision (Anthony, 2026-11-15): one share icon at the top right of the invite code opens the phone’s share sheet with the /join/CODE link; no Copy button. Jira not updated yet (README Conflicts row 36)."
+    },
+    {
+      "id": "AC5",
+      "text": "User Action: Clicks “Copy.” Expected System Behavior: The invite link is copied. Message: “Invite link copied.”",
+      "verify": "test",
+      "note": "Team decision (Anthony, 2026-11-15): there is no Copy button. Where the browser has no share sheet, the share icon copies the link and shows “Invite link copied.” (README Conflicts row 36)."
+    },
+    {
+      "id": "AC6",
+      "text": "Leaving a household happens from the profile page (see SCRUM-75).",
+      "verify": "test"
+    },
+    {
+      "id": "AC7",
+      "text": "Error Condition: The House page fails to load. Message: “We couldn’t load your household. Please try again.” with a “Retry” button.",
+      "verify": "test"
+    },
+    {
+      "id": "AC8",
+      "text": "Error Condition: The invite link can’t be created. Message: “Couldn’t create an invite link. Please try again.”",
+      "verify": "test",
+      "note": "The link is built from the household’s invite code, so it exists whenever the page loads; a failed load is AC7. Nothing triggers this message yet (README Conflicts row 36)."
+    }
+  ]
+}

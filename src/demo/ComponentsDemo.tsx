@@ -13,6 +13,8 @@ import TabBar, { type TabId } from "../components/TabBar.tsx";
 import TabFilter from "../components/TabFilter.tsx";
 import TextArea from "../components/TextArea.tsx";
 import TextField from "../components/TextField.tsx";
+import ThemedIcon from "../components/ThemedIcon.tsx";
+import { ToastProvider, useToast } from "../components/Toast.tsx";
 import { today } from "../dates.ts";
 import styles from "./ComponentsDemo.module.css";
 import Measured from "./Measured.tsx";
@@ -350,6 +352,20 @@ export default function ComponentsDemo() {
         <p className={styles.hint}>Tap a tab to select it.</p>
       </Section>
 
+      <Section title="Toast">
+        <ToastProvider>
+          <ToastDemo />
+        </ToastProvider>
+        <p className={styles.hint}>Not in Figma yet (placeholder). Shows 16px above where the tab bar sits, for 4 seconds.</p>
+      </Section>
+
+      <Section title="Share icon">
+        <Measured show={showSizes}>
+          <ThemedIcon name="share" />
+        </Measured>
+        <p className={styles.hint}>Not in Figma yet (placeholder): the House tab's invite card.</p>
+      </Section>
+
       <Section title="Colors">
         <ul className={styles.swatches}>
           {COLOR_TOKENS.map((token) => (
@@ -383,5 +399,19 @@ export default function ComponentsDemo() {
         </ul>
       </Section>
     </main>
+  );
+}
+
+function ToastDemo() {
+  const showToast = useToast();
+  return (
+    <div className={styles.row}>
+      <Button variant="outline" onClick={() => showToast("Invite link copied.")}>
+        Show a toast
+      </Button>
+      <Button variant="outline" onClick={() => showToast("You joined Maple St House.")}>
+        Show another
+      </Button>
+    </div>
   );
 }

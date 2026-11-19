@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { completeChore, listChores, undoChore } from "../api/chores.ts";
 import type { Household } from "../api/households.ts";
 import Button from "../components/Button.tsx";
@@ -17,6 +17,7 @@ import {
   type Chore,
 } from "../chores.ts";
 import { startOfWeek, today as localToday } from "../dates.ts";
+import { usePolling } from "../usePolling.ts";
 import Header from "./Header.tsx";
 import styles from "./Home.module.css";
 
@@ -28,6 +29,8 @@ type HomeProps = {
   household: Household;
   userId: string;
   onAddChore: () => void;
+  /** Opens one chore's details (SCRUM-53). */
+  onOpenDetails: (choreId: string) => void;
   /** Opens one chore's history (SCRUM-45). */
   onOpenChore: (choreId: string) => void;
 };
@@ -72,6 +75,7 @@ export default function Home({
   household,
   userId,
   onAddChore,
+  onOpenDetails,
   onOpenChore,
 }: HomeProps) {
   const [list, setList] = useState<ListState>({ status: "loading" });
@@ -82,6 +86,9 @@ export default function Home({
   const [toggleError, setToggleError] = useState<string | null>(null);
   const doneListId = useId();
   const today = localToday();
+  // Counts ticks and unticks, so a background check that started before one can be dropped.
+  const changes = useRef(0);
+  const savingNow = useRef(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -94,6 +101,16 @@ export default function Home({
     };
   }, [attempt]);
 
+  // Housemates' changes appear without a refresh. A check that fails, or that started before
+  // a tick or untick (or while one is saving), is dropped so it can't undo what the user did.
+  usePolling(() => {
+    const startedAt = changes.current;
+    listChores(startOfWeek(localToday())).then((result) => {
+      if (!result.ok || changes.current !== startedAt || savingNow.current > 0) return;
+      setList({ status: "ready", chores: result.chores });
+    });
+  }, list.status === "ready");
+
   const replaceChore = useCallback((chore: Chore) => {
     setList((current) =>
       current.status === "ready"
@@ -105,6 +122,8 @@ export default function Home({
   // Ticks or unticks right away, then saves. If saving fails, the checkbox goes back.
   async function toggle(chore: Chore) {
     const undoing = chore.completedAt !== null;
+    changes.current += 1;
+    savingNow.current += 1;
     setToggleError(null);
     setSaving((ids) => new Set(ids).add(chore.id));
     replaceChore(
@@ -114,6 +133,8 @@ export default function Home({
     );
 
     const result = await (undoing ? undoChore(chore.id) : completeChore(chore.id));
+    changes.current += 1;
+    savingNow.current -= 1;
     replaceChore(result.ok ? result.chore : chore);
     if (!result.ok) setToggleError("Couldn't update this chore. Please try again.");
     setSaving((ids) => {
@@ -138,6 +159,7 @@ export default function Home({
           // SCRUM-8: only the assignee can mark it done or undo it.
           onToggle={isMine(chore, userId) ? () => toggle(chore) : undefined}
           busy={saving.has(chore.id)}
+          onOpen={() => onOpenDetails(chore.id)}
           onViewHistory={() => onOpenChore(chore.id)}
         />
       </li>
