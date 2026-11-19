@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JAALS test archive</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='9' fill='%233f6fb5'/%3E%3Cpath d='M5.6 10.4l3 3 5.8-6.6' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<meta name="description" content="Every merged branch and every run on main of the JAALS chore tracker's tests.">
+<style>
+@font-face { font-family: Libron; src: url("assets/fonts/Libron-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: Libron; src: url("assets/fonts/Libron-Italic.woff2") format("woff2"); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: Libron; src: url("assets/fonts/Libron-Bold.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: Libron; src: url("assets/fonts/Libron-BoldItalic.woff2") format("woff2"); font-weight: 700; font-style: italic; font-display: swap; }
+:root {
+  color-scheme: light dark;
+  /* Surfaces: the page, panels that hold a dataset or an epic, an epic's header band, and the recessed AC list. */
+  --paper: #f2f4f1; --panel: #fbfcfa; --band: #e4e9e3; --well: #f2f4f1;
+  --ink: #1c2420; --ink-2: #48534d; --ink-3: #5c6761; --rule: #d3dad4; --rule-strong: #b8c2ba;
+  --passed: #3f6fb5; --failed: #d03b3b; --skipped: #848d88; --on-mark: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #151b18; --panel: #1b221e; --band: #242d28; --well: #151b18;
+    --ink: #e5ebe6; --ink-2: #b4beb8; --ink-3: #97a29b; --rule: #2c3530; --rule-strong: #3d4842;
+  }
+}
+* { box-sizing: border-box; }
+html { font-size: 18px; }
+body { margin: 0; background: var(--paper); color: var(--ink); font-family: Libron, Georgia, serif; line-height: 1.5; font-variant-numeric: tabular-nums; -webkit-text-size-adjust: 100%; }
+/* An internal page, laid out for a desktop browser window. */
+.page { max-width: 64rem; margin: 0 auto; padding: 2.5rem 2rem 5rem; }
+a { color: inherit; text-decoration: underline; text-decoration-color: var(--ink-3); text-decoration-thickness: 1px; text-underline-offset: 0.18em; }
+a:hover { text-decoration-color: currentColor; }
+:focus-visible { outline: 2px solid var(--passed); outline-offset: 2px; border-radius: 3px; }
+code { font-family: inherit; font-weight: 700; }
+.masthead { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 0.25rem 1.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--rule); }
+.masthead h1 { margin: 0; font-size: 1rem; font-weight: 700; }
+.masthead p { margin: 0; color: var(--ink-3); font-size: 0.85rem; }
+section { margin-top: 4.5rem; }
+h2 { margin: 0 0 0.4rem; font-size: 2rem; font-weight: 400; line-height: 1.15; letter-spacing: -0.012em; }
+h3 { margin: 0; font-size: 1.1rem; font-weight: 700; line-height: 1.3; }
+p { margin: 0 0 0.5rem; max-width: 42rem; }
+.intro, .empty, .note { color: var(--ink-2); }
+section > .intro { margin-bottom: 1.25rem; }
+section > .more { margin-top: 1rem; }
+.tree-controls { display: flex; gap: 0.5rem; margin: 0.75rem 0; }
+.tree-controls button { font: inherit; font-size: 0.85rem; color: var(--ink); background: var(--panel); border: 1px solid var(--rule-strong); border-radius: 6px; padding: 0.3rem 0.75rem; cursor: pointer; }
+.tree-controls button:hover { background: var(--band); }
+.note { font-size: 0.85rem; }
+.muted { color: var(--ink-3); }
+.glyph { width: 1.05em; height: 1.05em; flex: none; }
+.status { display: inline-flex; align-items: center; gap: 0.4em; white-space: nowrap; }
+/* Jira-style keys (SCRUM-3) in small caps, so they sit quieter than the titles beside them. */
+.key { font-variant-caps: all-small-caps; letter-spacing: 0.06em; font-weight: 700; color: var(--ink-2); }
+
+.latest { margin-top: 2.75rem; }
+.latest .verdict { display: flex; align-items: center; gap: 0.35em; margin: 0 0 1rem; font-size: 2.667rem; font-weight: 400; line-height: 1.1; letter-spacing: -0.012em; }
+.latest .verdict .glyph { width: 0.82em; height: 0.82em; }
+.latest .links { display: flex; flex-wrap: wrap; gap: 0.25rem 1.5rem; margin-top: 1rem; }
+.problems { margin-top: 1.5rem; padding: 1rem 1.25rem; background: var(--panel); border: 1px solid var(--rule); border-left: 4px solid var(--failed); border-radius: 6px; max-width: 42rem; }
+.problems h3 { font-size: 1rem; }
+.problems ul { margin: 0.5rem 0 0; padding-left: 1.2rem; font-size: 0.9rem; }
+
+/* Panels hold one dataset each: the chart, an epic, a table. */
+.panel, .table-wrap { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 0.25rem 1.25rem; margin: 0 0 0.75rem; padding: 0; list-style: none; font-size: 0.85rem; color: var(--ink-2); }
+.swatch { display: inline-block; width: 0.75em; height: 0.75em; margin-right: 0.4em; border-radius: 2px; vertical-align: -0.02em; }
+.swatch.passed, .chart .passed { background: var(--passed); fill: var(--passed); }
+.swatch.failed, .chart .failed { background: var(--failed); fill: var(--failed); }
+.swatch.skipped, .chart .skipped { background: var(--skipped); fill: var(--skipped); }
+.chart-panel { padding: 1.1rem 1.25rem 0.6rem; }
+.chart { position: relative; padding-left: 2.25rem; }
+.chart svg { display: block; width: 100%; height: 200px; overflow: visible; }
+.chart .grid { stroke: var(--rule); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.chart .hit { fill: transparent; }
+.chart .bar:hover .hit, .chart .bar:focus-visible .hit { fill: var(--ink); fill-opacity: 0.06; }
+.chart .bar:focus-visible { outline: none; }
+.ticks { position: absolute; left: 0; top: 0; width: 1.75rem; height: 200px; }
+.tick, .dates span { position: absolute; font-size: 0.75rem; color: var(--ink-3); line-height: 1; }
+.tick { right: 0; transform: translateY(-50%); }
+.dates { position: relative; height: 1.4rem; margin-top: 0.35rem; }
+.dates span { top: 0; transform: translateX(-50%); white-space: nowrap; }
+.tip { position: fixed; z-index: 10; max-width: 22rem; padding: 0.45rem 0.65rem; border-radius: 4px; background: var(--ink); color: var(--paper); font-size: 0.8rem; line-height: 1.4; white-space: pre-line; pointer-events: none; }
+
+/* Stories: each epic is a panel with a header band, stories are rows on it, and an
+   open story's acceptance criteria sit in a recessed list. Type shrinks a step per level. */
+.stories-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 0.5rem 2rem; margin-bottom: 1rem; }
+.stories-head .total { margin: 0; font-weight: 700; }
+.marks { margin: 0; }
+.marks li { display: inline-flex; align-items: center; gap: 0.4em; }
+.box { display: block; width: 1rem; height: 1rem; flex: none; }
+.tree { display: grid; gap: 1.25rem; }
+.tree summary { list-style: none; cursor: pointer; }
+.tree summary::-webkit-details-marker { display: none; }
+.chev { display: block; width: 1rem; height: 1rem; flex: none; color: var(--ink-3); transition: transform 140ms ease-out; }
+details[open] > summary > .chev { transform: rotate(90deg); }
+@media (prefers-reduced-motion: reduce) { .chev { transition: none; } }
+.goto { display: inline-flex; align-items: center; justify-content: center; width: 1.75rem; height: 1.75rem; flex: none; border-radius: 4px; color: var(--ink-3); text-decoration: none; }
+.goto svg { width: 1.05rem; height: 1.05rem; }
+a.goto:hover { color: var(--ink); background: color-mix(in srgb, var(--ink) 9%, transparent); }
+
+.epic, .group { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; }
+.group-head { display: grid; grid-template-columns: 1rem minmax(0, 1fr) auto 1.75rem; align-items: center; gap: 0.85rem; padding: 0.9rem 1rem 0.9rem 1.1rem; background: var(--band); }
+.epic[open] > .group-head, .group[open] > .group-head { border-bottom: 1px solid var(--rule-strong); }
+.group-name { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 0.6rem; min-width: 0; }
+.group-name .level { color: var(--ink-3); font-size: 0.9rem; }
+.group-name .key { font-size: 1.1rem; }
+.group-name .title { font-size: 1.333rem; font-weight: 700; line-height: 1.2; }
+.group .group-name .title { font-weight: 400; font-style: italic; }
+.progress { display: flex; align-items: center; gap: 0.75rem; color: var(--ink-2); font-size: 0.85rem; white-space: nowrap; }
+.segments { display: flex; gap: 3px; width: 6.5rem; }
+.segments i { flex: 1; height: 0.55rem; border-radius: 2px; }
+.segments i[data-verdict="accepted"] { background: var(--passed); }
+.segments i[data-verdict="not-accepted"] { background: var(--failed); }
+.segments i[data-verdict="incomplete"] { box-shadow: inset 0 0 0 1.5px var(--skipped); }
+
+.story-list > .story + .story { border-top: 1px solid var(--rule); }
+.story-row { display: grid; grid-template-columns: 1rem minmax(0, 1fr) 7.5rem 8.25rem 1.75rem; align-items: center; gap: 0.85rem; padding: 0.75rem 1rem 0.75rem 1.1rem; }
+.story-row:hover { background: color-mix(in srgb, var(--ink) 3%, transparent); }
+.story-name { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 0.55rem; min-width: 0; }
+.story-name .key { font-size: 0.95rem; }
+.story-name .title { font-weight: 700; }
+.story-name .reason { flex-basis: 100%; color: var(--ink-2); font-size: 0.8rem; }
+.boxes { display: flex; flex-wrap: wrap; gap: 3px; }
+.pill { justify-self: start; padding: 0.2rem 0.75rem; border-radius: 999px; font-size: 0.8rem; font-weight: 700; white-space: nowrap; background: color-mix(in srgb, var(--passed) 16%, var(--panel)); }
+.pill[data-verdict="not-accepted"] { background: color-mix(in srgb, var(--failed) 16%, var(--panel)); }
+.pill[data-verdict="incomplete"] { background: transparent; box-shadow: inset 0 0 0 1px var(--skipped); color: var(--ink-2); }
+
+.acs { list-style: none; margin: 0 1rem 1rem 3rem; padding: 0; background: var(--well); border: 1px solid var(--rule); border-radius: 6px; }
+.ac + .ac { border-top: 1px solid var(--rule); }
+.ac-row { display: grid; grid-template-columns: 1rem 2.6rem minmax(0, 1fr) 7.25rem 1.75rem; align-items: start; gap: 0.6rem; padding: 0.5rem 0.6rem 0.5rem 0.75rem; font-size: 0.889rem; line-height: 1.45; }
+.ac-row > .chev { margin-top: 0.2rem; }
+.ac-row > .goto { margin-top: -0.2rem; }
+.ac-id { font-weight: 700; color: var(--ink-2); }
+.ac-status { display: inline-flex; align-items: center; gap: 0.4em; padding-top: 0.12rem; color: var(--ink-2); font-size: 0.8rem; white-space: nowrap; }
+.ac-detail { padding: 0 0.75rem 0.65rem 5.75rem; font-size: 0.8rem; color: var(--ink-3); }
+.ac-note { margin: 0; color: var(--ink-2); }
+.tests { margin: 0; padding: 0; list-style: none; }
+.test-state { font-weight: 700; color: var(--ink-2); }
+
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+th { padding: 0.6rem 1rem; background: var(--band); border-bottom: 1px solid var(--rule-strong); color: var(--ink-2); font-weight: 700; text-align: left; white-space: nowrap; }
+td { padding: 0.7rem 1rem; border-bottom: 1px solid var(--rule); vertical-align: top; white-space: nowrap; }
+td.wrap { width: 100%; min-width: 14rem; white-space: normal; }
+tbody tr:last-child td { border-bottom: 0; }
+td em { color: var(--ink-2); }
+.branch { font-weight: 700; }
+footer { margin-top: 4.5rem; padding-top: 1rem; border-top: 1px solid var(--rule); color: var(--ink-3); font-size: 0.8rem; }
+</style>
+</head>
+<body>
+<div class="page">
+<header class="masthead">
+<h1>JAALS test archive</h1>
+<p><a href="index.html">Back to the dashboard</a></p>
+<p>Updated <time datetime="2026-11-19T23:12:40.766Z">Nov 19, 2026, 11:12 PM UTC</time></p>
+</header>
+<main>
+<section id="merged">
+<h2>Merged branches</h2>
+<p class="intro">Each branch's final run before its pull request merged. These are kept permanently.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Pull request</th><th scope="col">Branch</th><th scope="col">Final run</th><th scope="col">Tests</th><th scope="col">Merged</th><th scope="col">Reports</th></tr></thead><tbody>
+<tr><td class="wrap"><a href="https://github.com/antshep-umich/si526-team/pull/25">#25</a> Picker lists open over the page (and upward near the bottom)</td><td><span class="branch">Ant-Dev-picker-overlay</span></td><td><span class="status"><svg class="glyph" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="var(--passed)"/><path d="M5.6 10.4l3 3 5.8-6.6" fill="none" stroke="var(--on-mark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Passed</span></span></td><td>731 of 732 passed, 1 skipped</td><td><time datetime="2026-11-19T19:55:59Z">Nov 19, 2026, 7:55 PM UTC</time></td><td><a href="reports/merged/pr-25/index.html" data-search="">Final run</a><br><a href="reports/main/44603414856-1/index.html" data-search="">Main after merge</a></td></tr>
+<tr><td class="wrap"><a href="https://github.com/antshep-umich/si526-team/pull/23">#23</a> Add chore categories for preferred chores (SCRUM-61)</td><td><span class="branch">Sprint4_Dev_chore-category</span></td><td><span class="status"><svg class="glyph" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="var(--passed)"/><path d="M5.6 10.4l3 3 5.8-6.6" fill="none" stroke="var(--on-mark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Passed</span></span></td><td>737 of 738 passed, 1 skipped</td><td><time datetime="2026-11-19T19:51:54Z">Nov 19, 2026, 7:51 PM UTC</time></td><td><a href="reports/merged/pr-23/index.html" data-search="">Final run</a><br><a href="reports/main/44602722718-1/index.html" data-search="">Main after merge</a></td></tr>
+<tr><td class="wrap"><a href="https://github.com/antshep-umich/si526-team/pull/24">#24</a> Appearance setting on the profile: System, Light or Dark</td><td><span class="branch">Ant-Dev-appearance</span></td><td><span class="status"><svg class="glyph" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="var(--passed)"/><path d="M5.6 10.4l3 3 5.8-6.6" fill="none" stroke="var(--on-mark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Passed</span></span></td><td>728 of 729 passed, 1 skipped</td><td><time datetime="2026-11-19T19:45:02Z">Nov 19, 2026, 7:45 PM UTC</time></td><td><a href="reports/merged/pr-24/index.html" data-search="">Final run</a><br><a href="reports/main/44601545706-1/index.html" data-search="">Main after merge</a></td></tr>
+<tr><td class="wrap"><a href="https://github.com/antshep-umich/si526-team/pull/22">#22</a> Dashboard caught up with Jira; chore dropdown with Edit chore; animated dropdowns; Firefox tab bar fix</td><td><span class="branch">Ant-Dev-Sprint4</span></td><td><span class="status"><svg class="glyph" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="var(--passed)"/><path d="M5.6 10.4l3 3 5.8-6.6" fill="none" stroke="var(--on-mark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Passed</span></span></td><td>721 of 722 passed, 1 skipped</td><td><time datetime="2026-11-19T19:35:19Z">Nov 19, 2026, 7:35 PM UTC</time></td><td><a href="reports/merged/pr-22/index.html" data-search="">Final run</a><br><a href="reports/main/44599885805-1/index.html" data-search="">Main after merge</a></td></tr>
+<tr><td class="wrap"><a href="https://github.com/antshep-umich/si526-team/pull/20">#20</a> Add the User profile page (SCRUM-72)</td><td><span class="branch">Sprint4_Dev_profile</span></td><td><span class="status"><svg class="glyph" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="var(--passed)"/><path d="M5.6 10.4l3 3 5.8-6.6" fill="none" stroke="var(--on-mark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Passed</span></span></td><td>683 of 684 passed, 1 skipped</td><td><time datetime="2026-11-19T18:41:02Z">Nov 19, 2026, 6:41 PM UTC</time></td><td><a href="reports/merged/pr-20/index.html" data-search="">Final run</a><br><a href="reports/main/44590407626-1/index.html" data-search="">Main after merge</a></td></tr>
+<tr><td class="wrap"><a href="https://github.com/antshep-umich/si526-team/pull/19">#19</a> Seed the test household on production builds</td><td><span class="branch">Ant-Dev-Sprint4</span></td><td><span class="status"><svg class="glyph" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="var(--passed)"/><path d="M5.6 10.4l3 3 5.8-6.6" fill="none" stroke="var(--on-mark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Passed</span></span></td><td>642 of 643 passed, 1 skipped</td><td><time datetime="2026-11-19T17:42:54Z">Nov 19, 2026, 5:42 PM UTC</time></td><td><a href="reports/merged/pr-19/index.html" data-search="">Final run</a><br><a href="reports/main/44580141774-1/index.html" data-search="">Main after merge</a></td></tr>
+<tr><td class="wrap"><a href="https://github.com/antshep-umich/si526-team/pull/18">#18</a> Redesign the three chore histories as one family</td><td><span class="branch">chore-history-design</span></td><td><span class="status"><svg class="glyph" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="var(--passed)"/><path d="M5.6 10.4l3 3 5.8-6.6" fill="none" stroke="var(--on-mark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Passed</span></span></td><td>642 of 643 passed, 1 skipped</td><td><time datetime="2026-11-19T17:34:49Z">Nov 19, 2026, 5:34 PM UTC</time></td><td><a href="reports/merged/pr-18/index.html" data-search="">Final run</a><br><a href="reports/main/44578706155-1/index.html" data-search="">Main after merge</a></td></tr>
+<tr><td class="wrap"><a href="https://github.com/antshep-umich/si526-team/pull/17">#17</a> Sprint 4: House tab (SCRUM-74), tab bar and header on every screen, test household</td><td><span class="branch">Ant-Dev-Sprint4</span></td><td><span class="status"><svg class="glyph" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="var(--passed)"/><path d="M5.6 10.4l3 3 5.8-6.6" fill="none" stroke="var(--on-mark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Passed</span></span></td><td>634 of 635 passed, 1 skipped</td><td><time datetime="2026-11-19T17:32:25Z">Nov 19, 2026, 5:32 PM UTC</time></td><td><a href="reports/merged/pr-17/index.html" data-search="">Final run</a><br><a href="reports/main/44578275457-1/index.html" data-search="">Main after merge</a></td></tr>
+<tr><td class="wrap"><a href="https://github.com/antshep-umich/si526-team/pull/16">#16</a> Add Chore details screen (SCRUM-53)</td><td><span class="branch">Sprint4_Dev_chore-details</span></td><td><span class="status"><svg class="glyph" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="var(--passed)"/><path d="M5.6 10.4l3 3 5.8-6.6" fill="none" stroke="var(--on-mark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Passed</span></span></td><td>595 of 595 passed</td><td><time datetime="2026-11-19T17:20:34Z">Nov 19, 2026, 5:20 PM UTC</time></td><td><a href="reports/merged/pr-16/index.html" data-search="">Final run</a></td></tr>
+<tr><td class="wrap"><a href="https://github.com/antshep-umich/si526-team/pull/15">#15</a> Give outline buttons a solid background</td><td><span class="branch">outline-button-background</span></td><td><span class="status"><svg class="glyph" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="var(--passed)"/><path d="M5.6 10.4l3 3 5.8-6.6" fill="none" stroke="var(--on-mark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Passed</span></span></td><td>585 of 585 passed</td><td><time datetime="2026-11-18T21:50:55Z">Nov 18, 2026, 9:50 PM UTC</time></td><td><a href="reports/merged/pr-15/index.html" data-search="">Final run</a></td></tr>
+<tr><td class="wrap"><a href="https://github.com/antshep-umich/si526-team/pull/14">#14</a> Add monthly household chore history (SCRUM-47)</td><td><span class="branch">Sprint3_Dev_monthly-history</span></td><td><span class="status"><svg class="glyph" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="var(--passed)"/><path d="M5.6 10.4l3 3 5.8-6.6" fill="none" stroke="var(--on-mark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Passed</span></span></td><td>585 of 585 passed</td><td><time datetime="2026-11-12T01:26:21Z">Nov 12, 2026, 1:26 AM UTC</time></td><td><a href="reports/merged/pr-14/index.html" data-search="">Final run</a></td></tr>
+<tr><td class="wrap"><a href="https://github.com/antshep-umich/si526-team/pull/13">#13</a> Add weekly household chore history (SCRUM-46)</td><td><span class="branch">Sprint3_Dev_chore-history</span></td><td><span class="status"><svg class="glyph" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="var(--passed)"/><path d="M5.6 10.4l3 3 5.8-6.6" fill="none" stroke="var(--on-mark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Passed</span></span></td><td>570 of 570 passed</td><td><time datetime="2026-11-12T01:24:38Z">Nov 12, 2026, 1:24 AM UTC</time></td><td><a href="reports/merged/pr-13/index.html" data-search="">Final run</a><br><a href="reports/main/43134324468-1/index.html" data-search="">Main after merge</a></td></tr>
+<tr><td class="wrap"><a href="https://github.com/antshep-umich/si526-team/pull/12">#12</a> Add My chore history (SCRUM-44)</td><td><span class="branch">Sprint3_Dev_chore-history</span></td><td><span class="status"><svg class="glyph" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="var(--passed)"/><path d="M5.6 10.4l3 3 5.8-6.6" fill="none" stroke="var(--on-mark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Passed</span></span></td><td>569 of 569 passed</td><td><time datetime="2026-11-11T03:25:42Z">Nov 11, 2026, 3:25 AM UTC</time></td><td><a href="reports/merged/pr-12/index.html" data-search="">Final run</a><br><a href="reports/main/42952695040-1/index.html" data-search="">Main after merge</a></td></tr>
+<tr><td class="wrap"><a href="https://github.com/antshep-umich/si526-team/pull/11">#11</a> Track Sprint 2 stories&#39; acceptance criteria on the test dashboard</td><td><span class="branch">acceptance-criteria-sprint-2</span></td><td><span class="status"><svg class="glyph" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="var(--passed)"/><path d="M5.6 10.4l3 3 5.8-6.6" fill="none" stroke="var(--on-mark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Passed</span></span></td><td>538 of 538 passed</td><td><time datetime="2026-11-02T03:00:30Z">Nov 2, 2026, 3:00 AM UTC</time></td><td><a href="reports/merged/pr-11/index.html" data-search="">Final run</a><br><a href="reports/main/41380692949-1/index.html" data-search="">Main after merge</a></td></tr>
+</tbody></table></div>
+
+</section>
+<section id="history">
+<h2>History of main</h2>
+<p class="intro">Every run on main, newest first. Full reports are kept for the newest 30.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Tested</th><th scope="col">Commit</th><th scope="col">Result</th><th scope="col">Tests</th><th scope="col">Time</th><th scope="col">Report</th></tr></thead><tbody>
+<tr><td><time datetime="2026-11-19T19:56:20.543Z">Nov 19, 2026, 7:56 PM UTC</time></td><td class="wrap"><a href="https://github.com/antshep-umich/si526-team/commit/81bcbcb039d24210bfc12caf45373e337221461c">81bcbcb</a> <em>Merge pull request #25 from antshep-umich/Ant-Dev-picker-overlay</em></td><td><span class="status"><svg class="glyph" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="var(--passed)"/><path d="M5.6 10.4l3 3 5.8-6.6" fill="none" stroke="var(--on-mark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Passed</span></span></td><td>747 of 748 passed, 1 skipped</td><td>17.9 s</td><td><a href="reports/main/44603414856-1/index.html" data-search="">Open report</a></td></tr>
+<tr><td><time datetime="2026-11-19T19:52:19.602Z">Nov 19, 2026, 7:52 PM UTC</time></td><td class="wrap"><a href="https://github.com/antshep-umich/si526-team/commit/a7ce83b6096612a23e0b564950eeb8d04034663a">a7ce83b</a> <em>Merge pull request #23 from antshep-umich/Sprint4_Dev_chore-category</em></td><td><span class="status"><svg class="glyph" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="var(--passed)"/><path d="M5.6 10.4l3 3 5.8-6.6" fill="none" stroke="var(--on-mark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Passed</span></span></td><td>744 of 745 passed, 1 skipped</td><td>20.3 s</td><td><a href="reports/main/44602722718-1/index.html" data-search="">Open report</a></td></tr>
+<tr><td><time datetime="2026-11-19T19:45:30.663Z">Nov 19, 2026, 7:45 PM UTC</time></td><td class="wrap"><a href="https://github.com/antshep-umich/si526-team/commit/e75133179e768ae728840be36eabdaf952ae6fac">e751331</a> <em>Merge pull request #24 from antshep-umich/Ant-Dev-appearance</em></td><td><span class="status"><svg class="glyph" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="var(--failed)"/><path d="M6.8 6.8l6.4 6.4M13.2 6.8l-6.4 6.4" stroke="var(--on-mark)" stroke-width="2" stroke-linecap="round"/></svg><span>Failed</span></span></td><td>727 of 729 passed, 1 skipped</td><td>29.5 s</td><td><a href="reports/main/44601545706-1/index.html" data-search="">Open report</a></td></tr>
+<tr><td><time datetime="2026-11-19T19:35:54.759Z">Nov 19, 2026, 7:35 PM UTC</time></td><td class="wrap"><a href="https://github.com/antshep-umich/si526-team/commit/dfa90a09fd1429307bf163fd98d7c3a5c0855f11">dfa90a0</a> <em>Merge pull request #22 from antshep-umich/Ant-Dev-Sprint4</em></td><td><span class="status"><svg class="glyph" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="var(--passed)"/><path d="M5.6 10.4l3 3 5.8-6.6" fill="none" stroke="var(--on-mark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Passed</span></span></td><td>721 of 722 passed, 1 skipped</td><td>21.5 s</td><td><a href="reports/main/44599885805-1/index.html" data-search="">Open report</a></td></tr>
+<tr><td><time datetime="2026-11-19T18:41:36.877Z">Nov 19, 2026, 6:41 PM UTC</time></td><td class="wrap"><a href="https://github.com/antshep-umich/si526-team/commit/9f7c910705a2e1236629d93a8f88200acaabf913">9f7c910</a> <em>Merge pull request #20 from antshep-umich/Sprint4_Dev_profile</em></td><td><span class="status"><svg class="glyph" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="var(--passed)"/><path d="M5.6 10.4l3 3 5.8-6.6" fill="none" stroke="var(--on-mark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Passed</span></span></td><td>683 of 684 passed, 1 skipped</td><td>17.6 s</td><td><a href="reports/main/44590407626-1/index.html" data-search="">Open report</a></td></tr>
+<tr><td><time datetime="2026-11-19T17:43:19.754Z">Nov 19, 2026, 5:43 PM UTC</time></td><td class="wrap"><a href="https://github.com/antshep-umich/si526-team/commit/0e2585f064b6d43c0b602a77dafda05e14eb7c7a">0e2585f</a> <em>Merge pull request #19 from antshep-umich/Ant-Dev-Sprint4</em></td><td><span class="status"><svg class="glyph" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="var(--passed)"/><path d="M5.6 10.4l3 3 5.8-6.6" fill="none" stroke="var(--on-mark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Passed</span></span></td><td>642 of 643 passed, 1 skipped</td><td>18.7 s</td><td><a href="reports/main/44580141774-1/index.html" data-search="">Open report</a></td></tr>
+<tr><td><time datetime="2026-11-19T17:35:18.153Z">Nov 19, 2026, 5:35 PM UTC</time></td><td class="wrap"><a href="https://github.com/antshep-umich/si526-team/commit/c6f00871c7655d095840296bf978ba6eeeedeba2">c6f0087</a> <em>Merge pull request #18 from antshep-umich/chore-history-design</em></td><td><span class="status"><svg class="glyph" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="var(--passed)"/><path d="M5.6 10.4l3 3 5.8-6.6" fill="none" stroke="var(--on-mark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Passed</span></span></td><td>642 of 643 passed, 1 skipped</td><td>19.7 s</td><td><a href="reports/main/44578706155-1/index.html" data-search="">Open report</a></td></tr>
+<tr><td><time datetime="2026-11-19T17:32:50.592Z">Nov 19, 2026, 5:32 PM UTC</time></td><td class="wrap"><a href="https://github.com/antshep-umich/si526-team/commit/9fd784c32b24602e2ba7ee6f56fae4a2a4d88bb8">9fd784c</a> <em>Merge pull request #17 from antshep-umich/Ant-Dev-Sprint4</em></td><td><span class="status"><svg class="glyph" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="var(--passed)"/><path d="M5.6 10.4l3 3 5.8-6.6" fill="none" stroke="var(--on-mark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Passed</span></span></td><td>634 of 635 passed, 1 skipped</td><td>18.4 s</td><td><a href="reports/main/44578275457-1/index.html" data-search="">Open report</a></td></tr>
+<tr><td><time datetime="2026-11-12T01:25:03.372Z">Nov 12, 2026, 1:25 AM UTC</time></td><td class="wrap"><a href="https://github.com/antshep-umich/si526-team/commit/133148d8cd190197eba203072ebae040a62af9c2">133148d</a> <em>Merge pull request #13 from antshep-umich/Sprint3_Dev_chore-history</em></td><td><span class="status"><svg class="glyph" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="var(--passed)"/><path d="M5.6 10.4l3 3 5.8-6.6" fill="none" stroke="var(--on-mark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Passed</span></span></td><td>570 of 570 passed</td><td>14.9 s</td><td><a href="reports/main/43134324468-1/index.html" data-search="">Open report</a></td></tr>
+<tr><td><time datetime="2026-11-11T03:26:09.046Z">Nov 11, 2026, 3:26 AM UTC</time></td><td class="wrap"><a href="https://github.com/antshep-umich/si526-team/commit/3279035f303ac78946b53c81268c2979c49d7486">3279035</a> <em>Merge pull request #12 from antshep-umich/Sprint3_Dev_chore-history</em></td><td><span class="status"><svg class="glyph" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="var(--passed)"/><path d="M5.6 10.4l3 3 5.8-6.6" fill="none" stroke="var(--on-mark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Passed</span></span></td><td>569 of 569 passed</td><td>14.6 s</td><td><a href="reports/main/42952695040-1/index.html" data-search="">Open report</a></td></tr>
+<tr><td><time datetime="2026-11-02T03:00:58.820Z">Nov 2, 2026, 3:00 AM UTC</time></td><td class="wrap"><a href="https://github.com/antshep-umich/si526-team/commit/898bfeba4594819a44a487a3f45c9dd87c2f0fd1">898bfeb</a> <em>Merge pull request #11 from antshep-umich/acceptance-criteria-sprint-2</em></td><td><span class="status"><svg class="glyph" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="var(--passed)"/><path d="M5.6 10.4l3 3 5.8-6.6" fill="none" stroke="var(--on-mark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Passed</span></span></td><td>538 of 538 passed</td><td>18.7 s</td><td><a href="reports/main/41380692949-1/index.html" data-search="">Open report</a></td></tr>
+<tr><td><time datetime="2026-10-29T16:11:28.645Z">Oct 29, 2026, 4:11 PM UTC</time></td><td class="wrap"><a href="https://github.com/antshep-umich/si526-team/commit/044c240112070eb9a1d5ec84516dd9b30909e138">044c240</a> <em>Merge pull request #10 from antshep-umich/Sprint2_Dev</em></td><td><span class="status"><svg class="glyph" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="var(--passed)"/><path d="M5.6 10.4l3 3 5.8-6.6" fill="none" stroke="var(--on-mark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Passed</span></span></td><td>502 of 502 passed</td><td>17.4 s</td><td><a href="reports/main/40909029131-1/index.html" data-search="">Open report</a></td></tr>
+</tbody></table></div>
+
+</section>
+</main>
+<footer>
+<p>Built with the dashboard after each push, from the same history.</p>
+</footer>
+</div>
+<div class="tip" hidden></div>
+<script>
+(() => {
+  // Vitest's HTML report keeps its search in local storage under this key (Vitest 5).
+  // Links with data-search set it just before the report opens: "tag:SCRUM-3" shows
+  // that story's tests, "" clears it. If Vitest renames the key, the links still open
+  // the report, just unfiltered.
+  const FILTER_KEY = "vitest-ui_task-tree-filter";
+  const remember = (event) => {
+    const a = event.target.closest && event.target.closest("a[data-search]");
+    if (!a) return;
+    try {
+      let saved = {};
+      try { saved = JSON.parse(localStorage.getItem(FILTER_KEY) || "{}") || {}; } catch {}
+      localStorage.setItem(FILTER_KEY, JSON.stringify({
+        ...saved,
+        failed: false, success: false, skipped: false, slow: false, onlyTests: false,
+        search: a.dataset.search,
+        project: "__vitest_ui_all_projects__",
+      }));
+    } catch {}
+  };
+  document.addEventListener("click", remember);
+
+  // Expand all / Collapse all, above and below the stories.
+  document.addEventListener("click", (event) => {
+    const button = event.target.closest && event.target.closest("[data-tree]");
+    if (!button) return;
+    const expand = button.dataset.tree === "expand";
+    const all = document.querySelectorAll("#stories details");
+    for (const d of all) {
+      if (!expand) d.open = false;
+      else if (!d.closest(".ac")) d.open = true;
+    }
+  });
+  document.addEventListener("auxclick", remember);
+
+  const format = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });
+  const local = (iso) => { const d = new Date(iso); return isNaN(d) ? "" : format.format(d); };
+  for (const t of document.querySelectorAll("time[datetime]")) { const text = local(t.getAttribute("datetime")); if (text) t.textContent = text; }
+  const tip = document.querySelector(".tip");
+  for (const title of document.querySelectorAll(".chart title")) title.remove();
+  const show = (bar, x, y) => {
+    tip.textContent = local(bar.dataset.time) + "\n" + bar.dataset.tip;
+    tip.hidden = false;
+    tip.style.left = Math.max(8, Math.min(x + 12, innerWidth - tip.offsetWidth - 8)) + "px";
+    tip.style.top = (y - tip.offsetHeight - 12 < 8 ? y + 18 : y - tip.offsetHeight - 12) + "px";
+  };
+  const hide = () => { tip.hidden = true; };
+  for (const bar of document.querySelectorAll(".chart .bar")) {
+    bar.addEventListener("pointermove", (e) => show(bar, e.clientX, e.clientY));
+    bar.addEventListener("pointerleave", hide);
+    bar.addEventListener("focus", () => { const r = bar.getBoundingClientRect(); show(bar, r.left + r.width / 2, r.top + 40); });
+    bar.addEventListener("blur", hide);
+  }
+})();
+</script>
+</body>
+</html>
