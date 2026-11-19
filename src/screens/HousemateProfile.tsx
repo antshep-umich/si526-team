@@ -5,7 +5,7 @@ import styles from "./House.module.css";
 
 // Not built yet (placeholder): a housemate's profile, opened from the House tab (SCRUM-74 AC2).
 // SCRUM-72 (profile) and SCRUM-63 (preferred chores) replace it; leaving a household
-// (SCRUM-75) will live there too (README Conflicts row 30).
+// (SCRUM-75) will live there too (README Conflicts row 35).
 
 export default function HousemateProfile({ member }: { member: HouseholdMember }) {
   return (

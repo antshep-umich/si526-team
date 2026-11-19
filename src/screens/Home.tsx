@@ -29,6 +29,8 @@ type HomeProps = {
   household: Household;
   userId: string;
   onAddChore: () => void;
+  /** Opens one chore's details (SCRUM-53). */
+  onOpenDetails: (choreId: string) => void;
   /** Opens one chore's history (SCRUM-45). */
   onOpenChore: (choreId: string) => void;
 };
@@ -73,6 +75,7 @@ export default function Home({
   household,
   userId,
   onAddChore,
+  onOpenDetails,
   onOpenChore,
 }: HomeProps) {
   const [list, setList] = useState<ListState>({ status: "loading" });
@@ -156,6 +159,7 @@ export default function Home({
           // SCRUM-8: only the assignee can mark it done or undo it.
           onToggle={isMine(chore, userId) ? () => toggle(chore) : undefined}
           busy={saving.has(chore.id)}
+          onOpen={() => onOpenDetails(chore.id)}
           onViewHistory={() => onOpenChore(chore.id)}
         />
       </li>

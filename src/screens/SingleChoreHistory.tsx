@@ -74,7 +74,7 @@ export default function ChoreHistory({ choreId }: ChoreHistoryProps) {
   return (
     <main className={styles.page}>
       <div className={styles.content}>
-        {/* The tab bar's Chores tab is the way back (README Conflicts row 28). */}
+        {/* The tab bar's Chores tab is the way back (README Conflicts row 33). */}
         {!result?.ok && <Header title="Chore history" />}
 
         {loading && <p className={styles.message}>Loading chore history…</p>}

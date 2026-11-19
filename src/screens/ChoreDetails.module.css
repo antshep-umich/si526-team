@@ -1,0 +1,65 @@
+/* Figma "Home - Chore Details" (634:192): 56px from the top, 24px from the sides,
+   28px between the header and the fields. The header is Header.tsx. */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  width: 100%;
+  max-width: 402px;
+  margin: 0 auto;
+  padding: 56px 24px 24px;
+}
+
+/* Read-only fields drawn like the Text field and Text area components. */
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin: 0;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font: var(--type-field-label);
+  color: var(--color-text-default);
+}
+
+.box {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  margin: 0;
+  padding: 12px 14px;
+  border: 1.5px solid var(--color-border-input);
+  border-radius: 12px;
+  background: var(--color-border-default);
+  font: var(--type-body);
+  color: var(--color-text-default);
+  overflow-wrap: break-word;
+}
+
+.notes {
+  align-items: flex-start;
+  min-height: 96px;
+}
+
+/* Not in Figma yet: "No description added." is muted so it doesn't read as a note. */
+.empty {
+  color: var(--color-text-muted);
+}
+
+.message {
+  font: var(--type-body);
+  color: var(--color-text-muted);
+}
+
+.failed {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}

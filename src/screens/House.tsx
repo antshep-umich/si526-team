@@ -11,7 +11,7 @@ import Header from "./Header.tsx";
 import styles from "./House.module.css";
 
 // SCRUM-74 House Page. Not in Figma yet (placeholder): built from the design system as agreed
-// in docs/superpowers/specs/2026-11-15-house-tab-design.md (README Conflicts rows 30 and 31).
+// in docs/superpowers/specs/2026-11-15-house-tab-design.md (README Conflicts rows 35 and 36).
 
 type HouseProps = {
   /** The signed-in user, whose row says "You". */
@@ -112,7 +112,7 @@ export default function House({ userId, onOpenHousemate }: HouseProps) {
         <p className={styles.count}>{count === 1 ? "1 member" : `${count} members`}</p>
       </Header>
 
-      {/* No household managers until SCRUM-62: no "Become household manager" button yet (row 30). */}
+      {/* No household managers until SCRUM-62: no "Become household manager" button yet (row 35). */}
       <section className={`${styles.card} ${styles.manager}`} aria-label="Household manager">
         <span className={styles.managerAvatar} aria-hidden="true">
           ?

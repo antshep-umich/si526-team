@@ -23,11 +23,11 @@ type ChoreCardProps = {
   /** Turns the checkbox off while a change is being saved. */
   busy?: boolean;
   /**
-   * Makes the name and details a button that shows or hides more about the chore
-   * (chore history). Not in Figma yet: the expanded row isn't designed.
+   * Makes the name and details a button that opens the chore: its details screen
+   * (SCRUM-53, from Home) or more about it in place (chore history).
    */
   onOpen?: () => void;
-  /** Whether the details opened by onOpen are showing. */
+  /** Whether the details opened by onOpen are showing in place. Leave out when onOpen opens a screen. */
   expanded?: boolean;
   /** The id of the element onOpen shows. */
   controls?: string;
@@ -41,7 +41,7 @@ export default function ChoreCard({
   onViewHistory,
   busy = false,
   onOpen,
-  expanded = false,
+  expanded,
   controls,
 }: ChoreCardProps) {
   const done = status === "done" || status === "late";

@@ -6,6 +6,7 @@ import { authClient } from "./auth.ts";
 import { ToastProvider, useToast } from "./components/Toast.tsx";
 import { forgetInviteCode, pendingInviteCode } from "./inviteLink.ts";
 import AddChore from "./screens/AddChore.tsx";
+import ChoreDetails from "./screens/ChoreDetails.tsx";
 import ChoreHistory from "./screens/ChoreHistory.tsx";
 import ChooseHousehold from "./screens/ChooseHousehold.tsx";
 import CreateHousehold from "./screens/CreateHousehold.tsx";
@@ -86,6 +87,7 @@ type View =
   | { name: "add-chore" }
   | { name: "my-history" }
   | { name: "household-history" }
+  | { name: "chore-details"; choreId: string }
   | { name: "chore"; choreId: string }
   | { name: "house" }
   | { name: "housemate"; member: HouseholdMember };
@@ -174,6 +176,9 @@ function SignedIn({ userId }: { userId: string }) {
       case "household-history":
         content = <HouseholdChoreHistory household={household} userId={userId} />;
         break;
+      case "chore-details":
+        content = <ChoreDetails household={household} userId={userId} choreId={view.choreId} />;
+        break;
       case "chore":
         content = <SingleChoreHistory choreId={view.choreId} />;
         break;
@@ -189,6 +194,7 @@ function SignedIn({ userId }: { userId: string }) {
             household={household}
             userId={userId}
             onAddChore={() => setView({ name: "add-chore" })}
+            onOpenDetails={(choreId) => setView({ name: "chore-details", choreId })}
             onOpenChore={(choreId) => setView({ name: "chore", choreId })}
           />
         );

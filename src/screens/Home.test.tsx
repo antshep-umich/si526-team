@@ -7,12 +7,13 @@ import type { Chore } from "../chores.ts";
 import { POLL_INTERVAL_MS } from "../usePolling.ts";
 import Home, { forgetChoreFilter } from "./Home.tsx";
 
-const { listChores, completeChore, undoChore } = vi.hoisted(() => ({
+const { listChores, completeChore, undoChore, getChore } = vi.hoisted(() => ({
   listChores: vi.fn(),
   completeChore: vi.fn(),
   undoChore: vi.fn(),
+  getChore: vi.fn(),
 }));
-vi.mock("../api/chores.ts", () => ({ listChores, completeChore, undoChore }));
+vi.mock("../api/chores.ts", () => ({ listChores, completeChore, undoChore, getChore }));
 
 const household: Household = {
   id: "h1",
@@ -56,7 +57,7 @@ const chores = [
 ];
 
 function renderHome(props: Partial<Parameters<typeof Home>[0]> = {}) {
-  const callbacks = { onAddChore: vi.fn(), onOpenChore: vi.fn() };
+  const callbacks = { onAddChore: vi.fn(), onOpenDetails: vi.fn(), onOpenChore: vi.fn() };
   render(<Home household={household} userId="u-ana" {...callbacks} {...props} />);
   return callbacks;
 }
@@ -65,7 +66,7 @@ function renderHome(props: Partial<Parameters<typeof Home>[0]> = {}) {
 const names = (list: HTMLElement) =>
   within(list)
     .getAllByRole("listitem")
-    .map((item) => item.querySelector("p")?.textContent);
+    .map((item) => item.querySelector(".name")?.textContent);
 
 /** The card for a chore, found by its name. */
 const card = (name: string) => screen.getByText(name).closest("li")!;
@@ -107,6 +108,7 @@ describe("Home chore list", () => {
         household={household}
         userId="u-ana"
         onAddChore={() => {}}
+        onOpenDetails={() => {}}
         onOpenChore={() => {}}
       />,
     );
@@ -394,5 +396,16 @@ describe("SCRUM-8 acceptance criteria", { tags: ["SCRUM-8"] }, () => {
     for (const sams of ["Buy dish soap", "Take out trash", "Vacuum"]) {
       expect(within(card(sams)).queryByRole("checkbox")).not.toBeInTheDocument();
     }
+  });
+});
+
+describe("Opening a chore from the list", { tags: ["SCRUM-53"] }, () => {
+  it("AC1: selecting a chore in the list opens its details", async () => {
+    const { onOpenDetails, onOpenChore } = renderHome();
+
+    await userEvent.click(await screen.findByRole("button", { name: /^Clean bathroom/ }));
+
+    expect(onOpenDetails).toHaveBeenCalledWith("Clean bathroom");
+    expect(onOpenChore).not.toHaveBeenCalled();
   });
 });

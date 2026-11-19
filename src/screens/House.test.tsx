@@ -75,7 +75,7 @@ describe("House page", { tags: ["SCRUM-74"] }, () => {
     expect(onOpenHousemate).toHaveBeenCalledWith(member("u-sam", "Sam Ito"));
   });
 
-  // Skipped until SCRUM-62 adds the button (AC3's note, README Conflicts row 30). Run it then.
+  // Skipped until SCRUM-62 adds the button (AC3's note, README Conflicts row 35). Run it then.
   it.skip('AC3: with no manager, the card shows "No Household Manager assigned" and a "Become household manager" button', async () => {
     renderHouse();
 

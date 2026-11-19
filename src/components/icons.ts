@@ -6,6 +6,7 @@ import checkDark from "../assets/icons/dark/check.svg";
 import checkboxOverdueDark from "../assets/icons/dark/checkbox-overdue.svg";
 import checkboxPendingDark from "../assets/icons/dark/checkbox-pending.svg";
 import chevronDownDark from "../assets/icons/dark/chevron-down.svg";
+import chevronLeftDark from "../assets/icons/dark/chevron-left.svg";
 import chevronUpDark from "../assets/icons/dark/chevron-up.svg";
 import clockDark from "../assets/icons/dark/clock.svg";
 import eyeOffDark from "../assets/icons/dark/eye-off.svg";
@@ -24,6 +25,7 @@ import checkLight from "../assets/icons/light/check.svg";
 import checkboxOverdueLight from "../assets/icons/light/checkbox-overdue.svg";
 import checkboxPendingLight from "../assets/icons/light/checkbox-pending.svg";
 import chevronDownLight from "../assets/icons/light/chevron-down.svg";
+import chevronLeftLight from "../assets/icons/light/chevron-left.svg";
 import chevronUpLight from "../assets/icons/light/chevron-up.svg";
 import clockLight from "../assets/icons/light/clock.svg";
 import eyeOffLight from "../assets/icons/light/eye-off.svg";
@@ -61,6 +63,11 @@ export const icons = {
    * and the export is unturned, so callers rotate it (see DoneSection and PickerField).
    */
   chevronUp: { light: chevronUpLight, dark: chevronUpDark },
+  /**
+   * 32×32, text/default. Figma's icon/chevron/left (Chore details header); its asset
+   * couldn't be exported, so this is drawn to match the other chevrons.
+   */
+  chevronLeft: { light: chevronLeftLight, dark: chevronLeftDark },
   /** 20×20, text/muted */
   calendar: { light: calendarLight, dark: calendarDark },
   /** 24×24, text/muted. The password is hidden; pressing shows it. */

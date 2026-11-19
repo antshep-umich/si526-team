@@ -144,7 +144,7 @@ screen unmounts. Results replace data in place: React re-renders only what chang
 
 ## Docs
 
-README Conflicts row 9 rewritten (only the two toasts remain, built as a placeholder), rows 30–31
+README Conflicts row 9 rewritten (only the two toasts remain, built as a placeholder), rows 35–36
 updated; AGENTS.md (repo map, frontend notes, current state); TECH_SPEC §6 note on `/join/CODE`.
 
 ## Left to the builder

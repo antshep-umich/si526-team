@@ -18,6 +18,7 @@ const {
   listChores,
   createChore,
   listChoreHistory,
+  getChore,
   getChoreHistory,
 } = vi.hoisted(() => ({
   useSession: vi.fn(),
@@ -30,6 +31,7 @@ const {
   listChores: vi.fn(),
   createChore: vi.fn(),
   listChoreHistory: vi.fn(),
+  getChore: vi.fn(),
   getChoreHistory: vi.fn(),
 }));
 vi.mock("./auth.ts", () => ({
@@ -43,7 +45,7 @@ vi.mock("./api/chores.ts", () => ({
   completeChore: vi.fn(),
   undoChore: vi.fn(),
   listChoreHistory,
-  getChore: vi.fn(),
+  getChore,
   getChoreHistory,
 }));
 
@@ -98,6 +100,7 @@ beforeEach(() => {
     listChores,
     createChore,
     listChoreHistory,
+    getChore,
     getChoreHistory,
   ]) {
     mock.mockReset();
@@ -188,6 +191,7 @@ describe("App when signed in", () => {
     };
     listChores.mockResolvedValue({ ok: true, chores: [chore] });
     getChoreHistory.mockResolvedValue({ ok: true, chore, history: [] });
+    getChore.mockResolvedValue({ ok: true, chore });
     getCurrentHousehold.mockResolvedValue({ ok: true, household });
     render(<App />);
     await screen.findByRole("heading", { name: "Maple St House" });
@@ -200,6 +204,7 @@ describe("App when signed in", () => {
       ["Add chore", () => userEvent.click(screen.getByRole("button", { name: "Add chore" }))],
       ["My chore history", fromMenu("My chore history")],
       ["Household chore history", fromMenu("Household chore history")],
+      ["Mop kitchen", () => userEvent.click(screen.getByRole("button", { name: /^Mop kitchen/ }))],
       ["Mop kitchen", () => userEvent.click(screen.getByRole("button", { name: "View history for Mop kitchen" }))],
     ] as const;
 
@@ -501,6 +506,35 @@ describe("App acceptance criteria", () => {
       await userEvent.click(screen.getByRole("button", { name: "Add chore" }));
 
       expect(screen.getByRole("heading", { name: "Add chore" })).toBeInTheDocument();
+    });
+  });
+
+  describe("Chore details", { tags: ["SCRUM-53"] }, () => {
+    // Back is the Chores tab, as on every screen in a household (README Conflicts row 33).
+    it("AC3: Back returns to the previous screen: the Chores tab returns to the chore list as it was", async () => {
+      const chore = {
+        id: "c1",
+        name: "Mop kitchen",
+        notes: null,
+        dueDate: "2999-01-01",
+        assignee: { userId: "u-ana", name: "Ana Lopez" },
+        createdBy: { userId: "u-ana", name: "Ana Lopez" },
+        createdAt: "2026-10-29T16:00:00.000Z",
+        completedAt: null,
+        completedBy: null,
+      };
+      listChores.mockResolvedValue({ ok: true, chores: [chore] });
+      getChore.mockResolvedValue({ ok: true, chore });
+      await openChoreList();
+      await userEvent.click(await screen.findByRole("radio", { name: "Mine" }));
+
+      await userEvent.click(await screen.findByRole("button", { name: /^Mop kitchen/ }));
+      expect(await screen.findByText("No description added.")).toBeInTheDocument();
+      await userEvent.click(screen.getByRole("button", { name: "Chores" }));
+
+      expect(await screen.findByRole("heading", { level: 1, name: "Maple St House" })).toBeInTheDocument();
+      expect(screen.getByRole("radio", { name: "Mine" })).toBeChecked();
+      expect(await screen.findByRole("button", { name: /^Mop kitchen/ })).toBeInTheDocument();
     });
   });
 
