@@ -4,7 +4,8 @@
  * Change values in Figma first, then here, so the two stay in step.
  *
  * Light or dark mode follows the device's system setting. <html data-theme="light|dark">
- * overrides it; only the components demo page sets that (for its theme switch).
+ * overrides it: the Appearance choice on the profile (src/theme.ts), and the components
+ * demo page's theme switch.
  */
 
 :root {

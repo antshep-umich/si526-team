@@ -17,7 +17,7 @@ invite code, and keep track of who's doing which chore.
 - **Using an AI coding agent?** Point it at [AGENTS.md](AGENTS.md), a compact briefing written for agents.
 
 It's a **mobile web app**: designed for phones (402×874, the iPhone 17 frame) and it follows the
-phone's light or dark setting.
+phone's light or dark setting, unless you choose Light or Dark under Appearance on your profile.
 
 ## What works today
 
@@ -352,6 +352,7 @@ update the story or Figma to match and delete the row.
 | 41 | SCRUM-72 | Confirmation messages | Preferences: "displays a confirmation message" (no words given); name: "Profile updated successfully." | Not designed | Toasts: "Profile updated successfully.", "Chore preferences saved.", "Household preferences saved." | Built (placeholder) | PM: confirm the wording |
 | 42 | SCRUM-72 | Getting to the profile | "The user opens their profile page" | The frame has the menu icon but no way in | "My profile" in the header menu, under the histories. The House tab's housemate profile (SCRUM-74 AC2) is still its placeholder | Built (placeholder) | UX: a Profile tab or menu item? |
 | 43 | SCRUM-72 | What the preferences do | "Personalize how chores are assigned" | — | Saved only; nothing assigns chores from them yet | Built | Stories for automatic assignment |
+| 49 | SCRUM-72 | Appearance (light or dark mode) | No story | Not in Figma; the app followed the phone's setting only | An "Appearance" section at the end of the profile: System, Light or Dark (the All / Mine switch), applied at once and kept on this device (Anthony, 2026-11-19). Numbered 49 to stay clear of the rows open pull requests add (44–48) | Built (placeholder) | UX: design the section |
 | 44 | SCRUM-45 | Another household's chore | AC4: “You are not apart of this household.” | Not designed | The API answers another household's chore exactly as it answers a deleted one (404 CHORE_NOT_FOUND), so it never confirms the chore exists; the screen shows “Chore no longer available.” (Anthony, 2026-11-19) | Built | Team: update SCRUM-45 AC4 in Jira |
 | 45 | All | Animation | No story | Not in Figma | Everything that drops down or rolls up animates: chore dropdowns, the Done list, the header menu, the Assigned to list and My chore history's rows (a 220ms roll, or a 180ms fade for the menu); chevrons turn. Off with the phone's reduce-motion setting (Anthony, 2026-11-19) | Built (placeholder) | UX: confirm the timing |
 
