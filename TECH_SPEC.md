@@ -460,6 +460,8 @@ The `Tests` workflow (`.github/workflows/tests.yml`) runs the typecheck and the 
 | Push to any branch except `main` | The pushed commit | That branch's row under "Branches in progress" (replaced on each push), with a link to the branch's Vercel preview (`previewUrl` in `render.ts` builds it from the branch name; a name too long for Vercel to keep links to its pull request instead) |
 | Pull request into `main` opened or updated | The merge result (branch + current `main`) | Nothing; it's the pull request's check |
 | Pull request merged | The branch's final commit | A row under "Merged branches", kept permanently |
+
+"Merged branches" and "History of main" show their newest 5 (`DASHBOARD_LIST_LENGTH` in `render.ts`), with a "See all" link under each to `archive.html`, which lists every merged branch and every run on main. Both pages are rendered from the same `data/history.json` on every publish; the trend chart still uses every run.
 | Push to `main` (each merge) | The new `main` | The latest result, the chart, the Stories section and `main`'s history |
 
 Failing runs are published too. A run whose typecheck or tests failed, or whose AC files or tags have problems, fails its check. Every run uploads `test-report` (results, summary and HTML report) and `test-report.html` (the HTML report alone) as artifacts for 30 days.
@@ -485,7 +487,7 @@ Failing runs are published too. A run whose typecheck or tests failed, or whose 
 
 ### How publishing works
 
-- The `publish` job runs `scripts/test-report/publish.ts`. It reads the `gh-pages` branch, adds the run to `data/history.json`, copies in the run's HTML report, re-renders `index.html`, and replaces `gh-pages` with a single new commit. It pushes with `--force-with-lease`, so if another run published first, it starts over from the new state instead of overwriting it.
+- The `publish` job runs `scripts/test-report/publish.ts`. It reads the `gh-pages` branch, adds the run to `data/history.json`, copies in the run's HTML report, re-renders `index.html` and `archive.html`, and replaces `gh-pages` with a single new commit. It pushes with `--force-with-lease`, so if another run published first, it starts over from the new state instead of overwriting it.
 - **Kept:** every `main` row forever, with full reports for the newest 30; the latest run of each branch that still exists (deleted branches drop off); every merged pull request's final run and report. Each report is about 1 MB.
 - Only the workflow writes to `gh-pages`. Don't push to it by hand.
 - Pull requests from forks are tested but never published.

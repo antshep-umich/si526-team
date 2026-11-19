@@ -480,12 +480,26 @@ ${table(["Branch", "Result", "Tests", "Last commit", "Tested", "Report", "Previe
 </section>`;
 }
 
-function mergedSection(site: SiteData): string {
+/** How many merged branches and runs of main the dashboard lists; the archive page has them all. */
+export const DASHBOARD_LIST_LENGTH = 5;
+
+/** The link under a shortened list, to the same section on the archive page. */
+function archiveLink(section: "merged" | "history", count: number, what: string): string {
+  return `<p class="more">${link(`archive.html#${section}`, `See all ${count} ${what}`)}</p>`;
+}
+
+/** A list cut to its newest entries when `limit` is set, plus how many there are in all. */
+function newest<T>(list: T[], limit: number | null): { shown: T[]; cut: boolean } {
+  return limit !== null && list.length > limit ? { shown: list.slice(0, limit), cut: true } : { shown: list, cut: false };
+}
+
+function mergedSection(site: SiteData, limit: number | null): string {
   const heading = `<h2>Merged branches</h2>`;
   if (site.merged.length === 0) {
     return `<section id="merged">${heading}${emptyNote("No pull requests have merged since the dashboard started.")}</section>`;
   }
-  const rows = site.merged.map((e) => {
+  const { shown, cut } = newest(site.merged, limit);
+  const rows = shown.map((e) => {
     const { meta } = e.summary;
     const pr = meta.pr;
     const number = pr ? `#${pr.number}` : "";
@@ -510,17 +524,19 @@ function mergedSection(site: SiteData): string {
   });
   return `<section id="merged">
 ${heading}
-<p class="intro">Each branch's final run before its pull request merged. These are kept permanently.</p>
+<p class="intro">Each branch's final run before its pull request merged${cut ? `, the newest ${limit} here` : ""}. These are kept permanently.</p>
 ${table(["Pull request", "Branch", "Final run", "Tests", "Merged", "Reports"], rows, 0)}
+${cut ? archiveLink("merged", site.merged.length, "merged branches") : ""}
 </section>`;
 }
 
-function historySection(site: SiteData): string {
+function historySection(site: SiteData, limit: number | null): string {
   const heading = `<h2>History of main</h2>`;
   if (site.main.length === 0) {
     return `<section id="history">${heading}${emptyNote("No runs on main yet.")}</section>`;
   }
-  const rows = site.main.map((e) => [
+  const { shown, cut } = newest(site.main, limit);
+  const rows = shown.map((e) => [
     time(e.summary.startedAt),
     commitCell(e.summary.meta),
     outcome(e.summary),
@@ -530,8 +546,9 @@ function historySection(site: SiteData): string {
   ]);
   return `<section id="history">
 ${heading}
-<p class="intro">Every run on main, newest first. Full reports are kept for the newest 30.</p>
+<p class="intro">${cut ? `The newest ${limit} runs on main` : "Every run on main, newest first"}. Full reports are kept for the newest 30.</p>
 ${table(["Tested", "Commit", "Result", "Tests", "Time", "Report"], rows, 1)}
+${cut ? archiveLink("history", site.main.length, "runs on main") : ""}
 </section>`;
 }
 
@@ -571,6 +588,7 @@ h3 { margin: 0; font-size: 1.1rem; font-weight: 700; line-height: 1.3; }
 p { margin: 0 0 0.5rem; max-width: 42rem; }
 .intro, .empty, .note { color: var(--ink-2); }
 section > .intro { margin-bottom: 1.25rem; }
+section > .more { margin-top: 1rem; }
 .note { font-size: 0.85rem; }
 .muted { color: var(--ink-3); }
 .glyph { width: 1.05em; height: 1.05em; flex: none; }
@@ -720,34 +738,28 @@ const SCRIPT = `
 })();
 `;
 
-/** The whole dashboard page. Every piece of text from runs, tests or Jira is escaped. */
-export function renderSite(site: SiteData): string {
+/** A page of the dashboard site, with its styles and script. Every piece of text from runs, tests or Jira is escaped by the caller. */
+function page(opts: { title: string; description: string; masthead: string; body: string; footer: string }): string {
   return `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>JAALS test results</title>
+<title>${opts.title}</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='9' fill='%233f6fb5'/%3E%3Cpath d='M5.6 10.4l3 3 5.8-6.6' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
-<meta name="description" content="Test results for the JAALS chore tracker: the latest run on main, acceptance criteria by Jira story, branches in progress and merged branches.">
+<meta name="description" content="${opts.description}">
 <style>${STYLES}</style>
 </head>
 <body>
 <div class="page">
 <header class="masthead">
-<h1>JAALS test results</h1>
-<p>Updated ${time(site.updatedAt)}</p>
+${opts.masthead}
 </header>
 <main>
-${latestSection(site)}
-${chartSection(site)}
-${storiesSection(site)}
-${branchesSection(site)}
-${mergedSection(site)}
-${historySection(site)}
+${opts.body}
 </main>
 <footer>
-<p>The Tests workflow updates this page after each push. Tests run on every branch; acceptance criteria come from the files in <code>acceptance/</code>.</p>
+${opts.footer}
 </footer>
 </div>
 <div class="tip" hidden></div>
@@ -755,4 +767,36 @@ ${historySection(site)}
 </body>
 </html>
 `;
+}
+
+/** The dashboard (index.html): merged branches and main's history are cut to their newest few. */
+export function renderSite(site: SiteData): string {
+  return page({
+    title: "JAALS test results",
+    description:
+      "Test results for the JAALS chore tracker: the latest run on main, acceptance criteria by Jira story, branches in progress and merged branches.",
+    masthead: `<h1>JAALS test results</h1>
+<p>Updated ${time(site.updatedAt)}</p>`,
+    body: `${latestSection(site)}
+${chartSection(site)}
+${storiesSection(site)}
+${branchesSection(site)}
+${mergedSection(site, DASHBOARD_LIST_LENGTH)}
+${historySection(site, DASHBOARD_LIST_LENGTH)}`,
+    footer: `<p>The Tests workflow updates this page after each push. Tests run on every branch; acceptance criteria come from the files in <code>acceptance/</code>. Older merged branches and runs are in the <a href="archive.html">archive</a>.</p>`,
+  });
+}
+
+/** The archive (archive.html): every merged branch and every run on main. */
+export function renderArchive(site: SiteData): string {
+  return page({
+    title: "JAALS test archive",
+    description: "Every merged branch and every run on main of the JAALS chore tracker's tests.",
+    masthead: `<h1>JAALS test archive</h1>
+<p>${link("index.html", "Back to the dashboard")}</p>
+<p>Updated ${time(site.updatedAt)}</p>`,
+    body: `${mergedSection(site, null)}
+${historySection(site, null)}`,
+    footer: `<p>Built with the dashboard after each push, from the same history.</p>`,
+  });
 }
