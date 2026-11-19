@@ -16,7 +16,7 @@ add chores, see the household's chore list and mark their own chores done.
 - **Requirements:** the Jira stories at https://jaals.atlassian.net (project SCRUM; readable through the Atlassian MCP, read-only). `JAALS Stories.txt` one folder above the repo is an older export: SCRUM-6, 7 and 8 have changed since. Where stories disagree with Figma or the build, the decision is recorded in README "Conflicts to resolve", and in `acceptance/` an AC whose text was corrected to a team decision carries a `note` until Jira is updated. If you find a new disagreement, raise it with the user rather than picking a side.
 
 - **Mobile web only** for now (designed at 402×874, the iPhone 17 frame). iOS/Android may come later, which is why the API is a plain JSON API.
-- **Light and dark mode follow the device setting.** There is no in-app switch (the `/components` dev page has one).
+- **Light and dark mode follow the device setting** unless the user picks Light or Dark under Appearance on their profile (`src/theme.ts`, kept in the browser, per device). The `/components` dev page has its own switch.
 - About 10 research participants; no sensitive data. Email isn't built yet (TECH_SPEC §8).
 
 ## Stack
@@ -73,6 +73,7 @@ src/                    React app
   chores.ts, dates.ts   chore status/sorting/weekly progress, and "YYYY-MM-DD" dates in the phone's time zone
   history.ts            My chore history's filters, sorts and month groups (SCRUM-44), and the row wording all histories share
   inviteLink.ts         /join/<code> invite links: build one, read it at startup, keep the code until it's used
+  theme.ts              System / Light / Dark: the profile's Appearance choice, applied before the first paint
   usePolling.ts         refresh a screen every 10 s while visible (instead of WebSockets)
   monthlyHistory.ts     Household chore history by month: which chores and the summary (SCRUM-47)
   components/           design-system components (from Figma), each with a .module.css; Toast.tsx (ToastProvider + useToast) is a placeholder, not in Figma; Collapse.tsx rolls any dropdown down and up

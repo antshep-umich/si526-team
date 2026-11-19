@@ -17,6 +17,7 @@ import Button from "../components/Button.tsx";
 import PickerField from "../components/PickerField.tsx";
 import TextField from "../components/TextField.tsx";
 import { useToast } from "../components/Toast.tsx";
+import AppearanceSection from "./AppearanceSection.tsx";
 import Header from "./Header.tsx";
 import styles from "./Profile.module.css";
 import { FormError } from "./Screen.tsx";
@@ -41,6 +42,7 @@ export default function Profile({ household, onHouseholdChange }: ProfileProps) 
       <ProfileInformation household={household} onHouseholdChange={onHouseholdChange} />
       <ChorePreferencesSection />
       <ManagerPreferencesSection household={household} onHouseholdChange={onHouseholdChange} />
+      <AppearanceSection />
     </main>
   );
 }
