@@ -1,12 +1,16 @@
 {
   "story": "SCRUM-61",
   "title": "Set user chore preference",
-  "epic": { "key": "SCRUM-1", "title": "Chore Tracking" },
+  "epic": {
+    "key": "SCRUM-1",
+    "title": "Chore Tracking"
+  },
   "criteria": [
     {
       "id": "AC1",
       "text": "User Action: User navigates to their chore preferences. Expected System Behavior: Displays the household’s chores, each with an option to mark it as preferred.",
-      "verify": "test"
+      "verify": "test",
+      "note": "Team decision (2026-11-19): the chores to prefer are Set chore preferences' chore types on the profile page (SCRUM-72), not each chore in the household. Add chore's optional Category links a chore to one."
     },
     {
       "id": "AC2",
@@ -16,17 +20,20 @@
     {
       "id": "AC3",
       "text": "User Action: A housemate assigns a chore. Expected System Behavior: Housemates who prefer that chore are shown as preferring it in the assignment options.",
-      "verify": "test"
+      "verify": "test",
+      "note": "A chore's category is picked in Add chore; housemates who chose that type in Set chore preferences show “· Prefers this chore” in Assigned to."
     },
     {
       "id": "AC4",
       "text": "Error Condition: The household has no chores yet. Expected message: “No chores to choose from yet.”",
-      "verify": "test"
+      "verify": "manual",
+      "note": "Can't happen since the team decision on AC1: the chore types are a fixed list, so there is always something to choose. Jira still says household chores."
     },
     {
       "id": "AC5",
       "text": "Error Condition: The preferences fail to save. Expected message: The system displays an error message and provides an option to try saving again. Prototype: {Link}",
-      "verify": "test"
+      "verify": "test",
+      "note": "Shows “Changes not saved. Please try again.” (SCRUM-72's wording); Save stays available to try again."
     }
   ]
 }

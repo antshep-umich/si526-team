@@ -27,7 +27,9 @@ const household: Household = {
   createdAt: "2026-10-17T00:00:00.000Z",
   role: "owner",
   assignmentMethod: null,
-  members: [{ userId: "u-sarah", name: "Sarah Cameron", role: "owner", joinedAt: "2026-10-17T00:00:00.000Z" }],
+  members: [
+    { userId: "u-sarah", name: "Sarah Cameron", role: "owner", joinedAt: "2026-10-17T00:00:00.000Z", choreTypes: [] },
+  ],
 };
 
 const saved = { choreTypes: ["dishes"], weeklyWorkload: "medium" };
@@ -228,3 +230,44 @@ describe("Set household manager preferences", { tags: ["SCRUM-72"] }, () => {
     expect(screen.getByText("Household Member")).toBeInTheDocument();
   });
 });
+
+// SCRUM-61 uses Set chore preferences' chore types as the chores to prefer (team decision,
+// 2026-11-19); Add chore's Category connects a chore to them (AddChore.test.tsx).
+describe("Preferring chores", { tags: ["SCRUM-61"] }, () => {
+  const prefs = () => within(section("Set chore preferences"));
+
+  it("AC1: the chore preferences list every kind of chore, each one markable", async () => {
+    renderProfile();
+
+    await prefs().findByRole("button", { name: "Dishes", pressed: true });
+    for (const name of ["Laundry", "Vacuuming", "Trash & recycling", "Bathroom", "Yard Work", "Cooking", "Mopping"]) {
+      expect(prefs().getByRole("button", { name })).toHaveAttribute("aria-pressed");
+    }
+  });
+
+  it("AC2: marking and unmarking, then saving, saves them and confirms", async () => {
+    saveChorePreferences.mockResolvedValue({ ok: true, preferences: { choreTypes: ["trash"], weeklyWorkload: "medium" } });
+    renderProfile();
+
+    await userEvent.click(await prefs().findByRole("button", { name: "Dishes" }));
+    await userEvent.click(prefs().getByRole("button", { name: "Trash & recycling" }));
+    await userEvent.click(prefs().getByRole("button", { name: "Save" }));
+
+    expect(saveChorePreferences).toHaveBeenCalledWith({ choreTypes: ["trash"], weeklyWorkload: "medium" });
+    expect(showToast).toHaveBeenCalledWith("Chore preferences saved.");
+  });
+
+  it("AC5: a failed save shows an error, and Save tries again", async () => {
+    saveChorePreferences.mockResolvedValueOnce({ ok: false, code: "NETWORK_ERROR" });
+    saveChorePreferences.mockResolvedValueOnce({ ok: true, preferences: saved });
+    renderProfile();
+
+    await userEvent.click(await prefs().findByRole("button", { name: "Save" }));
+    expect(prefs().getByRole("alert")).toHaveTextContent(NOT_SAVED);
+
+    await userEvent.click(prefs().getByRole("button", { name: "Save" }));
+    expect(saveChorePreferences).toHaveBeenCalledTimes(2);
+    expect(prefs().queryByRole("alert")).not.toBeInTheDocument();
+  });
+});
+

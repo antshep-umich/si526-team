@@ -1,5 +1,6 @@
 import type { RequestHandler } from "express";
 import type { HouseholdResponse } from "../../shared/api.js";
+import type { ChoreType } from "../../shared/preferences.js";
 import { HttpStatus } from "../../shared/httpStatus.js";
 import { currentMembership } from "../middleware/household.js";
 import { currentUser } from "../middleware/session.js";
@@ -36,6 +37,8 @@ export function toHouseholdResponse(household: HouseholdWithMembers, userId: str
       name: m.user.name,
       role: m.role,
       joinedAt: m.joinedAt.toISOString(),
+      // Only CHORE_TYPES ids are ever saved (parseChorePreferences).
+      choreTypes: m.choreTypes as ChoreType[],
     })),
   };
 }

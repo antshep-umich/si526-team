@@ -27,6 +27,11 @@ export const WEEKLY_WORKLOADS = [
 
 export type WeeklyWorkload = (typeof WEEKLY_WORKLOADS)[number]["id"];
 
+/** One of CHORE_TYPES' ids, or null if `value` isn't. */
+export function parseChoreType(value: unknown): ChoreType | null {
+  return CHORE_TYPES.some((t) => t.id === value) ? (value as ChoreType) : null;
+}
+
 /** "Set household manager preferences": how the household's chores get assigned. */
 export const ASSIGNMENT_METHODS = [
   { id: "rotate", label: "Rotate evenly", description: "Everyone takes turns on every chore." },

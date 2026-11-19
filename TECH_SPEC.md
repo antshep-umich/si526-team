@@ -232,18 +232,18 @@ Every route except `/api/auth/*` and `/api/health` requires a session. **Authori
 | GET | `/api/me` | current user and their household (if any) |
 | POST | `/api/households` | create a household; the creator becomes the owner |
 | POST | `/api/households/join` | join a household with `{ inviteCode }` |
-| GET | `/api/households/current` | household details and members |
+| GET | `/api/households/current` | household details and members (each with their `choreTypes`, for Add chore's "Prefers this chore") |
 | POST | `/api/households/current/invite-code` | regenerate the invite code (owner only) |
 | GET, PUT | `/api/households/current/preferences` | the caller's own chore preferences (SCRUM-72): `{ choreTypes, weeklyWorkload }`, ids from `shared/preferences.ts` |
 | PUT | `/api/households/current/assignment-method` | how the household's chores get assigned, `{ assignmentMethod }` (owner only; SCRUM-72). Returns the household |
 | POST | `/api/auth/update-user` | Better Auth: change your name (SCRUM-72). Our hook keeps the sign-up name rule and answers `NAME_REQUIRED` for a blank name |
 | GET | `/api/chores?since=YYYY-MM-DD` | the household's chores: every open one, plus those done or due since `since` (the app sends the Monday of this week). Without `since`, the last 8 days |
-| POST | `/api/chores` | add a chore: `{ name, assigneeId, dueDate, notes? }` |
+| POST | `/api/chores` | add a chore: `{ name, assigneeId, dueDate, notes?, category? }` (`category`: a chore type from `shared/preferences.ts`, SCRUM-61) |
 | GET | `/api/chores/history` | the caller's chore history (SCRUM-44): every chore in the household assigned to them, done or not and however old, latest due first. The app filters and sorts it |
 | GET | `/api/chores/:id` | one chore |
 | POST | `/api/chores/:id/complete` | mark it done (assignee only; repeating it changes nothing) |
 | DELETE | `/api/chores/:id/complete` | undo it (assignee only) |
-| PATCH | `/api/chores/:id` | edit a chore, from the pencil in its dropdown: `{ name, assigneeId, dueDate, notes? }`, the whole Edit chore form. Household owner or the chore's creator only (`canEditChore` in `shared/chores.ts`); a due date that has passed may stay, but can't move to another past day; a new due date adds a `due_date_changed` history event |
+| PATCH | `/api/chores/:id` | edit a chore, from the pencil in its dropdown: `{ name, assigneeId, dueDate, notes?, category? }`, the whole Edit chore form (no `category` clears it). Household owner or the chore's creator only (`canEditChore` in `shared/chores.ts`); a due date that has passed may stay, but can't move to another past day; a new due date adds a `due_date_changed` history event |
 | DELETE | `/api/chores/:id` | delete a chore. **Not built** (no design yet) |
 
 `GET /api/me` isn't built; `GET /api/households/current` and Better Auth's session cover it.

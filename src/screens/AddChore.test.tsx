@@ -2,6 +2,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { ChoreType } from "../../shared/preferences.ts";
 import type { Household } from "../api/households.ts";
 import AddChore from "./AddChore.tsx";
 
@@ -17,6 +18,7 @@ const member = (userId: string, name: string) => ({
   name,
   role: "member" as const,
   joinedAt: "2026-10-17T00:00:00.000Z",
+  choreTypes: [] as ChoreType[],
 });
 
 const household: Household = {
@@ -281,3 +283,73 @@ describe("AddChore acceptance criteria", { tags: ["SCRUM-6"] }, () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("Couldn't save this chore. Please try again.");
   });
 });
+
+describe("Chore category and housemates' preferences", { tags: ["SCRUM-61"] }, () => {
+  const withPreferences: Household = {
+    ...household,
+    members: [member("u-ana", "Ana Lopez"), { ...member("u-ben", "Ben Ito"), choreTypes: ["trash", "dishes"] }],
+  };
+
+  async function pickCategory(name: string) {
+    await userEvent.click(screen.getByRole("combobox", { name: "Category (optional)" }));
+    await userEvent.click(screen.getByRole("option", { name }));
+  }
+
+  it("puts the optional Category between Chore name and Assigned to", () => {
+    renderAddChore();
+    const name = screen.getByLabelText("Chore name");
+    const category = screen.getByRole("combobox", { name: "Category (optional)" });
+    const assignee = screen.getByRole("combobox", { name: "Assigned to" });
+
+    expect(name.compareDocumentPosition(category)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(category.compareDocumentPosition(assignee)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+
+  it("AC3: housemates who prefer the chore's category are shown as preferring it", async () => {
+    getCurrentHousehold.mockResolvedValue({ ok: true, household: withPreferences });
+    renderAddChore({ household: withPreferences });
+
+    await pickCategory("Trash & recycling");
+    await userEvent.click(screen.getByRole("combobox", { name: "Assigned to" }));
+
+    expect(screen.getByRole("option", { name: "Ben Ito · Prefers this chore" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "You" })).toBeInTheDocument();
+  });
+
+  it("AC3: nobody is marked before a category is picked, or when nobody prefers it", async () => {
+    getCurrentHousehold.mockResolvedValue({ ok: true, household: withPreferences });
+    renderAddChore({ household: withPreferences });
+
+    await userEvent.click(screen.getByRole("combobox", { name: "Assigned to" }));
+    expect(screen.getByRole("option", { name: "Ben Ito" })).toBeInTheDocument();
+    await userEvent.keyboard("{Escape}");
+
+    await pickCategory("Laundry");
+    await userEvent.click(screen.getByRole("combobox", { name: "Assigned to" }));
+    expect(screen.getByRole("option", { name: "Ben Ito" })).toBeInTheDocument();
+  });
+
+  it("saves the category with the chore, and leaves it out when there's none", async () => {
+    renderAddChore();
+    await userEvent.type(screen.getByLabelText("Chore name"), "Mop kitchen");
+    await pickCategory("Mopping");
+    await pick("Ben Ito");
+    setDueDate("2026-10-30");
+    await submit();
+
+    expect(createChore).toHaveBeenLastCalledWith(expect.objectContaining({ name: "Mop kitchen", category: "mopping" }));
+  });
+
+  it("can go back to No category", async () => {
+    renderAddChore();
+    await userEvent.type(screen.getByLabelText("Chore name"), "Mop kitchen");
+    await pickCategory("Mopping");
+    await pickCategory("No category");
+    await pick("Ben Ito");
+    setDueDate("2026-10-30");
+    await submit();
+
+    expect(createChore.mock.lastCall![0]).not.toHaveProperty("category");
+  });
+});
+

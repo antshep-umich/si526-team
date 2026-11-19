@@ -65,6 +65,8 @@ model Chore {
   householdId   String    @db.Uuid
   name          String    @db.VarChar(60)
   notes         String?   @db.VarChar(200)
+  // SCRUM-61: one of shared/preferences.ts CHORE_TYPES, chosen in Add chore (optional).
+  category      String?
   // Required by the app; becomes null only if that account is deleted.
   assigneeId    String?
   dueDate       DateTime  @db.Date

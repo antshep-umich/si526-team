@@ -2,6 +2,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { ChoreType } from "../../shared/preferences.ts";
 import type { Household } from "../api/households.ts";
 import type { Chore } from "../chores.ts";
 import EditChore from "./EditChore.tsx";
@@ -18,6 +19,7 @@ const member = (userId: string, name: string) => ({
   name,
   role: "member" as const,
   joinedAt: "2026-10-17T00:00:00.000Z",
+  choreTypes: [] as ChoreType[],
 });
 
 const household: Household = {
@@ -43,9 +45,9 @@ const chore: Chore = {
   completedBy: null,
 };
 
-function renderEditChore() {
+function renderEditChore(edited: Chore = chore) {
   const callbacks = { onSaved: vi.fn(), onCancel: vi.fn() };
-  render(<EditChore household={household} userId="u-ana" chore={chore} {...callbacks} />);
+  render(<EditChore household={household} userId="u-ana" chore={edited} {...callbacks} />);
   return callbacks;
 }
 
@@ -131,3 +133,27 @@ describe("Edit chore", () => {
     expect(editChore).not.toHaveBeenCalled();
   });
 });
+
+describe("Chore category", { tags: ["SCRUM-61"] }, () => {
+  it("shows the chore's category and keeps it when saving", async () => {
+    editChore.mockResolvedValue({ ok: true, chore });
+    renderEditChore({ ...chore, category: "trash" });
+
+    expect(screen.getByRole("combobox", { name: "Category (optional)" })).toHaveTextContent("Trash & recycling");
+    await save();
+
+    expect(editChore).toHaveBeenCalledWith("c1", expect.objectContaining({ category: "trash" }));
+  });
+
+  it("clears the category with No category", async () => {
+    editChore.mockResolvedValue({ ok: true, chore });
+    renderEditChore({ ...chore, category: "trash" });
+
+    await userEvent.click(screen.getByRole("combobox", { name: "Category (optional)" }));
+    await userEvent.click(screen.getByRole("option", { name: "No category" }));
+    await save();
+
+    expect(editChore.mock.lastCall![1]).not.toHaveProperty("category");
+  });
+});
+

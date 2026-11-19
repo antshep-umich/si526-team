@@ -12,7 +12,8 @@ import {
   undoChore,
 } from "./chores.js";
 import { ServiceError } from "./errors.js";
-import { createHousehold, findMembership, joinHousehold } from "./households.js";
+import { createHousehold, findMembership, getHousehold, joinHousehold } from "./households.js";
+import { saveChorePreferences } from "./preferences.js";
 
 vi.mock("../models/households.js", () => import("../test/fakeModels.js"));
 vi.mock("../models/memberships.js", () => import("../test/fakeModels.js"));
@@ -333,3 +334,38 @@ describe("getChoreHistory (SCRUM-45)", () => {
     expect(result.history).toEqual([]);
   });
 });
+
+describe("chore categories (SCRUM-61)", { tags: ["SCRUM-61"] }, () => {
+  it("stores the category picked in Add chore, and none when it's left out", async () => {
+    const { ben } = await setUp();
+
+    expect((await addChore(ben, { ...chore(), category: "trash" })).category).toBe("trash");
+    expect((await addChore(ben, chore())).category).toBeNull();
+    expect((await addChore(ben, { ...chore(), category: "" })).category).toBeNull();
+  });
+
+  it("edits the category with the rest of the form, and clears it when it's left out", async () => {
+    const { ben } = await setUp();
+    const added = await addChore(ben, { ...chore(), category: "trash" });
+
+    expect((await editChore(ben, added.id, { ...chore(), category: "dishes" })).category).toBe("dishes");
+    expect((await editChore(ben, added.id, chore())).category).toBeNull();
+  });
+
+  it("rejects a category that isn't one of the chore types", async () => {
+    const { ben } = await setUp();
+
+    expect(await codeOf(() => addChore(ben, { ...chore(), category: "juggling" }))).toBe("VALIDATION_ERROR");
+  });
+
+  it("AC3: the household tells the person assigning which chore types each housemate prefers", async () => {
+    const { ana, ben } = await setUp();
+    await saveChorePreferences(ben, { choreTypes: ["trash", "dishes"], weeklyWorkload: null });
+
+    const household = await getHousehold(ana.householdId);
+    const benRow = household.memberships.find((m) => m.userId === "ben")!;
+
+    expect(benRow.choreTypes).toEqual(["dishes", "trash"]);
+  });
+});
+

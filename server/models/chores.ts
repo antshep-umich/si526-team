@@ -54,6 +54,8 @@ export function createChore(data: {
   /** A UTC midnight; stored as a date without a time. */
   dueDate: Date;
   createdById: string;
+  /** SCRUM-61: a CHORE_TYPES id, or null for none. */
+  category?: string | null;
 }): Promise<ChoreWithPeople> {
   return getPrisma().chore.create({ data, include: people });
 }
@@ -61,7 +63,7 @@ export function createChore(data: {
 /** Changes what the Edit chore form changes (SCRUM-7 AC11). */
 export function updateChore(
   choreId: string,
-  data: { name: string; notes: string | null; assigneeId: string; dueDate: Date },
+  data: { name: string; notes: string | null; assigneeId: string; dueDate: Date; category?: string | null },
 ): Promise<ChoreWithPeople> {
   return getPrisma().chore.update({ where: { id: choreId }, data, include: people });
 }
