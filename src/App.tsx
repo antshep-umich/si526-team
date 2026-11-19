@@ -3,13 +3,14 @@ import { useEffect, useState } from "react";
 import type { HouseholdMember } from "../shared/api.ts";
 import { getCurrentHousehold, type Household } from "./api/households.ts";
 import { authClient } from "./auth.ts";
+import type { Chore } from "./chores.ts";
 import { ToastProvider, useToast } from "./components/Toast.tsx";
 import { forgetInviteCode, pendingInviteCode } from "./inviteLink.ts";
 import AddChore from "./screens/AddChore.tsx";
-import ChoreDetails from "./screens/ChoreDetails.tsx";
 import ChoreHistory from "./screens/ChoreHistory.tsx";
 import ChooseHousehold from "./screens/ChooseHousehold.tsx";
 import CreateHousehold from "./screens/CreateHousehold.tsx";
+import EditChore from "./screens/EditChore.tsx";
 import ForgotPassword from "./screens/ForgotPassword.tsx";
 import Home, { forgetChoreFilter } from "./screens/Home.tsx";
 import House from "./screens/House.tsx";
@@ -88,7 +89,7 @@ type View =
   | { name: "add-chore" }
   | { name: "my-history" }
   | { name: "household-history" }
-  | { name: "chore-details"; choreId: string }
+  | { name: "edit-chore"; chore: Chore }
   | { name: "chore"; choreId: string }
   | { name: "house" }
   | { name: "housemate"; member: HouseholdMember }
@@ -178,8 +179,10 @@ function SignedIn({ userId }: { userId: string }) {
       case "household-history":
         content = <HouseholdChoreHistory household={household} userId={userId} />;
         break;
-      case "chore-details":
-        content = <ChoreDetails household={household} userId={userId} choreId={view.choreId} />;
+      case "edit-chore":
+        content = (
+          <EditChore household={household} userId={userId} chore={view.chore} onSaved={showChores} onCancel={showChores} />
+        );
         break;
       case "chore":
         content = <SingleChoreHistory choreId={view.choreId} userId={userId} />;
@@ -201,7 +204,7 @@ function SignedIn({ userId }: { userId: string }) {
             household={household}
             userId={userId}
             onAddChore={() => setView({ name: "add-chore" })}
-            onOpenDetails={(choreId) => setView({ name: "chore-details", choreId })}
+            onEditChore={(chore) => setView({ name: "edit-chore", chore })}
             onOpenChore={(choreId) => setView({ name: "chore", choreId })}
           />
         );
@@ -215,7 +218,12 @@ function SignedIn({ userId }: { userId: string }) {
     };
     const tab = view.name === "house" || view.name === "housemate" ? "house" : "chores";
     return (
-      <TabLayout selected={tab} onSelect={(next) => setView(next === "house" ? { name: "house" } : { name: "chores" })} menu={menu}>
+      <TabLayout
+        selected={tab}
+        onSelect={(next) => setView(next === "house" ? { name: "house" } : { name: "chores" })}
+        menu={menu}
+        screen={view}
+      >
         {content}
       </TabLayout>
     );

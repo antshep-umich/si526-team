@@ -1,0 +1,32 @@
+{
+  "story": "SCRUM-61",
+  "title": "Set user chore preference",
+  "epic": { "key": "SCRUM-1", "title": "Chore Tracking" },
+  "criteria": [
+    {
+      "id": "AC1",
+      "text": "User Action: User navigates to their chore preferences. Expected System Behavior: Displays the household’s chores, each with an option to mark it as preferred.",
+      "verify": "test"
+    },
+    {
+      "id": "AC2",
+      "text": "User Action: User marks or unmarks chores as preferred and saves. Expected System Behavior: The preferences are saved, and a confirmation message is displayed.",
+      "verify": "test"
+    },
+    {
+      "id": "AC3",
+      "text": "User Action: A housemate assigns a chore. Expected System Behavior: Housemates who prefer that chore are shown as preferring it in the assignment options.",
+      "verify": "test"
+    },
+    {
+      "id": "AC4",
+      "text": "Error Condition: The household has no chores yet. Expected message: “No chores to choose from yet.”",
+      "verify": "test"
+    },
+    {
+      "id": "AC5",
+      "text": "Error Condition: The preferences fail to save. Expected message: The system displays an error message and provides an option to try saving again. Prototype: {Link}",
+      "verify": "test"
+    }
+  ]
+}

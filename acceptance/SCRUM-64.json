@@ -1,0 +1,42 @@
+{
+  "story": "SCRUM-64",
+  "title": "Preference based chore assignment suggestion",
+  "epic": { "key": "SCRUM-1", "title": "Chore Tracking" },
+  "criteria": [
+    {
+      "id": "AC1",
+      "text": "User Action: Opens “Assigned to” on the “Add chore” or “Edit chore” screen for a chore that one or more housemates prefer. Expected System Behavior: Those housemates appear at the top of the list under “Suggested,” each labeled “Prefers this chore” with their number of open chores. Suggested housemates are sorted by fewest open chores. All other housemates appear below under “Everyone else.”",
+      "verify": "test"
+    },
+    {
+      "id": "AC2",
+      "text": "User Action: Opens “Assigned to” for a chore no one prefers. Expected System Behavior: The list shows all housemates with no “Suggested” section.",
+      "verify": "test"
+    },
+    {
+      "id": "AC3",
+      "text": "User Action: Opens “Assigned to” before entering a chore name. Expected System Behavior: The list shows all housemates. Suggestions appear once a chore name is entered.",
+      "verify": "test"
+    },
+    {
+      "id": "AC4",
+      "text": "User Action: Changes the chore name after opening “Assigned to.” Expected System Behavior: The suggestions update to match the new name.",
+      "verify": "test"
+    },
+    {
+      "id": "AC5",
+      "text": "User Action: Selects any housemate, suggested or not. Expected System Behavior: The chore is assigned to that housemate. Suggestions never block a choice.",
+      "verify": "test"
+    },
+    {
+      "id": "AC6",
+      "text": "System state: A housemate who prefers the chore has left the household. Expected System Behavior: They do not appear in suggestions.",
+      "verify": "test"
+    },
+    {
+      "id": "AC7",
+      "text": "Error Condition: Preferences fail to load. Expected behavior: The list shows all housemates as normal, with the message “Suggestions aren’t available right now.” Assignment still works.",
+      "verify": "test"
+    }
+  ]
+}

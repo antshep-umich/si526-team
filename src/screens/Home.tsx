@@ -2,7 +2,8 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { completeChore, listChores, undoChore } from "../api/chores.ts";
 import type { Household } from "../api/households.ts";
 import Button from "../components/Button.tsx";
-import ChoreCard from "../components/ChoreCard.tsx";
+import ChoreCard, { type ChoreCardPanel } from "../components/ChoreCard.tsx";
+import Collapse from "../components/Collapse.tsx";
 import DoneSection from "../components/DoneSection.tsx";
 import ProgressCard from "../components/ProgressCard.tsx";
 import TabFilter from "../components/TabFilter.tsx";
@@ -16,7 +17,9 @@ import {
   weeklyProgress,
   type Chore,
 } from "../chores.ts";
-import { startOfWeek, today as localToday } from "../dates.ts";
+import { describeDay, formatDate, localDateOf, startOfWeek, today as localToday } from "../dates.ts";
+import { statusLabel } from "../history.ts";
+import { canEditChore } from "../../shared/chores.ts";
 import { usePolling } from "../usePolling.ts";
 import Header from "./Header.tsx";
 import styles from "./Home.module.css";
@@ -29,9 +32,9 @@ type HomeProps = {
   household: Household;
   userId: string;
   onAddChore: () => void;
-  /** Opens one chore's details (SCRUM-53). */
-  onOpenDetails: (choreId: string) => void;
-  /** Opens one chore's history (SCRUM-45). */
+  /** Opens Edit chore from the pencil in a chore's dropdown (owner or creator only). */
+  onEditChore: (chore: Chore) => void;
+  /** Opens one chore's history (SCRUM-45), from "View history" in its dropdown. */
   onOpenChore: (choreId: string) => void;
 };
 
@@ -75,7 +78,7 @@ export default function Home({
   household,
   userId,
   onAddChore,
-  onOpenDetails,
+  onEditChore,
   onOpenChore,
 }: HomeProps) {
   const [list, setList] = useState<ListState>({ status: "loading" });
@@ -149,6 +152,32 @@ export default function Home({
     saveFilter(next);
   }
 
+  const person = (who: { userId: string; name: string } | null) =>
+    !who ? "Someone who left" : who.userId === userId ? "You" : who.name;
+
+  /**
+   * A chore's dropdown (SCRUM-7 AC11 and SCRUM-53; Figma "Schedule", 837:1483): Figma's
+   * "Assigned To:" and "Chore Details:", with the due date, status and "Last done" the
+   * stories ask for. The pencil only for those who may edit it.
+   */
+  function panel(chore: Chore): ChoreCardPanel {
+    const rows: [string, string][] = [
+      ["Assigned To:", chore.assignee ? person(chore.assignee) : "Unassigned"],
+      ["Due date:", formatDate(chore.dueDate, today)],
+      ["Status:", statusLabel(chore, today)],
+    ];
+    if (chore.completedAt) {
+      rows.push(["Last done:", `${describeDay(localDateOf(chore.completedAt), today)} by ${person(chore.completedBy)}`]);
+    }
+    rows.push(["Chore Details:", chore.notes ?? "No description added."]);
+    const editable = canEditChore({ creatorId: chore.createdBy?.userId ?? null }, { userId, role: household.role });
+    return {
+      rows,
+      onEdit: editable ? () => onEditChore(chore) : undefined,
+      onViewHistory: () => onOpenChore(chore.id),
+    };
+  }
+
   function card(chore: Chore) {
     return (
       <li key={chore.id}>
@@ -159,8 +188,7 @@ export default function Home({
           // SCRUM-8: only the assignee can mark it done or undo it.
           onToggle={isMine(chore, userId) ? () => toggle(chore) : undefined}
           busy={saving.has(chore.id)}
-          onOpen={() => onOpenDetails(chore.id)}
-          onViewHistory={() => onOpenChore(chore.id)}
+          panel={panel(chore)}
         />
       </li>
     );
@@ -220,15 +248,20 @@ export default function Home({
         )}
         {done.length > 0 && (
           <>
-            <DoneSection
-              count={done.length}
-              expanded={doneOpen}
-              onToggle={() => setDoneOpen(!doneOpen)}
-              controls={doneListId}
-            />
-            <ul id={doneListId} className={styles.list} aria-label="Done chores" hidden={!doneOpen}>
-              {done.map(card)}
-            </ul>
+            {/* One item on the page, so a closed list leaves no gap below the toggle. */}
+            <div>
+              <DoneSection
+                count={done.length}
+                expanded={doneOpen}
+                onToggle={() => setDoneOpen(!doneOpen)}
+                controls={doneListId}
+              />
+              <Collapse open={doneOpen} id={doneListId}>
+                <ul className={`${styles.list} ${styles.doneList}`} aria-label="Done chores">
+                  {done.map(card)}
+                </ul>
+              </Collapse>
+            </div>
           </>
         )}
       </>

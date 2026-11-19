@@ -20,6 +20,7 @@ const {
   listChoreHistory,
   getChore,
   getChoreHistory,
+  editChore,
 } = vi.hoisted(() => ({
   useSession: vi.fn(),
   signIn: vi.fn(),
@@ -33,6 +34,7 @@ const {
   listChoreHistory: vi.fn(),
   getChore: vi.fn(),
   getChoreHistory: vi.fn(),
+  editChore: vi.fn(),
 }));
 vi.mock("./auth.ts", () => ({
   authClient: { useSession, signOut, signIn: { email: signIn }, signUp: { email: vi.fn() } },
@@ -47,6 +49,7 @@ vi.mock("./api/chores.ts", () => ({
   listChoreHistory,
   getChore,
   getChoreHistory,
+  editChore,
 }));
 
 const household: Household = {
@@ -103,6 +106,7 @@ beforeEach(() => {
     listChoreHistory,
     getChore,
     getChoreHistory,
+    editChore,
   ]) {
     mock.mockReset();
   }
@@ -201,12 +205,17 @@ describe("App when signed in", () => {
       await userEvent.click(screen.getByRole("button", { name: "Menu" }));
       await userEvent.click(screen.getByRole("menuitem", { name: item }));
     };
+    // The chore's dropdown on the chore list, then one of its buttons.
+    const fromDropdown = (button: string) => async () => {
+      await userEvent.click(await screen.findByRole("button", { name: /^Mop kitchen/ }));
+      await userEvent.click(screen.getByRole("button", { name: button }));
+    };
     const screens = [
       ["Add chore", () => userEvent.click(screen.getByRole("button", { name: "Add chore" }))],
       ["My chore history", fromMenu("My chore history")],
       ["Household chore history", fromMenu("Household chore history")],
-      ["Mop kitchen", () => userEvent.click(screen.getByRole("button", { name: /^Mop kitchen/ }))],
-      ["Mop kitchen", () => userEvent.click(screen.getByRole("button", { name: "View history for Mop kitchen" }))],
+      ["Edit chore", fromDropdown("Edit Mop kitchen")],
+      ["Mop kitchen", fromDropdown("View history for Mop kitchen")],
     ] as const;
 
     for (const [heading, open] of screens) {
@@ -501,7 +510,7 @@ describe("App acceptance criteria", () => {
       expect(screen.getByRole("radio", { name: "All" })).toBeChecked();
     });
 
-    it('AC9: "Add chore" opens the "Add chore" screen', async () => {
+    it('AC10: "Add chore" opens the "Add chore" screen', async () => {
       await openChoreList();
 
       await userEvent.click(screen.getByRole("button", { name: "Add chore" }));
@@ -510,13 +519,12 @@ describe("App acceptance criteria", () => {
     });
   });
 
-  describe("Chore details", { tags: ["SCRUM-53"] }, () => {
-    // Back is the Chores tab, as on every screen in a household (README Conflicts row 33).
-    it("AC3: Back returns to the previous screen: the Chores tab returns to the chore list as it was", async () => {
+  describe("Editing a chore", () => {
+    it("opens Edit chore from the pencil, filled in, and saves back to the chore list", async () => {
       const chore = {
         id: "c1",
         name: "Mop kitchen",
-        notes: null,
+        notes: "Under the table too",
         dueDate: "2999-01-01",
         assignee: { userId: "u-ana", name: "Ana Lopez" },
         createdBy: { userId: "u-ana", name: "Ana Lopez" },
@@ -525,17 +533,26 @@ describe("App acceptance criteria", () => {
         completedBy: null,
       };
       listChores.mockResolvedValue({ ok: true, chores: [chore] });
-      getChore.mockResolvedValue({ ok: true, chore });
+      editChore.mockResolvedValue({ ok: true, chore: { ...chore, name: "Mop the kitchen" } });
       await openChoreList();
-      await userEvent.click(await screen.findByRole("radio", { name: "Mine" }));
 
       await userEvent.click(await screen.findByRole("button", { name: /^Mop kitchen/ }));
-      expect(await screen.findByText("No description added.")).toBeInTheDocument();
-      await userEvent.click(screen.getByRole("button", { name: "Chores" }));
+      await userEvent.click(screen.getByRole("button", { name: "Edit Mop kitchen" }));
 
+      expect(screen.getByRole("heading", { level: 1, name: "Edit chore" })).toBeInTheDocument();
+      expect(screen.getByLabelText("Chore name")).toHaveValue("Mop kitchen");
+      expect(screen.getByLabelText("Notes (optional)")).toHaveValue("Under the table too");
+      await userEvent.clear(screen.getByLabelText("Chore name"));
+      await userEvent.type(screen.getByLabelText("Chore name"), "Mop the kitchen");
+      await userEvent.click(screen.getByRole("button", { name: "Save chore" }));
+
+      expect(editChore).toHaveBeenCalledWith("c1", {
+        name: "Mop the kitchen",
+        assigneeId: "u-ana",
+        dueDate: "2999-01-01",
+        notes: "Under the table too",
+      });
       expect(await screen.findByRole("heading", { level: 1, name: "Maple St House" })).toBeInTheDocument();
-      expect(screen.getByRole("radio", { name: "Mine" })).toBeChecked();
-      expect(await screen.findByRole("button", { name: /^Mop kitchen/ })).toBeInTheDocument();
     });
   });
 

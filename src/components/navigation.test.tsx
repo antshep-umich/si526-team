@@ -116,7 +116,9 @@ describe("DoneSection", () => {
 
     rerender(<DoneSection count={2} expanded onToggle={onToggle} controls="done-list" />);
     expect(button).toHaveAttribute("aria-expanded", "true");
-    expect(button.querySelector('img[data-icon-theme="light"]')).toHaveAttribute("src", icons.chevronUp.light);
+    // The same chevron, turned to point up.
+    expect(button.querySelector('img[data-icon-theme="light"]')).toHaveAttribute("src", icons.chevronDown.light);
+    expect(button.querySelector("img")!.parentElement).toHaveClass("up");
   });
 });
 

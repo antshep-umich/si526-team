@@ -58,6 +58,14 @@ export function createChore(data: {
   return getPrisma().chore.create({ data, include: people });
 }
 
+/** Changes what the Edit chore form changes (SCRUM-7 AC11). */
+export function updateChore(
+  choreId: string,
+  data: { name: string; notes: string | null; assigneeId: string; dueDate: Date },
+): Promise<ChoreWithPeople> {
+  return getPrisma().chore.update({ where: { id: choreId }, data, include: people });
+}
+
 /** Marks a chore done (a time and who) or not done (null, null). */
 export function setChoreCompletion(
   choreId: string,

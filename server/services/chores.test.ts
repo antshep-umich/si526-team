@@ -4,6 +4,7 @@ import { db } from "../test/fakeModels.js";
 import {
   addChore,
   completeChore,
+  editChore,
   getChore,
   getChoreHistory,
   listChores,
@@ -110,6 +111,57 @@ describe("addChore (SCRUM-6)", () => {
     const { ana } = await setUp();
 
     expect((await addChore(ana, chore({ notes: "   " }))).notes).toBeNull();
+  });
+});
+
+describe("editChore (the pencil in a chore's details)", () => {
+  it("lets the household owner and the chore's creator edit it, and nobody else", async () => {
+    const { ana, ben, cy } = await setUp();
+    const byBen = await addChore(ben, chore({ assigneeId: "ben" }));
+    const byAna = await addChore(ana, chore());
+
+    expect((await editChore(ana, byBen.id, chore({ name: "Owner's edit", assigneeId: "ben" }))).name).toBe("Owner's edit");
+    expect((await editChore(ben, byBen.id, chore({ name: "Creator's edit", assigneeId: "ben" }))).name).toBe("Creator's edit");
+    expect(await codeOf(() => editChore(ben, byAna.id, chore({ name: "Not mine" })))).toBe("NOT_ALLOWED_TO_EDIT");
+    expect(await codeOf(() => editChore(cy, byAna.id, chore()))).toBe("CHORE_NOT_FOUND");
+  });
+
+  it("changes the name, notes, assignee and due date, and records a new due date in the history", async () => {
+    const { ana } = await setUp();
+    const added = await addChore(ana, chore());
+
+    const edited = await editChore(ana, added.id, { name: "Recycling", assigneeId: "ben", dueDate: "2026-11-02", notes: "Blue bin" });
+
+    expect(edited).toMatchObject({ name: "Recycling", notes: "Blue bin", assigneeId: "ben" });
+    expect(edited.dueDate.toISOString().slice(0, 10)).toBe("2026-11-02");
+    const { history } = await getChoreHistory(ana, added.id);
+    expect(history.map((event) => event.eventType)).toEqual(["due_date_changed", "created"]);
+  });
+
+  it("doesn't record a history event when the due date stays the same", async () => {
+    const { ana } = await setUp();
+    const added = await addChore(ana, chore());
+
+    await editChore(ana, added.id, chore({ name: "Trash and recycling" }));
+
+    expect((await getChoreHistory(ana, added.id)).history).toHaveLength(1);
+  });
+
+  it("keeps a due date that has since passed, but won't move one into the past", async () => {
+    const { ana } = await setUp();
+    const added = await addChore(ana, chore({ dueDate: "2026-10-30" }));
+    vi.setSystemTime(new Date("2026-11-05T15:00:00Z"));
+
+    expect((await editChore(ana, added.id, chore({ name: "Late trash" }))).name).toBe("Late trash");
+    expect(await codeOf(() => editChore(ana, added.id, chore({ dueDate: "2026-11-01" })))).toBe("DUE_DATE_IN_PAST");
+  });
+
+  it("checks the form like Add chore does", async () => {
+    const { ana } = await setUp();
+    const added = await addChore(ana, chore());
+
+    expect(await codeOf(() => editChore(ana, added.id, chore({ name: " " })))).toBe("VALIDATION_ERROR");
+    expect(await codeOf(() => editChore(ana, added.id, chore({ assigneeId: "cy" })))).toBe("ASSIGNEE_NOT_IN_HOUSEHOLD");
   });
 });
 

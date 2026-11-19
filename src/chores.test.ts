@@ -65,10 +65,8 @@ describe("choreDetails", () => {
     );
   });
 
-  it("shows when a done chore was finished and when it was due (SCRUM-8)", () => {
-    expect(choreDetails(done("a", "2026-10-27", "2026-10-28"), "u-ana", TODAY)).toBe(
-      "You · done Wed, Oct 28 · due Tue, Oct 27",
-    );
+  it("shows when a done chore was finished, not when it was due (SCRUM-8)", () => {
+    expect(choreDetails(done("a", "2026-10-27", "2026-10-28"), "u-ana", TODAY)).toBe("You · done Wed, Oct 28");
   });
 
   it("says Unassigned if the assignee's account is gone", () => {

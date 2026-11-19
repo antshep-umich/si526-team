@@ -243,7 +243,7 @@ Every route except `/api/auth/*` and `/api/health` requires a session. **Authori
 | GET | `/api/chores/:id` | one chore |
 | POST | `/api/chores/:id/complete` | mark it done (assignee only; repeating it changes nothing) |
 | DELETE | `/api/chores/:id/complete` | undo it (assignee only) |
-| PATCH | `/api/chores/:id` | edit a chore. **Not built** (no design yet) |
+| PATCH | `/api/chores/:id` | edit a chore, from the pencil in its dropdown: `{ name, assigneeId, dueDate, notes? }`, the whole Edit chore form. Household owner or the chore's creator only (`canEditChore` in `shared/chores.ts`); a due date that has passed may stay, but can't move to another past day; a new due date adds a `due_date_changed` history event |
 | DELETE | `/api/chores/:id` | delete a chore. **Not built** (no design yet) |
 
 `GET /api/me` isn't built; `GET /api/households/current` and Better Auth's session cover it.
@@ -269,7 +269,7 @@ Named in `shared/httpStatus.ts` (`HttpStatus.CREATED` rather than `201`) and use
 | `POST /api/households/join` | **201 Created** with `Location` when it adds the user; **200 OK** when they were already in that household (a repeat tap) |
 | `GET /api/households/current`, `POST …/invite-code`, `GET` and `PUT …/preferences`, `PUT …/assignment-method`, `GET /api/health` | **200 OK** |
 | `POST /api/chores` | **201 Created**, with `Location: /api/chores/<id>` |
-| `GET /api/chores`, `GET /api/chores/history`, `GET /api/chores/:id`, `POST` and `DELETE /api/chores/:id/complete` | **200 OK**, with the chore (or `{ chores }`) |
+| `GET /api/chores`, `GET /api/chores/history`, `GET` and `PATCH /api/chores/:id`, `POST` and `DELETE /api/chores/:id/complete` | **200 OK**, with the chore (or `{ chores }`) |
 | `POST /api/password-reset` | **204 No Content** |
 
 **Errors** (the same on every endpoint)
@@ -278,7 +278,7 @@ Named in `shared/httpStatus.ts` (`HttpStatus.CREATED` rather than `201`) and use
 |---|---|---|
 | **400 Bad Request** | The request itself is malformed | `INVALID_JSON`, `BAD_REQUEST` |
 | **401 Unauthorized** | Nobody is signed in. Checked before anything else about the request | `UNAUTHENTICATED` |
-| **403 Forbidden** | Signed in, but not allowed (for example, a member changing the invite code, or marking someone else's chore done) | `FORBIDDEN`, `NOT_ASSIGNEE` |
+| **403 Forbidden** | Signed in, but not allowed (for example, a member changing the invite code, marking someone else's chore done, or editing a chore they didn't add) | `FORBIDDEN`, `NOT_ASSIGNEE`, `NOT_ALLOWED_TO_EDIT` |
 | **404 Not Found** | The URL names something that doesn't exist: an unknown route, "your household" when you have none, or a chore that isn't in your household | `NOT_FOUND`, `NO_HOUSEHOLD`, `CHORE_NOT_FOUND` |
 | **405 Method Not Allowed** | The path exists, but not with this method. The `Allow` header lists the methods it takes | `METHOD_NOT_ALLOWED` |
 | **409 Conflict** | The request clashes with the current state | `ALREADY_IN_HOUSEHOLD` |
@@ -376,7 +376,7 @@ Email is not needed for the MVP. When a later cycle needs it (reminders, passwor
 ## 11. Open questions
 
 - One household per user for the MVP? This spec assumes yes; the Membership table allows more later.
-- Should anyone in a household be able to edit or delete any chore, or only its creator and the household owner? This needs UX and PM input. (Decided for marking done: only the assignee.)
+- Who can delete a chore? Still open. (Decided: only the assignee marks a chore done; editing is the household owner and the chore's creator until household managers exist (SCRUM-62), when it becomes the manager. Anthony, 2026-11-19.)
 - Recurring chores: are they needed in cycle 1? Discovery research should decide.
 
 ---
@@ -457,7 +457,7 @@ The `Tests` workflow (`.github/workflows/tests.yml`) runs the typecheck and the 
 
 | Event | Tests run on | Goes on the dashboard as |
 |---|---|---|
-| Push to any branch except `main` | The pushed commit | That branch's row under "Branches in progress" (replaced on each push) |
+| Push to any branch except `main` | The pushed commit | That branch's row under "Branches in progress" (replaced on each push), with a link to the branch's Vercel preview (`previewUrl` in `render.ts` builds it from the branch name; a name too long for Vercel to keep links to its pull request instead) |
 | Pull request into `main` opened or updated | The merge result (branch + current `main`) | Nothing; it's the pull request's check |
 | Pull request merged | The branch's final commit | A row under "Merged branches", kept permanently |
 | Push to `main` (each merge) | The new `main` | The latest result, the chart, the Stories section and `main`'s history |

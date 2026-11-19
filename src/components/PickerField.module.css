@@ -41,9 +41,19 @@
   border-radius: 12px 12px 0 0;
 }
 
-/* Figma turns the down chevron 180° for "up"; the exported file isn't turned. */
+/* Figma turns the down chevron 180° for "up"; it turns smoothly (reduced motion: at once). */
+.chevron {
+  transition: transform 220ms ease;
+}
+
 .up {
   transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chevron {
+    transition: none;
+  }
 }
 
 .list {

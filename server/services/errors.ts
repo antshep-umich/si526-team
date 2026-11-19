@@ -13,7 +13,8 @@ export type ServiceErrorCode =
   | "CHORE_NOT_FOUND"
   | "DUE_DATE_IN_PAST"
   | "ASSIGNEE_NOT_IN_HOUSEHOLD"
-  | "NOT_ASSIGNEE";
+  | "NOT_ASSIGNEE"
+  | "NOT_ALLOWED_TO_EDIT";
 
 export class ServiceError extends Error {
   readonly code: ServiceErrorCode;

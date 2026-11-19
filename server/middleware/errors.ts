@@ -21,6 +21,8 @@ const STATUS_BY_CODE: Record<ServiceErrorCode, HttpStatus> = {
   FORBIDDEN: HttpStatus.FORBIDDEN,
   // Only the assignee can mark a chore done or undo it (SCRUM-8).
   NOT_ASSIGNEE: HttpStatus.FORBIDDEN,
+  // Only the household owner or the chore's creator can edit it (shared/chores.ts canEditChore).
+  NOT_ALLOWED_TO_EDIT: HttpStatus.FORBIDDEN,
   // The URL names "your household" or one of its chores, and there isn't one.
   NO_HOUSEHOLD: HttpStatus.NOT_FOUND,
   CHORE_NOT_FOUND: HttpStatus.NOT_FOUND,

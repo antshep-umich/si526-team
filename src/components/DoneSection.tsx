@@ -24,7 +24,7 @@ export default function DoneSection({ count, expanded, onToggle, controls }: Don
       onClick={onToggle}
     >
       Done ({count})
-      <ThemedIcon name={expanded ? "chevronUp" : "chevronDown"} className={expanded ? styles.up : undefined} />
+      <ThemedIcon name="chevronDown" className={`${styles.chevron} ${expanded ? styles.up : ""}`} />
     </button>
   );
 }

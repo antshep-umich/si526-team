@@ -1,6 +1,7 @@
 import { useId, useState, type KeyboardEvent, type ReactNode } from "react";
 import fieldStyles from "./TextField.module.css";
 import styles from "./PickerField.module.css";
+import Collapse from "./Collapse.tsx";
 import ThemedIcon from "./ThemedIcon.tsx";
 
 export type PickerOption = { value: string; label: string };
@@ -106,24 +107,26 @@ export default function PickerField({ label, placeholder, options, value, onChan
           onBlur={() => setOpen(false)}
         >
           <span className={selected ? undefined : styles.placeholder}>{selected?.label ?? placeholder}</span>
-          <ThemedIcon name={open ? "chevronUp" : "chevronDown"} className={open ? styles.up : undefined} />
+          <ThemedIcon name="chevronDown" className={`${styles.chevron} ${open ? styles.up : ""}`} />
         </div>
-        <ul id={listId} role="listbox" aria-labelledby={labelId} className={styles.list} hidden={!open}>
-          {options.map((option, index) => (
-            <li
-              key={option.value}
-              id={optionId(index)}
-              role="option"
-              aria-selected={option.value === value}
-              className={`${styles.option} ${keyboard && index === active ? styles.active : ""}`}
-              // Keep focus on the combobox, so choosing doesn't close the list by blurring it first.
-              onMouseDown={(event) => event.preventDefault()}
-              onClick={() => pick(index)}
-            >
-              {option.label}
-            </li>
-          ))}
-        </ul>
+        <Collapse open={open}>
+          <ul id={listId} role="listbox" aria-labelledby={labelId} className={styles.list}>
+            {options.map((option, index) => (
+              <li
+                key={option.value}
+                id={optionId(index)}
+                role="option"
+                aria-selected={option.value === value}
+                className={`${styles.option} ${keyboard && index === active ? styles.active : ""}`}
+                // Keep focus on the combobox, so choosing doesn't close the list by blurring it first.
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => pick(index)}
+              >
+                {option.label}
+              </li>
+            ))}
+          </ul>
+        </Collapse>
       </div>
       {error && (
         <p id={errorId} className={fieldStyles.error}>

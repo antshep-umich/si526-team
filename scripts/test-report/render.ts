@@ -430,6 +430,35 @@ function commitCell(meta: RunMeta): string {
   return `${commit(meta)}${message}`;
 }
 
+/** The Vercel project and team in preview links (README "Environments"). */
+const VERCEL = { project: "si526-team", scope: "si-526" } as const;
+
+/**
+ * A branch's Vercel preview link, which always shows the branch's latest push:
+ * `si526-team-git-<branch>-si-526.vercel.app`. Vercel lowercases the name, turns `/` into
+ * `-` and drops other symbols (`Sprint4_Dev_x` becomes `sprint4devx`). Null when the
+ * name is too long: past 63 characters Vercel shortens it in a way we can't predict.
+ */
+export function previewUrl(branch: string): string | null {
+  const slug = branch
+    .toLowerCase()
+    .replace(/\//g, "-")
+    .replace(/[^a-z0-9-]/g, "")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+  const label = `${VERCEL.project}-git-${slug}-${VERCEL.scope}`;
+  return slug && label.length <= 63 ? `https://${label}.vercel.app` : null;
+}
+
+/** The preview link, or a way to find it: Vercel comments the link on the branch's pull request. */
+function previewCell(meta: RunMeta): string {
+  const url = previewUrl(meta.branch);
+  if (url) return link(url, "Open preview");
+  return meta.repoUrl
+    ? link(`${meta.repoUrl}/pulls?q=${encodeURIComponent(`head:${meta.branch}`)}`, "On its pull request")
+    : `<span class="muted">On its pull request</span>`;
+}
+
 function branchesSection(site: SiteData): string {
   const heading = `<h2>Branches in progress</h2>`;
   if (site.branches.length === 0) {
@@ -442,11 +471,12 @@ function branchesSection(site: SiteData): string {
     commitCell(e.summary.meta),
     time(e.summary.startedAt),
     reportCell(e),
+    previewCell(e.summary.meta),
   ]);
   return `<section id="branches">
 ${heading}
-<p class="intro">The latest push to each branch. A branch drops off this list when it's deleted.</p>
-${table(["Branch", "Result", "Tests", "Last commit", "Tested", "Report"], rows, 3)}
+<p class="intro">The latest push to each branch, with its Vercel preview (the app as that branch has it, on its own copy of the database). A branch drops off this list when it's deleted.</p>
+${table(["Branch", "Result", "Tests", "Last commit", "Tested", "Report", "Preview"], rows, 3)}
 </section>`;
 }
 

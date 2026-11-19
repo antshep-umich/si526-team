@@ -198,6 +198,13 @@ export const createChore: typeof choresModel.createChore = async (data) => {
   return withPeople(row);
 };
 
+export const updateChore: typeof choresModel.updateChore = async (choreId, data) => {
+  const row = db.chores.find((c) => c.id === choreId);
+  if (!row) throw new Error("No Chore found");
+  Object.assign(row, data, { updatedAt: db.now() });
+  return withPeople(row);
+};
+
 export const setChoreCompletion: typeof choresModel.setChoreCompletion = async (choreId, completion) => {
   const row = db.chores.find((c) => c.id === choreId);
   if (!row) throw new Error("No Chore found");

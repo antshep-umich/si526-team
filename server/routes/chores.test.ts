@@ -18,6 +18,7 @@ const app = createApp({ getSessionUser: session });
 const as = (user: string) => ({
   get: (path: string) => request(app).get(path).set("x-test-user", user),
   post: (path: string, body?: object) => request(app).post(path).set("x-test-user", user).send(body),
+  patch: (path: string, body?: object) => request(app).patch(path).set("x-test-user", user).send(body),
   delete: (path: string) => request(app).delete(path).set("x-test-user", user),
 });
 
@@ -203,6 +204,20 @@ describe("GET /api/chores/:id/history (SCRUM-45)", () => {
     expect(res.body.error.code).toBe("CHORE_NOT_FOUND");
   });
 
+  it("AC4: another household's chore answers as unavailable, without saying it exists", { tags: ["SCRUM-45"] }, async () => {
+    await household();
+    const { body: added } = await as("ben").post("/api/chores", newChore);
+    await as("cy").post("/api/households", { name: "Other House" });
+
+    const res = await as("cy").get(`/api/chores/${added.id}/history`);
+    const deleted = await as("cy").get("/api/chores/no-such-chore/history");
+
+    // The screen shows "Chore no longer available." for this code (AC7).
+    expect(res.status).toBe(404);
+    expect(res.body.error.code).toBe("CHORE_NOT_FOUND");
+    expect(res.body.error.code).toBe(deleted.body.error.code);
+  });
+
   it("returns 404 when the chore is unavailable", async () => {
     await household();
 
@@ -215,6 +230,39 @@ describe("GET /api/chores/:id/history (SCRUM-45)", () => {
   });
 });
 
+
+describe("PATCH /api/chores/:id", () => {
+  it("edits the chore for its creator: 200 with the chore", async () => {
+    await household();
+    const { body: added } = await as("ben").post("/api/chores", newChore);
+
+    const res = await as("ben").patch(`/api/chores/${added.id}`, { ...newChore, name: "Recycling", assigneeId: "ben" });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ id: added.id, name: "Recycling", assignee: { userId: "ben", name: "Ben Test" } });
+  });
+
+  it("answers 403 NOT_ALLOWED_TO_EDIT for a member who neither owns the household nor added the chore", async () => {
+    await household();
+    const { body: added } = await as("ana").post("/api/chores", newChore);
+
+    const res = await as("ben").patch(`/api/chores/${added.id}`, { ...newChore, name: "Mine now" });
+
+    expect(res.status).toBe(403);
+    expect(res.body.error.code).toBe("NOT_ALLOWED_TO_EDIT");
+  });
+
+  it("answers 404 for another household's chore, and 422 for a broken rule", async () => {
+    await household();
+    const { body: added } = await as("ben").post("/api/chores", newChore);
+    await as("cy").post("/api/households", { name: "Other House" });
+
+    expect((await as("cy").patch(`/api/chores/${added.id}`, newChore)).status).toBe(404);
+    const invalid = await as("ana").patch(`/api/chores/${added.id}`, { ...newChore, name: "" });
+    expect(invalid.status).toBe(422);
+    expect(invalid.body.error.code).toBe("VALIDATION_ERROR");
+  });
+});
 
 describe("POST and DELETE /api/chores/:id/complete", () => {
   it("lets the assignee mark it done (200) and undo it (200)", async () => {
@@ -251,7 +299,7 @@ describe("POST and DELETE /api/chores/:id/complete", () => {
 describe("HTTP details", () => {
   it.each([
     ["delete", "/api/chores", "GET, POST, HEAD"],
-    ["patch", "/api/chores/00000000-0000-4000-9000-000000000001", "GET, HEAD"],
+    ["post", "/api/chores/00000000-0000-4000-9000-000000000001", "GET, PATCH, HEAD"],
     ["get", "/api/chores/00000000-0000-4000-9000-000000000001/complete", "POST, DELETE"],
   ] as const)("answers %s %s with 405 and Allow: %s", async (method, path, allow) => {
     await household();
@@ -286,7 +334,7 @@ describe("acceptance criteria", () => {
     expect((await as("ana").delete(complete)).status).toBe(200);
   });
 
-  it("AC1-AC3: housemates can view chore history with dates and newest events first", { tags: ["SCRUM-45"] }, async () => {
+  it("AC2, AC3: housemates can view chore history with dates and newest events first", { tags: ["SCRUM-45"] }, async () => {
     await household();
 
     const { body: added } = await as("ben").post("/api/chores", newChore);

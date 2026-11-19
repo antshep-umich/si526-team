@@ -1,5 +1,6 @@
 // One chore's history (SCRUM-45 View Single Chore History for Household).
 import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Chore } from "../chores.ts";
 import SingleChoreHistory from "./SingleChoreHistory.tsx";
@@ -59,5 +60,41 @@ describe("Single chore history", { tags: ["SCRUM-45"] }, () => {
       "CreatedSun, Nov 1 at 9:00 AM by Sam ItoDue Thu, Nov 5",
     ]);
     expect(screen.getByText("Status").nextElementSibling).toHaveTextContent("Done late");
+  });
+
+  it("AC3: lists what happened to the chore in order, newest first", async () => {
+    render(<SingleChoreHistory choreId="c1" userId="u-ana" />);
+
+    const events = within(await screen.findByRole("list", { name: "Chore activity" })).getAllByRole("listitem");
+    expect(events.map((event) => event.firstElementChild?.nextElementSibling?.textContent)).toEqual([
+      "Marked done",
+      "Due date changed",
+      "Created",
+    ]);
+  });
+
+  it('AC5: a chore with no history says "No chore history."', async () => {
+    getChoreHistory.mockResolvedValue({ ok: true, chore, history: [] });
+    render(<SingleChoreHistory choreId="c1" userId="u-ana" />);
+
+    expect(await screen.findByText("No chore history.")).toBeInTheDocument();
+  });
+
+  it("AC6: when the history fails to load it shows an error and a way to retry", async () => {
+    getChoreHistory.mockResolvedValueOnce({ ok: false, code: "NETWORK_ERROR" });
+    render(<SingleChoreHistory choreId="c1" userId="u-ana" />);
+
+    expect(await screen.findByText("Couldn't load chore history.")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: /try again|retry/i }));
+
+    expect(await screen.findByRole("heading", { level: 1, name: "Mop kitchen" })).toBeInTheDocument();
+    expect(getChoreHistory).toHaveBeenCalledTimes(2);
+  });
+
+  it('AC7: a deleted chore shows "Chore no longer available."', async () => {
+    getChoreHistory.mockResolvedValue({ ok: false, code: "CHORE_NOT_FOUND" });
+    render(<SingleChoreHistory choreId="c1" userId="u-ana" />);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Chore no longer available.");
   });
 });

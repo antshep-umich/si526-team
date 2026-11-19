@@ -5,9 +5,9 @@
   "criteria": [
     {
       "id": "AC1",
-      "text": "User Action: Clicks the checkbox on an open chore. Expected System Behavior: The chore moves to \"Done\" with the name struck through and a \"Done\" chip (\"Late\" if it was overdue). The Done count and progress card update.",
+      "text": "User Action: Clicks the checkbox on an open chore that belongs to them. Expected System Behavior: The chore moves to “Done” with the name struck through and a “Done” chip. The Done count and progress card update. Done chores show date chore was marked as done, not the due date.",
       "verify": "test",
-      "note": "Corrected to Figma's Late chip (team decision). Jira only mentions the Done chip."
+      "note": "Figma also has a \"Late\" chip for a chore ticked off after its due date (team decision); Jira only mentions the Done chip."
     },
     {
       "id": "AC2",
@@ -16,20 +16,19 @@
     },
     {
       "id": "AC3",
-      "text": "Error Condition: The change fails to save. The chore returns to its previous state. Message: \"Couldn't update this chore. Please try again.\"",
+      "text": "Error Condition: The change fails to save. The chore returns to its previous state. Message: “Couldn’t update this chore. Please try again.”",
       "verify": "test"
     },
     {
       "id": "AC4",
-      "text": "Chore card layout, Done section, and progress card: see \"View the Chore List.\"",
+      "text": "Chore card layout, Done section, and progress card: see “View the Chore List.”",
       "verify": "manual",
       "note": "A pointer to SCRUM-7, whose criteria test the chore card, the Done section and the progress card."
     },
     {
       "id": "AC5",
-      "text": "Only the housemate a chore is assigned to can mark it done or undo it. Other housemates see no checkbox.",
-      "verify": "test",
-      "note": "Added (team decision: only the assignee can tick a chore). Not in Jira yet."
+      "text": "Users can not see checkbox for chores that do not belong to them.",
+      "verify": "test"
     }
   ]
 }

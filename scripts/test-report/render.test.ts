@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { escapeHtml, renderSite } from "./render.ts";
+import { escapeHtml, previewUrl, renderSite } from "./render.ts";
 import { MAIN_REPORTS_KEPT, applyRun, emptySite } from "./site.ts";
 import type { RunMeta, RunSummary, SiteData, StoryCoverage } from "./types.ts";
 
@@ -45,6 +45,22 @@ const SECTIONS = ["latest", "chart", "stories", "branches", "merged", "history"]
 describe("escapeHtml", () => {
   it("escapes the characters that matter in text and attributes", () => {
     expect(escapeHtml(`<a href="x">Tom & Jerry's</a>`)).toBe("&lt;a href=&quot;x&quot;&gt;Tom &amp; Jerry&#39;s&lt;/a&gt;");
+  });
+});
+
+describe("previewUrl", () => {
+  it("builds the branch link Vercel comments on pull requests", () => {
+    // Both as Vercel's own pull request comments gave them (PRs #21 and #22).
+    expect(previewUrl("Ant-Dev-Sprint4")).toBe("https://si526-team-git-ant-dev-sprint4-si-526.vercel.app");
+    expect(previewUrl("Sprint4_Dev_preferred-chores")).toBe(
+      "https://si526-team-git-sprint4devpreferred-chores-si-526.vercel.app",
+    );
+    expect(previewUrl("feature/house-tab")).toBe("https://si526-team-git-feature-house-tab-si-526.vercel.app");
+  });
+
+  it("gives up on names too long to predict", () => {
+    expect(previewUrl("a-really-long-branch-name-that-vercel-shortens")).toBeNull();
+    expect(previewUrl("___")).toBeNull();
   });
 });
 
@@ -143,6 +159,23 @@ describe("renderSite", () => {
     const failed = run({ runId: "2-1" }, at(2), { outcome: "failed", totals: { total: 10, passed: 9, failed: 1, skipped: 0 } });
     const html = renderSite(build([run({}, at(1)), failed]));
     expect(section(html, "latest")).toContain('data-outcome="failed"');
+  });
+});
+
+describe("the Branches section", () => {
+  it("links each branch's preview, or its pull request when the name is too long", () => {
+    const html = renderSite(
+      build([
+        run({ kind: "branch", branch: "Ant-Dev-Sprint4", runId: "2-1" }, at(2)),
+        run({ kind: "branch", branch: "a-really-long-branch-name-that-vercel-shortens", runId: "3-1" }, at(3)),
+      ]),
+    );
+    const branches = section(html, "branches");
+
+    expect(branches).toContain('<a href="https://si526-team-git-ant-dev-sprint4-si-526.vercel.app">Open preview</a>');
+    expect(branches).toContain(
+      '<a href="https://github.com/o/r/pulls?q=head%3Aa-really-long-branch-name-that-vercel-shortens">On its pull request</a>',
+    );
   });
 });
 

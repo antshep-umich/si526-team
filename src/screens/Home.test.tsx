@@ -58,7 +58,7 @@ const chores = [
 ];
 
 function renderHome(props: Partial<Parameters<typeof Home>[0]> = {}) {
-  const callbacks = { onAddChore: vi.fn(), onOpenDetails: vi.fn(), onOpenChore: vi.fn() };
+  const callbacks = { onAddChore: vi.fn(), onEditChore: vi.fn(), onOpenChore: vi.fn() };
   render(<Home household={household} userId="u-ana" {...callbacks} {...props} />);
   return callbacks;
 }
@@ -71,6 +71,9 @@ const names = (list: HTMLElement) =>
 
 /** The card for a chore, found by its name. */
 const card = (name: string) => screen.getByText(name).closest("li")!;
+
+/** The card's own row (checkbox, name, chip, chevron), without its dropdown. */
+const cardRow = (name: string) => card(name).querySelector<HTMLElement>(".row")!;
 
 const openList = () => screen.getByRole("list", { name: "Chores to do" });
 
@@ -109,7 +112,7 @@ describe("Home chore list", () => {
         household={household}
         userId="u-ana"
         onAddChore={() => {}}
-        onOpenDetails={() => {}}
+        onEditChore={() => {}}
         onOpenChore={() => {}}
       />,
     );
@@ -226,6 +229,20 @@ describe("SCRUM-7 acceptance criteria", { tags: ["SCRUM-7"] }, () => {
     expect(screen.getByText(status)).toBeInTheDocument();
   });
 
+  it("AC2: the progress bar tracks the chores due this week", async () => {
+    listChores.mockResolvedValue({
+      ok: true,
+      chores: [
+        ...chores, // 1 of 4 due this week (Mon Oct 26 to Sun Nov 1) is done
+        chore("Sweep porch", { dueDate: "2026-10-22" }), // last week, still open
+        chore("Clean oven", { dueDate: "2026-11-03" }), // next week
+      ],
+    });
+    renderHome();
+
+    expect(await screen.findByRole("progressbar", { name: "1 of 4 chores done" })).toBeInTheDocument();
+  });
+
   it('AC2: the progress card says "No Chores Yet" when no chores are due', async () => {
     listChores.mockResolvedValue({ ok: true, chores: [] });
     renderHome();
@@ -255,12 +272,26 @@ describe("SCRUM-7 acceptance criteria", { tags: ["SCRUM-7"] }, () => {
 
     const overdue = card("Take out trash");
     expect(overdue.firstElementChild).toHaveClass("overdue");
-    expect(within(overdue).getByText("Overdue")).toBeInTheDocument();
+    expect(within(overdue.querySelector<HTMLElement>(".row")!).getByText("Overdue")).toBeInTheDocument();
     expect(card("Clean bathroom").firstElementChild).not.toHaveClass("overdue");
-    expect(within(card("Clean bathroom")).queryByText("Overdue")).not.toBeInTheDocument();
+    expect(within(cardRow("Clean bathroom")).queryByText("Overdue")).not.toBeInTheDocument();
   });
 
-  it('AC5: "Mine" shows only the chores assigned to the user', async () => {
+  it('AC5: an overdue chore that has been completed has a "Late" chip', async () => {
+    listChores.mockResolvedValue({
+      ok: true,
+      chores: [...chores, chore("Water plants", { dueDate: "2026-10-26", completedAt: at("2026-10-27"), completedBy: ana })],
+    });
+    renderHome();
+    await screen.findByRole("list", { name: "Chores to do" });
+    await openDone();
+
+    expect(within(cardRow("Water plants")).getByText("Late")).toBeInTheDocument();
+    expect(within(cardRow("Water plants")).queryByText("Done")).not.toBeInTheDocument();
+    expect(within(cardRow("Wash dishes")).getByText("Done")).toBeInTheDocument();
+  });
+
+  it('AC6: "Mine" shows only the chores assigned to the user', async () => {
     renderHome();
 
     await userEvent.click(await screen.findByRole("radio", { name: "Mine" }));
@@ -269,7 +300,7 @@ describe("SCRUM-7 acceptance criteria", { tags: ["SCRUM-7"] }, () => {
     expect(names(await openDone())).toEqual(["Wash dishes"]);
   });
 
-  it('AC6: "All" shows every household chore again', async () => {
+  it('AC7: "All" shows every household chore again', async () => {
     renderHome();
     await userEvent.click(await screen.findByRole("radio", { name: "Mine" }));
 
@@ -278,10 +309,10 @@ describe("SCRUM-7 acceptance criteria", { tags: ["SCRUM-7"] }, () => {
     expect(names(openList())).toEqual(["Take out trash", "Clean bathroom", "Buy dish soap"]);
   });
 
-  it('AC7: done chores sit under "Done ([count])" below the open ones, struck through, with a "Done" or "Late" chip', async () => {
+  it('AC8: done chores sit under "Done ([count])" below the open ones, struck through, with a "Done" chip', async () => {
     listChores.mockResolvedValue({
       ok: true,
-      chores: [...chores, chore("Water plants", { dueDate: "2026-10-26", completedAt: at("2026-10-27"), completedBy: ana })],
+      chores: [...chores, chore("Mop", { completedAt: at("2026-10-29"), completedBy: ana })],
     });
     renderHome();
     await screen.findByRole("list", { name: "Chores to do" });
@@ -289,15 +320,14 @@ describe("SCRUM-7 acceptance criteria", { tags: ["SCRUM-7"] }, () => {
     const toggle = screen.getByRole("button", { name: "Done (2)" });
     expect(openList().compareDocumentPosition(toggle)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     const done = await openDone();
-    expect(names(done)).toEqual(["Wash dishes", "Water plants"]); // most recently done first
-    for (const name of ["Water plants", "Wash dishes"]) {
+    expect(names(done)).toEqual(["Mop", "Wash dishes"]); // most recently done first
+    for (const name of ["Mop", "Wash dishes"]) {
       expect(within(done).getByText(name)).toHaveStyle({ textDecoration: "line-through" });
+      expect(within(cardRow(name)).getByText("Done")).toBeInTheDocument();
     }
-    expect(within(card("Wash dishes")).getByText("Done")).toBeInTheDocument();
-    expect(within(card("Water plants")).getByText("Late")).toBeInTheDocument();
   });
 
-  it('AC8: "Done ([count])" opens and closes the section', async () => {
+  it('AC9: "Done ([count])" opens and closes the section', async () => {
     renderHome();
     const toggle = await screen.findByRole("button", { name: "Done (1)" });
     const done = document.getElementById(toggle.getAttribute("aria-controls")!)!;
@@ -312,7 +342,7 @@ describe("SCRUM-7 acceptance criteria", { tags: ["SCRUM-7"] }, () => {
     expect(done).not.toBeVisible();
   });
 
-  it('AC10: says "Couldn\'t load chores." with a "Try again" button when they fail to load', async () => {
+  it('AC12: says "Couldn\'t load chores." with a "Try again" button when they fail to load', async () => {
     listChores.mockResolvedValueOnce({ ok: false, code: "NETWORK_ERROR" });
     renderHome();
 
@@ -340,7 +370,21 @@ describe("SCRUM-8 acceptance criteria", { tags: ["SCRUM-8"] }, () => {
     expect(screen.getByRole("progressbar", { name: "2 of 4 chores done" })).toBeInTheDocument();
     const done = await openDone();
     expect(within(done).getByText("Clean bathroom")).toHaveStyle({ textDecoration: "line-through" });
-    expect(within(card("Clean bathroom")).getByText("Done")).toBeInTheDocument();
+    expect(within(cardRow("Clean bathroom")).getByText("Done")).toBeInTheDocument();
+  });
+
+  it("AC1: a done chore shows the date it was marked done, not the due date", async () => {
+    listChores.mockResolvedValue({
+      ok: true,
+      chores: [chore("Water plants", { dueDate: "2026-10-26", completedAt: at("2026-10-27"), completedBy: ana })],
+    });
+    renderHome();
+    await screen.findByRole("button", { name: "Done (1)" });
+    await openDone();
+
+    const meta = card("Water plants").textContent!;
+    expect(meta).toMatch(/done Tue, Oct 27/);
+    expect(meta).not.toMatch(/due/);
   });
 
   it('AC1: an overdue chore ticked off gets the "Late" chip', async () => {
@@ -352,7 +396,7 @@ describe("SCRUM-8 acceptance criteria", { tags: ["SCRUM-8"] }, () => {
     await userEvent.click(await screen.findByRole("checkbox", { name: "Mark Fold laundry done" }));
     await openDone();
 
-    expect(within(card("Fold laundry")).getByText("Late")).toBeInTheDocument();
+    expect(within(cardRow("Fold laundry")).getByText("Late")).toBeInTheDocument();
   });
 
   it("AC2: unticking a done chore returns it to the open list and updates the count and progress", async () => {
@@ -400,13 +444,148 @@ describe("SCRUM-8 acceptance criteria", { tags: ["SCRUM-8"] }, () => {
   });
 });
 
-describe("Opening a chore from the list", { tags: ["SCRUM-53"] }, () => {
-  it("AC1: selecting a chore in the list opens its details", async () => {
-    const { onOpenDetails, onOpenChore } = renderHome();
+describe("Single chore history from the chore list", { tags: ["SCRUM-45"] }, () => {
+  it("AC1: the household's chore list shows the household's chores, not only the user's", async () => {
+    renderHome();
 
-    await userEvent.click(await screen.findByRole("button", { name: /^Clean bathroom/ }));
+    expect(names(await screen.findByRole("list", { name: "Chores to do" }))).toEqual([
+      "Take out trash",
+      "Clean bathroom",
+      "Buy dish soap",
+    ]);
+    expect(names(await openDone())).toEqual(["Wash dishes"]);
+  });
+});
 
-    expect(onOpenDetails).toHaveBeenCalledWith("Clean bathroom");
-    expect(onOpenChore).not.toHaveBeenCalled();
+/** Opens a chore's dropdown from its name and returns the dropdown. */
+async function openPanel(name: string) {
+  const toggle = await screen.findByRole("button", { name: new RegExp(`^${name}`) });
+  await userEvent.click(toggle);
+  return document.getElementById(toggle.getAttribute("aria-controls")!)!;
+}
+
+/** The dropdown's facts by label, for example { "Assigned To:": "You" }. */
+const facts = (panel: HTMLElement) =>
+  Object.fromEntries(Array.from(panel.querySelectorAll("dt"), (dt) => [dt.textContent, dt.nextElementSibling?.textContent]));
+
+describe("A chore's dropdown", { tags: ["SCRUM-7"] }, () => {
+  it("AC11: the chevron opens a details pane under the card with what the card doesn't show, including when it was last done and by whom", async () => {
+    listChores.mockResolvedValue({
+      ok: true,
+      chores: [chore("Mop", { assignee: sam, completedAt: at("2026-10-28"), completedBy: sam, notes: "Kitchen and hall" })],
+    });
+    renderHome();
+    await screen.findByRole("button", { name: "Done (1)" });
+    await openDone();
+    const toggle = await screen.findByRole("button", { name: /^Mop/ });
+    const panel = document.getElementById(toggle.getAttribute("aria-controls")!)!;
+    expect(panel).not.toBeVisible();
+
+    // The chevron to the right of the chip.
+    const chevron = card("Mop").querySelector("button[aria-hidden]")!;
+    expect(within(cardRow("Mop")).getByText("Done").compareDocumentPosition(chevron)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    await userEvent.click(chevron);
+
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(panel).toBeVisible();
+    expect(facts(panel)).toMatchObject({ "Last done:": "Wed, Oct 28 by Sam Ito", "Chore Details:": "Kitchen and hall" });
+  });
+
+  it('AC11: the "Edit" pencil shows only for people who may edit the chore, and opens Edit chore', async () => {
+    const asMember = { ...household, role: "member" as const };
+    listChores.mockResolvedValue({
+      ok: true,
+      chores: [chore("Clean bathroom"), chore("Buy dish soap", { assignee: sam, createdBy: sam })],
+    });
+    const { onEditChore } = renderHome({ household: asMember });
+
+    // Ana added "Clean bathroom", so she may edit it; Sam added "Buy dish soap".
+    const mine = await openPanel("Clean bathroom");
+    const sams = await openPanel("Buy dish soap");
+    expect(within(sams).queryByRole("button", { name: "Edit Buy dish soap" })).not.toBeInTheDocument();
+    await userEvent.click(within(mine).getByRole("button", { name: "Edit Clean bathroom" }));
+
+    expect(onEditChore).toHaveBeenCalledWith(expect.objectContaining({ id: "Clean bathroom" }));
+  });
+
+  it("gives the household owner the pencil on every chore", async () => {
+    listChores.mockResolvedValue({ ok: true, chores: [chore("Buy dish soap", { assignee: sam, createdBy: sam })] });
+    renderHome();
+
+    const panel = await openPanel("Buy dish soap");
+
+    expect(within(panel).getByRole("button", { name: "Edit Buy dish soap" })).toBeInTheDocument();
+  });
+
+  it('has "View history", which opens the chore\'s history', async () => {
+    const { onOpenChore } = renderHome();
+
+    const panel = await openPanel("Clean bathroom");
+    await userEvent.click(within(panel).getByRole("button", { name: "View history for Clean bathroom" }));
+
+    expect(onOpenChore).toHaveBeenCalledWith("Clean bathroom");
+    // Only in the dropdown now, not on the card's row.
+    expect(screen.getAllByRole("button", { name: /^View history for/ })).toHaveLength(1);
+  });
+
+  it("stays open when the list refreshes", async () => {
+    vi.useFakeTimers({ toFake: ["Date", "setInterval", "clearInterval"] });
+    vi.setSystemTime(NOW);
+    renderHome();
+    const panel = await openPanel("Clean bathroom");
+
+    await act(() => vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS));
+
+    expect(listChores).toHaveBeenCalledTimes(2);
+    expect(panel).toBeVisible();
+  });
+});
+
+describe("Chore details in the dropdown", { tags: ["SCRUM-53"] }, () => {
+  it("AC1: selecting a chore in the list shows its name, assigned housemate, due date, completion status and description", async () => {
+    listChores.mockResolvedValue({ ok: true, chores: [chore("Clean bathroom", { assignee: sam, notes: "Scrub the tub too" })] });
+    renderHome();
+
+    const panel = await openPanel("Clean bathroom");
+
+    expect(within(card("Clean bathroom")).getByText("Clean bathroom")).toBeInTheDocument();
+    expect(facts(panel)).toEqual({
+      "Assigned To:": "Sam Ito",
+      "Due date:": "Thu, Oct 29",
+      "Status:": "To do",
+      "Chore Details:": "Scrub the tub too",
+    });
+  });
+
+  it('AC2: a chore with no description shows "No description added."', async () => {
+    renderHome();
+
+    const panel = await openPanel("Clean bathroom");
+
+    expect(facts(panel)["Chore Details:"]).toBe("No description added.");
+  });
+
+  it("AC5: when the details fail to load (with the list) it shows an error and retries", async () => {
+    listChores.mockResolvedValueOnce({ ok: false, code: "NETWORK_ERROR" });
+    renderHome();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Couldn't load chores.");
+    await userEvent.click(screen.getByRole("button", { name: "Try again" }));
+
+    const panel = await openPanel("Clean bathroom");
+    expect(facts(panel)["Chore Details:"]).toBe("No description added.");
+  });
+
+  it("AC3: Back returns to the previous screen: selecting the chore again rolls the details back up, leaving the list as it was", async () => {
+    renderHome();
+    await userEvent.click(await screen.findByRole("radio", { name: "Mine" }));
+    const panel = await openPanel("Clean bathroom");
+
+    await userEvent.click(screen.getByRole("button", { name: /^Clean bathroom/ }));
+
+    expect(panel).not.toBeVisible();
+    expect(screen.getByRole("button", { name: /^Clean bathroom/ })).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByRole("radio", { name: "Mine" })).toBeChecked();
+    expect(names(openList())).toEqual(["Clean bathroom"]);
   });
 });
