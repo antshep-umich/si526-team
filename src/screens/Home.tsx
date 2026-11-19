@@ -18,6 +18,7 @@ import {
   type Chore,
 } from "../chores.ts";
 import { startOfWeek, today as localToday } from "../dates.ts";
+import ChoreDetails from "./ChoreDetails.tsx";
 import styles from "./Home.module.css";
 import SingleChoreHistory from "./SingleChoreHistory.tsx";
 
@@ -83,6 +84,8 @@ export default function Home({
   const [attempt, setAttempt] = useState(0);
   const [filter, setFilter] = useState<Filter>(savedFilter);
   const [selectedChoreId, setSelectedChoreId] = useState<string | null>(null);
+  // SCRUM-53: the chore whose details screen is open.
+  const [detailsChoreId, setDetailsChoreId] = useState<string | null>(null);
   const [doneOpen, setDoneOpen] = useState(false);
   const [saving, setSaving] = useState<ReadonlySet<string>>(new Set());
   const [toggleError, setToggleError] = useState<string | null>(null);
@@ -144,6 +147,7 @@ export default function Home({
           // SCRUM-8: only the assignee can mark it done or undo it.
           onToggle={isMine(chore, userId) ? () => toggle(chore) : undefined}
           busy={saving.has(chore.id)}
+          onOpen={() => setDetailsChoreId(chore.id)}
           onViewHistory={() => setSelectedChoreId(chore.id)}
         />
       </li>
@@ -221,6 +225,17 @@ export default function Home({
 
   // The week's progress is the whole household's, whichever filter is on.
   const progress = list.status === "ready" ? weeklyProgress(list.chores, today) : null;
+  // Returned from Home itself, so the list, filter and Done section are as they were on Back.
+  if (detailsChoreId) {
+    return (
+      <ChoreDetails
+        household={household}
+        userId={userId}
+        choreId={detailsChoreId}
+        onBack={() => setDetailsChoreId(null)}
+      />
+    );
+  }
   if (selectedChoreId) {
     return (
       <SingleChoreHistory

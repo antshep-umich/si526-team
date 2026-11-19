@@ -1,0 +1,32 @@
+{
+  "story": "SCRUM-53",
+  "title": "View chore details & description",
+  "epic": { "key": "SCRUM-1", "title": "Chore Tracking" },
+  "criteria": [
+    {
+      "id": "AC1",
+      "text": "User Action: User selects a specific chore from the chore list or chore history. Expected System Behavior: Displays the chore details, including chore name, assigned housemate, due date, completion status, and description.",
+      "verify": "test"
+    },
+    {
+      "id": "AC2",
+      "text": "User Action: User views a chore with no description. Expected System Behavior: The description area shows \"No description added.\"",
+      "verify": "test"
+    },
+    {
+      "id": "AC3",
+      "text": "User Action: User selects \"Back.\" Expected System Behavior: Returns to the previous screen.",
+      "verify": "test"
+    },
+    {
+      "id": "AC4",
+      "text": "Error Condition: A chore has been deleted or is no longer available. Expected message: \"Chore no longer available.\"",
+      "verify": "test"
+    },
+    {
+      "id": "AC5",
+      "text": "Error Condition: The chore details fail to load. Expected message: The system displays an error message and provides an option to retry loading the details.",
+      "verify": "test"
+    }
+  ]
+}

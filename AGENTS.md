@@ -5,7 +5,7 @@ save you from exploring the codebase. Deeper detail lives in `TECH_SPEC.md` (§ 
 `TECH_DEBT.md` and `README.md`. **If you change anything this file describes, update it in the
 same commit.**
 
-_Last updated: 2026-11-11 (SCRUM-47 monthly household chore history), on `Sprint3_Dev_monthly-history`._
+_Last updated: 2026-11-18 (SCRUM-53 Chore details), on `Sprint4_Dev_chore-details`._
 
 ## The project
 
@@ -66,7 +66,7 @@ shared/                 imported by both server and frontend
   httpStatus.ts         HttpStatus.CREATED etc. Use these, never bare numbers
 src/                    React app
   App.tsx               which screen to show (session + household state machine)
-  screens/              one file per Figma screen, plus Screen.tsx (shared layout); Home.tsx is the chore list, ChoreHistory.tsx the user's history
+  screens/              one file per Figma screen, plus Screen.tsx (shared layout); Home.tsx is the chore list, ChoreHistory.tsx the user's history, ChoreDetails.tsx one chore (SCRUM-53)
   chores.ts, dates.ts   chore status/sorting/weekly progress, and "YYYY-MM-DD" dates in the phone's time zone
   history.ts            My chore history's filters, sorts and card wording (SCRUM-44)
   monthlyHistory.ts     Household chore history by month: which chores, the summary, card wording (SCRUM-47)
@@ -179,7 +179,7 @@ A request goes through six layers in order. **Each layer may only use the layers
 
 ## Current state (2026-11-05)
 
-**Done:** Feasibility spikes 1–3 (Vercel + Express + Prisma deploy, Better Auth, teammate deploys) · design tokens and all Figma components · Sprint 2 screens (SCRUM-2 Sign Up, SCRUM-3 Log in/Log out, SCRUM-4 Create a Household, SCRUM-32 Join a Household) + stand-in Forgot password · household API with member names · six-layer server · status codes · unit, component and e2e tests in CI · test dashboard · **chores**: the `Chore` table, `/api/chores`, the chore list ("Home - Chores (All)") and Add chore ("Home - Add Chore (refined)") screens (SCRUM-6, 7, 8) · sign-up, log-in and join messages and rules aligned with SCRUM-2, 3 and 32 · acceptance files for the six Done stories (SCRUM-2, 3, 6, 7, 8, 32), every AC tagged to tests or marked manual; SCRUM-32 AC3 (the "You joined…" message) has no test yet because the message isn't built · **Sprint 3, SCRUM-44 My chore history** (on `Sprint3_Dev_chore-history`): `GET /api/chores/history`, the history screen from the Home menu with filter, sort and an in-place expanded chore; no Figma design yet (README Conflicts rows 19–23) · **SCRUM-47 monthly household chore history** (on `Sprint3_Dev_monthly-history`, built on the SCRUM-46 weekly view): a Weekly / Monthly switch in `HouseholdChoreHistory.tsx`, and `MonthlyChoreHistory.tsx` with month navigation, a completed / incomplete / overdue summary and the chores due that month. It reuses `GET /api/chores?since=` (no new endpoint); no Figma design yet (README Conflicts rows 24–27).
+**Done:** Feasibility spikes 1–3 (Vercel + Express + Prisma deploy, Better Auth, teammate deploys) · design tokens and all Figma components · Sprint 2 screens (SCRUM-2 Sign Up, SCRUM-3 Log in/Log out, SCRUM-4 Create a Household, SCRUM-32 Join a Household) + stand-in Forgot password · household API with member names · six-layer server · status codes · unit, component and e2e tests in CI · test dashboard · **chores**: the `Chore` table, `/api/chores`, the chore list ("Home - Chores (All)") and Add chore ("Home - Add Chore (refined)") screens (SCRUM-6, 7, 8) · sign-up, log-in and join messages and rules aligned with SCRUM-2, 3 and 32 · acceptance files for the six Done stories (SCRUM-2, 3, 6, 7, 8, 32), every AC tagged to tests or marked manual; SCRUM-32 AC3 (the "You joined…" message) has no test yet because the message isn't built · **Sprint 3, SCRUM-44 My chore history** (on `Sprint3_Dev_chore-history`): `GET /api/chores/history`, the history screen from the Home menu with filter, sort and an in-place expanded chore; no Figma design yet (README Conflicts rows 19–23) · **SCRUM-47 monthly household chore history** (on `Sprint3_Dev_monthly-history`, built on the SCRUM-46 weekly view): a Weekly / Monthly switch in `HouseholdChoreHistory.tsx`, and `MonthlyChoreHistory.tsx` with month navigation, a completed / incomplete / overdue summary and the chores due that month. It reuses `GET /api/chores?since=` (no new endpoint); no Figma design yet (README Conflicts rows 24–27). · **Sprint 4, SCRUM-53 Chore details** (on `Sprint4_Dev_chore-details`): `ChoreDetails.tsx` from Figma "Home - Chore Details", opened by tapping a chore's name on Home; loads `GET /api/chores/:id` fresh (no new endpoint), with a placeholder Status field and no Edit button yet (README Conflicts rows 28–32).
 
 **Next (MVP, TECH_SPEC §4):**
 1. The team reviews README "Conflicts to resolve" (stories vs. Figma vs. build, Figma design issues, placeholder names). Several rows wait on UX designs: a card without a checkbox, the expanded chore row, toasts ("Chore added.", "Marked done. Undo"), empty/loading/error states.
