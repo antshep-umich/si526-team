@@ -589,3 +589,23 @@ describe("Chore details in the dropdown", { tags: ["SCRUM-53"] }, () => {
     expect(names(openList())).toEqual(["Clean bathroom"]);
   });
 });
+
+describe("Chores left by someone who moved out", { tags: ["SCRUM-75"] }, () => {
+  it("AC4: their open chores stay on the list marked Unassigned, and any housemate can assign them", async () => {
+    const asMember = { ...household, role: "member" as const };
+    // Sam added it and has left; Ana is neither its creator nor the owner.
+    listChores.mockResolvedValue({ ok: true, chores: [chore("Clean fridge", { assignee: null, createdBy: sam })] });
+    const { onEditChore } = renderHome({ household: asMember });
+
+    const open = await screen.findByRole("list", { name: "Chores to do" });
+    expect(within(open).getByText("Clean fridge")).toBeInTheDocument();
+    expect(cardRow("Clean fridge")).toHaveTextContent("Unassigned");
+    // Nobody's to tick off until someone takes it.
+    expect(within(card("Clean fridge")).queryByRole("checkbox")).not.toBeInTheDocument();
+    const panel = await openPanel("Clean fridge");
+    expect(facts(panel)).toMatchObject({ "Assigned To:": "Unassigned" });
+    await userEvent.click(within(panel).getByRole("button", { name: "Edit Clean fridge" }));
+
+    expect(onEditChore).toHaveBeenCalledWith(expect.objectContaining({ id: "Clean fridge" }));
+  });
+});

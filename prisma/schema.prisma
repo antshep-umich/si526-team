@@ -21,6 +21,7 @@ model Household {
 
   memberships Membership[]
   chores      Chore[]
+  notices     HouseholdNotice[]
 }
 
 enum AssignmentMethod {
@@ -48,6 +49,8 @@ model Membership {
   // SCRUM-72 "Set chore preferences": ids from shared/preferences.ts CHORE_TYPES.
   choreTypes     String[]        @default([])
   weeklyWorkload WeeklyWorkload?
+  // SCRUM-75: household notices up to this time have been shown to this member.
+  noticesSeenAt  DateTime        @default(now())
 
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
@@ -178,4 +181,23 @@ model ChoreHistory {
   actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
 
   @@index([choreId, createdAt])
+}
+
+// SCRUM-75 AC8: news for the rest of the household ("[Name] left the household."), shown
+// once to each member the next time they use the app (Membership.noticesSeenAt).
+enum HouseholdNoticeKind {
+  member_left
+}
+
+model HouseholdNotice {
+  id          String              @id @default(uuid()) @db.Uuid
+  householdId String              @db.Uuid
+  kind        HouseholdNoticeKind
+  // Who it's about, by name at the time: they may have left the household.
+  personName  String
+  createdAt   DateTime            @default(now())
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  @@index([householdId, createdAt])
 }

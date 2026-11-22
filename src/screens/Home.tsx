@@ -170,7 +170,10 @@ export default function Home({
       rows.push(["Last done:", `${describeDay(localDateOf(chore.completedAt), today)} by ${person(chore.completedBy)}`]);
     }
     rows.push(["Chore Details:", chore.notes ?? "No description added."]);
-    const editable = canEditChore({ creatorId: chore.createdBy?.userId ?? null }, { userId, role: household.role });
+    const editable = canEditChore(
+      { creatorId: chore.createdBy?.userId ?? null, assigneeId: chore.assignee?.userId ?? null },
+      { userId, role: household.role },
+    );
     return {
       rows,
       onEdit: editable ? () => onEditChore(chore) : undefined,

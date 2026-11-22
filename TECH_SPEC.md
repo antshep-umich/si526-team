@@ -187,7 +187,8 @@ Better Auth reads and writes its own tables: `user`, `session`, `account` and `v
 | householdId | FK → Household | |
 | role | enum: `owner`, `member` | the owner can regenerate the invite code and remove members |
 | joinedAt | timestamp | |
-| | | unique on `userId` in the MVP (one household per user) |
+| noticesSeenAt | timestamp | household notices up to here have been shown to them; starts at joining (SCRUM-75) |
+| | | unique on `userId` in the MVP (one household per user). Leaving deletes the row (SCRUM-75); rejoining makes a new one |
 
 **Chore** (migration `20261029032115_add_chores`)
 | Field | Type | Notes |
@@ -196,13 +197,25 @@ Better Auth reads and writes its own tables: `user`, `session`, `account` and `v
 | householdId | FK → Household | every query filters on this; deleting the household deletes its chores |
 | name | varchar(60) | required (SCRUM-6) |
 | notes | varchar(200), nullable | |
-| assigneeId | FK → user, nullable | required when the chore is made; null only if that account is deleted later |
+| assigneeId | FK → user, nullable | required when the chore is made; null ("Unassigned") when the assignee leaves the household while it's open (SCRUM-75), or deletes their account |
 | dueDate | date | required; a calendar day with no time |
 | completedAt | timestamp, nullable | set when the assignee marks it done; cleared on undo |
 | completedById | FK → user, nullable | who marked it done (always the assignee today) |
 | createdById | FK → user, nullable | null if that account is deleted later |
 | createdAt / updatedAt | timestamp | |
 | | | indexes on (householdId, dueDate) and (householdId, completedAt) |
+
+**HouseholdNotice** (migration `20261122120000_add_household_notices`, SCRUM-75 AC8)
+| Field | Type | Notes |
+|---|---|---|
+| id | uuid (PK) | |
+| householdId | FK → Household | deleting the household deletes its notices |
+| kind | enum: `member_left` | the app words it: "[Name] left the household." |
+| personName | text | who it's about, by name at the time (they've left) |
+| createdAt | timestamp | a member sees notices newer than their `noticesSeenAt` |
+| | | index on (householdId, createdAt) |
+
+**Leaving a household** (`DELETE /api/households/current/membership`) is one transaction: the member's open chores in it become unassigned (done ones keep their name), their membership goes, and the others get a `member_left` notice. If nobody is left, the household is deleted with its chores instead.
 
 **Status isn't stored.** It's worked out from the dates, in the phone's own time zone (`src/chores.ts`):
 
@@ -234,6 +247,9 @@ Every route except `/api/auth/*` and `/api/health` requires a session. **Authori
 | POST | `/api/households/join` | join a household with `{ inviteCode }` |
 | GET | `/api/households/current` | household details and members (each with their `choreTypes`, for Add chore's "Prefers this chore") |
 | POST | `/api/households/current/invite-code` | regenerate the invite code (owner only) |
+| DELETE | `/api/households/current/membership` | leave the household (SCRUM-75; see section 5, "Leaving a household"). An owner who leaves isn't replaced |
+| GET | `/api/households/current/notices` | `{ notices }`: the household notices the caller hasn't seen, oldest first (SCRUM-75 AC8). The app checks every 10 s |
+| PUT | `/api/households/current/notices/seen` | `{ through }` (an ISO timestamp, the newest notice shown): those notices won't come back |
 | GET, PUT | `/api/households/current/preferences` | the caller's own chore preferences (SCRUM-72): `{ choreTypes, weeklyWorkload }`, ids from `shared/preferences.ts` |
 | PUT | `/api/households/current/assignment-method` | how the household's chores get assigned, `{ assignmentMethod }` (owner only; SCRUM-72). Returns the household |
 | POST | `/api/auth/update-user` | Better Auth: change your name (SCRUM-72). Our hook keeps the sign-up name rule and answers `NAME_REQUIRED` for a blank name |
@@ -243,7 +259,7 @@ Every route except `/api/auth/*` and `/api/health` requires a session. **Authori
 | GET | `/api/chores/:id` | one chore |
 | POST | `/api/chores/:id/complete` | mark it done (assignee only; repeating it changes nothing) |
 | DELETE | `/api/chores/:id/complete` | undo it (assignee only) |
-| PATCH | `/api/chores/:id` | edit a chore, from the pencil in its dropdown: `{ name, assigneeId, dueDate, notes?, category? }`, the whole Edit chore form (no `category` clears it). Household owner or the chore's creator only (`canEditChore` in `shared/chores.ts`); a due date that has passed may stay, but can't move to another past day; a new due date adds a `due_date_changed` history event |
+| PATCH | `/api/chores/:id` | edit a chore, from the pencil in its dropdown: `{ name, assigneeId, dueDate, notes?, category? }`, the whole Edit chore form (no `category` clears it). Household owner or the chore's creator only, or anyone while it's unassigned (`canEditChore` in `shared/chores.ts`, SCRUM-75 AC4); a due date that has passed may stay, but can't move to another past day; a new due date adds a `due_date_changed` history event |
 | DELETE | `/api/chores/:id` | delete a chore. **Not built** (no design yet) |
 
 `GET /api/me` isn't built; `GET /api/households/current` and Better Auth's session cover it.
@@ -267,10 +283,10 @@ Named in `shared/httpStatus.ts` (`HttpStatus.CREATED` rather than `201`) and use
 |---|---|
 | `POST /api/households` | **201 Created**, with `Location: /api/households/current` |
 | `POST /api/households/join` | **201 Created** with `Location` when it adds the user; **200 OK** when they were already in that household (a repeat tap) |
-| `GET /api/households/current`, `POST …/invite-code`, `GET` and `PUT …/preferences`, `PUT …/assignment-method`, `GET /api/health` | **200 OK** |
+| `GET /api/households/current`, `POST …/invite-code`, `GET` and `PUT …/preferences`, `PUT …/assignment-method`, `GET …/notices`, `GET /api/health` | **200 OK** |
 | `POST /api/chores` | **201 Created**, with `Location: /api/chores/<id>` |
 | `GET /api/chores`, `GET /api/chores/history`, `GET` and `PATCH /api/chores/:id`, `POST` and `DELETE /api/chores/:id/complete` | **200 OK**, with the chore (or `{ chores }`) |
-| `POST /api/password-reset` | **204 No Content** |
+| `POST /api/password-reset`, `DELETE /api/households/current/membership`, `PUT …/notices/seen` | **204 No Content** |
 
 **Errors** (the same on every endpoint)
 
@@ -376,7 +392,8 @@ Email is not needed for the MVP. When a later cycle needs it (reminders, passwor
 ## 11. Open questions
 
 - One household per user for the MVP? This spec assumes yes; the Membership table allows more later.
-- Who can delete a chore? Still open. (Decided: only the assignee marks a chore done; editing is the household owner and the chore's creator until household managers exist (SCRUM-62), when it becomes the manager. Anthony, 2026-11-19.)
+- Who can delete a chore? Still open. (Decided: only the assignee marks a chore done; editing is the household owner and the chore's creator until household managers exist (SCRUM-62), when it becomes the manager. Anthony, 2026-11-19. Anyone may edit a chore while it's unassigned, to pick it up: Anthony, 2026-11-22.)
+- What happens when the owner leaves? Decided for now (Anthony, 2026-11-22): nobody takes over; the household carries on without an owner, so nobody can change the invite code or the assigned method. Revisit with SCRUM-62's household managers.
 - Recurring chores: are they needed in cycle 1? Discovery research should decide.
 
 ---

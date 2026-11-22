@@ -145,6 +145,51 @@
   outline-offset: -2px;
 }
 
+/* Not in Figma yet (SCRUM-64): an option's second line, and the headings over groups. */
+.detail {
+  display: block;
+  margin-top: 2px;
+  font: var(--type-meta);
+  color: var(--color-text-muted);
+}
+
+.option[aria-selected="true"] .detail {
+  font-weight: 400;
+}
+
+.groupLabel {
+  display: block;
+  padding: 10px 14px 6px;
+  border: 1.5px solid var(--color-border-input);
+  border-top: none;
+  border-bottom: none;
+  background: linear-gradient(var(--color-surface-card), var(--color-surface-card)), var(--color-background-bottom);
+  color: var(--color-text-default);
+  font: var(--type-field-label);
+}
+
+/* Grouped, only the very last option rounds off (or the very first heading, opened upward). */
+.grouped .option:last-child,
+.above .grouped .option:first-child {
+  border-radius: 0;
+}
+
+.grouped > li:last-child .option:last-child {
+  border-radius: 0 0 12px 12px;
+}
+
+.above .grouped > li:last-child .option:last-child {
+  border-radius: 0;
+}
+
+.above .grouped .groupLabel {
+  border-top: 1.5px solid var(--color-border-input);
+}
+
+.above .grouped > li:first-child .groupLabel {
+  border-radius: 12px 12px 0 0;
+}
+
 .hint {
   font: var(--type-meta); /* 400 13/18 */
   color: var(--color-text-muted);

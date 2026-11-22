@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { createChore, editChore } from "../api/chores.ts";
+import { createChore, editChore, listChores } from "../api/chores.ts";
 import { getCurrentHousehold, type Household } from "../api/households.ts";
 import Button from "../components/Button.tsx";
 import DateField from "../components/DateField.tsx";
@@ -8,16 +8,17 @@ import TextArea from "../components/TextArea.tsx";
 import TextField from "../components/TextField.tsx";
 import type { Chore } from "../chores.ts";
 import { today as localToday } from "../dates.ts";
-import type { HouseholdMember } from "../../shared/api.ts";
 import { CHORE_NAME_MAX_LENGTH, CHORE_NOTES_MAX_LENGTH, type ChoreResponse } from "../../shared/chores.ts";
 import { CHORE_TYPES, type ChoreType } from "../../shared/preferences.ts";
+import { assigneeOptions, openChoreCounts } from "../suggestions.ts";
 import Header from "./Header.tsx";
 import styles from "./ChoreForm.module.css";
 import { FormError } from "./Screen.tsx";
 
 // The chore form: SCRUM-6 Add a Chore (Figma "Home - Add Chore (refined)"), and Edit
 // chore (Figma "Home - Edit chore", 635:616), the same fields filled in with the chore's
-// (SCRUM-7 AC11, SCRUM-62). AddChore.tsx and EditChore.tsx choose which.
+// (SCRUM-7 AC11, SCRUM-62). AddChore.tsx and EditChore.tsx choose which. "Assigned to"
+// suggests who prefers the chore's category (SCRUM-64, src/suggestions.ts).
 
 type ChoreFormProps = {
   household: Household;
@@ -31,6 +32,8 @@ type ChoreFormProps = {
 type Errors = Partial<Record<"name" | "assignee" | "dueDate" | "notes", string>>;
 
 const SAVE_FAILED = "Couldn't save this chore. Please try again.";
+/** SCRUM-64 AC7's words, when preferences or chore counts couldn't load. */
+export const NO_SUGGESTIONS = "Suggestions aren’t available right now.";
 
 /**
  * SCRUM-61: the Set chore preferences types (Figma "User Profile"), plus a way back to none.
@@ -78,27 +81,24 @@ export default function ChoreForm({ household: initialHousehold, userId, chore, 
   const [saving, setSaving] = useState(false);
   const today = localToday();
 
+  // Open chores per housemate, for the suggestions; null while loading, "failed" if either load fails.
+  const [counts, setCounts] = useState<Map<string, number> | "failed" | null>(null);
+
   useEffect(() => {
     let cancelled = false;
-    getCurrentHousehold().then((result) => {
-      if (!cancelled && result.ok) setHousehold(result.household);
+    // Everyone's preferences and open chores: "today" is enough, every open chore comes back.
+    Promise.all([getCurrentHousehold(), listChores(localToday())]).then(([fresh, chores]) => {
+      if (cancelled) return;
+      if (fresh.ok) setHousehold(fresh.household);
+      setCounts(fresh.ok && chores.ok ? openChoreCounts(chores.chores, chore?.id) : "failed");
     });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [chore?.id]);
 
-  // "You" first: the person adding the chore, addressed directly.
-  const me = household.members.find((member) => member.userId === userId);
   const others = household.members.filter((member) => member.userId !== userId);
-  // SCRUM-61: with a category picked, people who chose it in Set chore preferences say so.
-  // Not in Figma yet (placeholder): the note is part of the option's label.
-  const labelFor = (member: HouseholdMember, label: string) =>
-    category && member.choreTypes.includes(category) ? `${label} · Prefers this chore` : label;
-  const options = [
-    ...(me ? [{ value: me.userId, label: labelFor(me, "You") }] : []),
-    ...others.map((member) => ({ value: member.userId, label: labelFor(member, member.name) })),
-  ];
+  const options = assigneeOptions(household.members, userId, category || null, counts instanceof Map ? counts : null);
   const onlyMember = others.length === 0;
 
   async function handleSubmit() {
@@ -167,7 +167,11 @@ export default function ChoreForm({ household: initialHousehold, userId, chore, 
             onChange={setAssigneeId}
             error={errors.assignee}
             hint={
-              onlyMember ? `Invite housemates with code ${household.inviteCode} to assign chores to them.` : undefined
+              onlyMember
+                ? `Invite housemates with code ${household.inviteCode} to assign chores to them.`
+                : counts === "failed" && category
+                  ? NO_SUGGESTIONS
+                  : undefined
             }
           />
           <DateField

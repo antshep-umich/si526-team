@@ -153,11 +153,12 @@ export async function addChore(membership: Membership, input: ChoreInput): Promi
 
 /**
  * Edits a chore (SCRUM-7 AC11, the pencil in its details). Only the household owner or
- * whoever added it may (canEditChore). A new due date is recorded in its history.
+ * whoever added it may, or anyone while it's unassigned (canEditChore, SCRUM-75 AC4).
+ * A new due date is recorded in its history.
  */
 export async function editChore(membership: Membership, choreId: string, input: ChoreInput): Promise<ChoreWithPeople> {
   const chore = await findOwnChore(membership, choreId);
-  if (!canEditChore({ creatorId: chore.createdById }, membership)) {
+  if (!canEditChore({ creatorId: chore.createdById, assigneeId: chore.assigneeId }, membership)) {
     throw new ServiceError("NOT_ALLOWED_TO_EDIT", "Only the household owner or the person who added this chore can edit it.");
   }
   const fields = await checkChoreInput(membership, input, chore.dueDate);

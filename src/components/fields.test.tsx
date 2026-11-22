@@ -199,3 +199,40 @@ describe("TextArea", () => {
     expect(area).toHaveAccessibleDescription("Notes must be 200 characters or fewer.");
   });
 });
+
+describe("PickerField's groups and second lines", () => {
+  const options = [
+    { value: "ben", label: "Ben Ito", detail: "Prefers this chore · 1 open chore", group: "Suggested" },
+    { value: "ana", label: "You", group: "Everyone else" },
+    { value: "cleo", label: "Cleo Park", group: "Everyone else" },
+  ];
+
+  function Picker() {
+    const [value, setValue] = useState<string | null>(null);
+    return <PickerField label="Assigned to" placeholder="Select a housemate" options={options} value={value} onChange={setValue} />;
+  }
+
+  it("lists options under their headings, reading both lines as the option's name", async () => {
+    render(<Picker />);
+    await userEvent.click(screen.getByRole("combobox", { name: "Assigned to" }));
+
+    expect(screen.getByRole("group", { name: "Suggested" })).toContainElement(
+      screen.getByRole("option", { name: "Ben Ito · Prefers this chore · 1 open chore" }),
+    );
+    expect(screen.getByRole("group", { name: "Everyone else" })).toContainElement(screen.getByRole("option", { name: "Cleo Park" }));
+  });
+
+  it("moves through every group with the arrow keys, and shows only the name once picked", async () => {
+    render(<Picker />);
+    screen.getByRole("combobox", { name: "Assigned to" }).focus();
+
+    const field = screen.getByRole("combobox", { name: "Assigned to" });
+    // The first ArrowDown opens the list on Ben; two more reach Cleo, past the "Everyone else" heading.
+    await userEvent.keyboard("{ArrowDown}{ArrowDown}{ArrowDown}{Enter}");
+    expect(field).toHaveTextContent("Cleo Park");
+
+    await userEvent.keyboard("{ArrowDown}{ArrowUp}{ArrowUp}{Enter}");
+    expect(field).toHaveTextContent("Ben Ito");
+    expect(field).not.toHaveTextContent("Prefers this chore");
+  });
+});

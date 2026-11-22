@@ -41,3 +41,21 @@ export function createHousehold(name: string): Promise<HouseholdResult> {
 export function joinHousehold(inviteCode: string): Promise<HouseholdResult> {
   return post("/api/households/join", { inviteCode });
 }
+
+export type LeaveResult = { ok: true } | { ok: false; code: string };
+
+/**
+ * DELETE /api/households/current/membership (SCRUM-75). Leaving when you're already out
+ * (NO_HOUSEHOLD: you left on another device) counts as done.
+ */
+export async function leaveHousehold(): Promise<LeaveResult> {
+  try {
+    const res = await fetch("/api/households/current/membership", { method: "DELETE" });
+    if (res.ok) return { ok: true };
+    const body = (await res.json().catch(() => null)) as { error?: { code?: string } } | null;
+    const code = body?.error?.code ?? `HTTP_${res.status}`;
+    return code === "NO_HOUSEHOLD" ? { ok: true } : { ok: false, code };
+  } catch {
+    return { ok: false, code: "NETWORK_ERROR" };
+  }
+}

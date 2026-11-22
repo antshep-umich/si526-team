@@ -1,16 +1,17 @@
 // SCRUM-6 Add a Chore.
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ChoreType } from "../../shared/preferences.ts";
 import type { Household } from "../api/households.ts";
 import AddChore from "./AddChore.tsx";
 
-const { createChore, getCurrentHousehold } = vi.hoisted(() => ({
+const { createChore, listChores, getCurrentHousehold } = vi.hoisted(() => ({
   createChore: vi.fn(),
+  listChores: vi.fn(),
   getCurrentHousehold: vi.fn(),
 }));
-vi.mock("../api/chores.ts", () => ({ createChore }));
+vi.mock("../api/chores.ts", () => ({ createChore, listChores }));
 vi.mock("../api/households.ts", () => ({ getCurrentHousehold }));
 
 const member = (userId: string, name: string) => ({
@@ -68,6 +69,7 @@ beforeEach(() => {
   vi.setSystemTime(new Date(2026, 9, 29, 12)); // Thursday, Oct 29 2026
   getCurrentHousehold.mockResolvedValue({ ok: true, household });
   createChore.mockResolvedValue({ ok: true, chore: saved });
+  listChores.mockResolvedValue({ ok: true, chores: [] });
 });
 
 afterEach(() => {
@@ -312,7 +314,8 @@ describe("Chore category and housemates' preferences", { tags: ["SCRUM-61"] }, (
     await pickCategory("Trash & recycling");
     await userEvent.click(screen.getByRole("combobox", { name: "Assigned to" }));
 
-    expect(screen.getByRole("option", { name: "Ben Ito · Prefers this chore" })).toBeInTheDocument();
+    // Since SCRUM-64 the note is the option's second line, with their open chores.
+    expect(screen.getByRole("option", { name: /^Ben Ito · Prefers this chore/ })).toBeInTheDocument();
     expect(screen.getByRole("option", { name: "You" })).toBeInTheDocument();
   });
 
@@ -353,3 +356,144 @@ describe("Chore category and housemates' preferences", { tags: ["SCRUM-61"] }, (
   });
 });
 
+describe("Suggested housemates in Assigned to", { tags: ["SCRUM-64"] }, () => {
+  const prefers = (userId: string, name: string, choreTypes: ChoreType[]) => ({ ...member(userId, name), choreTypes });
+  // In joining order. You, Ben and Dev like trash; Cleo likes nothing in particular.
+  const house: Household = {
+    ...household,
+    members: [
+      prefers("u-ana", "Ana Lopez", ["trash"]),
+      prefers("u-ben", "Ben Ito", ["trash", "dishes"]),
+      member("u-cleo", "Cleo Park"),
+      prefers("u-dev", "Dev Rao", ["trash"]),
+    ],
+  };
+  const open = (id: string, assignee: { userId: string; name: string }) => ({
+    ...saved,
+    id,
+    name: id,
+    assignee,
+  });
+  // Open chores: You 2, Ben 1, Dev 1, Cleo 0. Ben's done chore doesn't count.
+  const chores = [
+    open("a1", { userId: "u-ana", name: "Ana Lopez" }),
+    open("a2", { userId: "u-ana", name: "Ana Lopez" }),
+    open("b1", { userId: "u-ben", name: "Ben Ito" }),
+    { ...open("b2", { userId: "u-ben", name: "Ben Ito" }), completedAt: "2026-10-28T12:00:00.000Z" },
+    open("d1", { userId: "u-dev", name: "Dev Rao" }),
+  ];
+
+  beforeEach(() => {
+    getCurrentHousehold.mockResolvedValue({ ok: true, household: house });
+    listChores.mockResolvedValue({ ok: true, chores });
+  });
+
+  async function pickCategory(name: string) {
+    await userEvent.click(screen.getByRole("combobox", { name: "Category (optional)" }));
+    await userEvent.click(screen.getByRole("option", { name }));
+  }
+
+  async function openAssignedTo() {
+    await userEvent.click(screen.getByRole("combobox", { name: "Assigned to" }));
+    return screen.getByRole("listbox", { name: "Assigned to" });
+  }
+
+  // What each option is called, as a screen reader says it.
+  const optionNames = (element: HTMLElement) =>
+    within(element)
+      .getAllByRole("option")
+      .map((o) => o.getAttribute("aria-label") ?? o.textContent);
+  const group = (list: HTMLElement, name: string) => within(list).queryByRole("group", { name });
+
+  it("AC1: housemates who prefer the chore come first under Suggested, labeled, with their open chores, most first", async () => {
+    renderAddChore({ household: house });
+    await pickCategory("Trash & recycling");
+
+    const list = await openAssignedTo();
+
+    expect(optionNames(group(list, "Suggested")!)).toEqual([
+      "You · Prefers this chore · 2 open chores",
+      "Ben Ito · Prefers this chore · 1 open chore",
+      "Dev Rao · Prefers this chore · 1 open chore",
+    ]);
+    expect(optionNames(group(list, "Everyone else")!)).toEqual(["Cleo Park"]);
+    expect(listChores).toHaveBeenCalledWith("2026-10-29");
+  });
+
+  it("AC2: for a chore no one prefers, all housemates are listed with no Suggested section", async () => {
+    renderAddChore({ household: house });
+    await pickCategory("Laundry");
+
+    const list = await openAssignedTo();
+
+    expect(group(list, "Suggested")).not.toBeInTheDocument();
+    expect(optionNames(list)).toEqual(["You", "Ben Ito", "Cleo Park", "Dev Rao"]);
+  });
+
+  it("AC3: before a category is picked, all housemates are listed; suggestions appear once it is", async () => {
+    renderAddChore({ household: house });
+
+    let list = await openAssignedTo();
+    expect(group(list, "Suggested")).not.toBeInTheDocument();
+    expect(optionNames(list)).toEqual(["You", "Ben Ito", "Cleo Park", "Dev Rao"]);
+    await userEvent.keyboard("{Escape}");
+
+    await pickCategory("Trash & recycling");
+    list = await openAssignedTo();
+    expect(group(list, "Suggested")).toBeInTheDocument();
+  });
+
+  it("AC4: changing the category updates the suggestions", async () => {
+    renderAddChore({ household: house });
+    await pickCategory("Trash & recycling");
+    await openAssignedTo();
+    await userEvent.keyboard("{Escape}");
+
+    await pickCategory("Dishes");
+    const list = await openAssignedTo();
+
+    expect(optionNames(group(list, "Suggested")!)).toEqual(["Ben Ito · Prefers this chore · 1 open chore"]);
+    expect(optionNames(group(list, "Everyone else")!)).toEqual(["You", "Cleo Park", "Dev Rao"]);
+  });
+
+  it("AC5: any housemate can be picked, suggested or not", async () => {
+    renderAddChore({ household: house });
+    await userEvent.type(screen.getByLabelText("Chore name"), "Take out trash");
+    await pickCategory("Trash & recycling");
+    await openAssignedTo();
+    await userEvent.click(screen.getByRole("option", { name: "Cleo Park" }));
+    setDueDate("2026-10-30");
+
+    await submit();
+
+    expect(screen.getByRole("combobox", { name: "Assigned to" })).toHaveTextContent("Cleo Park");
+    expect(createChore).toHaveBeenCalledWith(expect.objectContaining({ assigneeId: "u-cleo", category: "trash" }));
+  });
+
+  it("AC6: a housemate who prefers the chore but has left isn't suggested", async () => {
+    // Eve was there when the app loaded the household, and has left since.
+    const withEve = { ...house, members: [...house.members, prefers("u-eve", "Eve Moss", ["trash"])] };
+    renderAddChore({ household: withEve });
+    await pickCategory("Trash & recycling");
+
+    const list = await openAssignedTo();
+
+    expect(within(list).queryByRole("option", { name: /Eve Moss/ })).not.toBeInTheDocument();
+  });
+
+  it("AC7: if preferences fail to load, everyone is listed as normal with \"Suggestions aren’t available right now.\", and assigning still works", async () => {
+    getCurrentHousehold.mockResolvedValue({ ok: false, code: "NETWORK_ERROR" });
+    renderAddChore({ household: house });
+    await pickCategory("Trash & recycling");
+
+    const list = await openAssignedTo();
+
+    expect(group(list, "Suggested")).not.toBeInTheDocument();
+    expect(optionNames(list)).toEqual(["You", "Ben Ito", "Cleo Park", "Dev Rao"]);
+    expect(screen.getByRole("combobox", { name: "Assigned to" })).toHaveAccessibleDescription(
+      "Suggestions aren’t available right now.",
+    );
+    await userEvent.click(screen.getByRole("option", { name: "Dev Rao" }));
+    expect(screen.getByRole("combobox", { name: "Assigned to" })).toHaveTextContent("Dev Rao");
+  });
+});

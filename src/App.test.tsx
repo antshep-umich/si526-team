@@ -1,11 +1,12 @@
 // Which screen App shows, from the session and the household (src/App.tsx).
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useSyncExternalStore } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Household } from "./api/households.ts";
 import App from "./App.tsx";
 import { pendingInviteCode, takeInviteCodeFromAddress } from "./inviteLink.ts";
+import { POLL_INTERVAL_MS } from "./usePolling.ts";
 
 const {
   useSession,
@@ -21,6 +22,10 @@ const {
   getChore,
   getChoreHistory,
   editChore,
+  leaveHousehold,
+  getNotices,
+  markNoticesSeen,
+  getChorePreferences,
 } = vi.hoisted(() => ({
   useSession: vi.fn(),
   signIn: vi.fn(),
@@ -35,11 +40,17 @@ const {
   getChore: vi.fn(),
   getChoreHistory: vi.fn(),
   editChore: vi.fn(),
+  leaveHousehold: vi.fn(),
+  getNotices: vi.fn(),
+  markNoticesSeen: vi.fn(),
+  getChorePreferences: vi.fn(),
 }));
 vi.mock("./auth.ts", () => ({
   authClient: { useSession, signOut, signIn: { email: signIn }, signUp: { email: vi.fn() } },
 }));
-vi.mock("./api/households.ts", () => ({ getCurrentHousehold, createHousehold, joinHousehold }));
+vi.mock("./api/households.ts", () => ({ getCurrentHousehold, createHousehold, joinHousehold, leaveHousehold }));
+vi.mock("./api/notices.ts", () => ({ getNotices, markNoticesSeen }));
+vi.mock("./api/preferences.ts", () => ({ getChorePreferences }));
 vi.mock("./api/passwordReset.ts", () => ({ resetPassword }));
 vi.mock("./api/chores.ts", () => ({
   listChores,
@@ -109,9 +120,15 @@ beforeEach(() => {
     getChore,
     getChoreHistory,
     editChore,
+    leaveHousehold,
+    getNotices,
+    markNoticesSeen,
+    getChorePreferences,
   ]) {
     mock.mockReset();
   }
+  getNotices.mockResolvedValue({ ok: true, notices: [] });
+  getChorePreferences.mockResolvedValue({ ok: true, preferences: { choreTypes: [], weeklyWorkload: null } });
   listChores.mockResolvedValue({ ok: true, chores: [] });
   listChoreHistory.mockResolvedValue({ ok: true, chores: [] });
   sessionStorage.clear();
@@ -597,6 +614,61 @@ describe("App acceptance criteria", () => {
   });
 });
 
+describe("Leaving a household, across the app", { tags: ["SCRUM-75"] }, () => {
+  const shared: Household = {
+    ...household,
+    members: [
+      ...household.members,
+      { userId: "u-ben", name: "Ben Ito", role: "member", joinedAt: "2026-10-18T00:00:00.000Z", choreTypes: [] },
+    ],
+  };
+
+  beforeEach(() => {
+    useSession.mockReturnValue(signedIn);
+    getCurrentHousehold.mockResolvedValue({ ok: true, household: shared });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('AC3: after Leave, the "Your household" screen opens with Create and Join', async () => {
+    leaveHousehold.mockResolvedValue({ ok: true });
+    render(<App />);
+
+    await userEvent.click(await screen.findByRole("button", { name: "Menu" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "My profile" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Leave household" }));
+    await userEvent.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Leave" }));
+
+    expect(await screen.findByRole("heading", { name: "Your household" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Create a household" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Join with a code" })).toBeInTheDocument();
+  });
+
+  it('AC8: housemates who stay are told "[Name] left the household."', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const notice = { id: "n1", kind: "member_left", personName: "Ben Ito", createdAt: "2026-11-22T15:00:00.000Z" };
+    render(<App />);
+    await screen.findByRole("heading", { name: "Maple St House" });
+
+    // Ben leaves while Ana has the app open: the next check finds it.
+    getNotices.mockResolvedValueOnce({ ok: true, notices: [notice] });
+    await act(() => vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS));
+
+    expect(await screen.findByText("Ben Ito left the household.")).toBeInTheDocument();
+    expect(markNoticesSeen).toHaveBeenCalledWith("2026-11-22T15:00:00.000Z");
+  });
+
+  it('opens "Your household" when the user turns out to have left on another device', async () => {
+    getNotices.mockResolvedValue({ ok: false, code: "NO_HOUSEHOLD" });
+
+    render(<App />);
+
+    expect(await screen.findByRole("heading", { name: "Your household" })).toBeInTheDocument();
+  });
+});
+
 describe("App with an invite link", () => {
   afterEach(() => {
     window.history.replaceState(null, "", "/");
@@ -642,7 +714,8 @@ describe("App with an invite link", () => {
     const { unmount } = render(<App />);
 
     expect(await screen.findByRole("radiogroup", { name: "Show chores" })).toBeInTheDocument();
-    expect(pendingInviteCode()).toBeNull();
+    // Dropped by an effect right after the household loads, which can land just after the list shows.
+    await waitFor(() => expect(pendingInviteCode()).toBeNull());
     unmount();
 
     getCurrentHousehold.mockResolvedValue({ ok: false, code: "NO_HOUSEHOLD" });

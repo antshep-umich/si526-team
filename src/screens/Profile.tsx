@@ -19,12 +19,13 @@ import TextField from "../components/TextField.tsx";
 import { useToast } from "../components/Toast.tsx";
 import AppearanceSection from "./AppearanceSection.tsx";
 import Header from "./Header.tsx";
+import LeaveHouseholdSection from "./LeaveHouseholdSection.tsx";
 import styles from "./Profile.module.css";
 import { FormError } from "./Screen.tsx";
 
 // Your profile (Jira SCRUM-72 User profile page; Figma "User Profile", 637:197): your
-// name and email, your chore preferences, and how the household assigns chores.
-// Opened from the header menu. Each section saves on its own, with its own Save and Cancel.
+// name and email, your chore preferences, how the household assigns chores, light or
+// dark mode, and leaving the household (SCRUM-75). Opened from the header menu. Each section saves on its own, with its own Save and Cancel.
 
 /** The story's words for any failed save. */
 export const NOT_SAVED = "Changes not saved. Please try again.";
@@ -35,7 +36,12 @@ type ProfileProps = {
   onHouseholdChange: (household: Household) => void;
 };
 
-export default function Profile({ household, onHouseholdChange }: ProfileProps) {
+type Props = ProfileProps & {
+  /** After leaving the household (SCRUM-75). */
+  onLeft: () => void;
+};
+
+export default function Profile({ household, onHouseholdChange, onLeft }: Props) {
   return (
     <main className={styles.page}>
       <Header title={household.name} />
@@ -43,6 +49,7 @@ export default function Profile({ household, onHouseholdChange }: ProfileProps) 
       <ChorePreferencesSection />
       <ManagerPreferencesSection household={household} onHouseholdChange={onHouseholdChange} />
       <AppearanceSection />
+      <LeaveHouseholdSection household={household} onLeft={onLeft} />
     </main>
   );
 }

@@ -101,6 +101,7 @@ export default function ComponentsDemo() {
   const [filter, setFilter] = useState<"all" | "mine">("all");
   const [doneOpen, setDoneOpen] = useState(false);
   const [assignee, setAssignee] = useState<string | null>(null);
+  const [suggested, setSuggested] = useState<string | null>(null);
   const [dueDate, setDueDate] = useState("");
   const [notes, setNotes] = useState("");
 
@@ -320,8 +321,24 @@ export default function ComponentsDemo() {
               hint="Invite housemates with code K7Q2MXAB to assign chores to them."
             />
           </Measured>
+          <Measured show={showSizes} block>
+            <PickerField
+              label="Assigned to (suggestions)"
+              placeholder="Select a housemate"
+              options={[
+                { value: "me", label: "You", detail: "Prefers this chore · 3 open chores", group: "Suggested" },
+                { value: "jenna", label: "Jenna White", detail: "Prefers this chore · 1 open chore", group: "Suggested" },
+                { value: "robert", label: "Robert Mann", group: "Everyone else" },
+              ]}
+              value={suggested}
+              onChange={setSuggested}
+            />
+          </Measured>
         </div>
-        <p className={styles.hint}>Tap the housemate field to open its list. The date opens the phone’s date picker.</p>
+        <p className={styles.hint}>
+          Tap the housemate field to open its list. The date opens the phone’s date picker. With a category picked, Add
+          chore suggests who prefers it (SCRUM-64; not in Figma yet).
+        </p>
       </Section>
 
       <Section title="Text area">

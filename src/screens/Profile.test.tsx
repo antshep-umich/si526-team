@@ -5,19 +5,28 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Household } from "../api/households.ts";
 import Profile, { NOT_SAVED } from "./Profile.tsx";
 
-const { useSession, updateUser, getChorePreferences, saveChorePreferences, saveAssignmentMethod, getCurrentHousehold, showToast } =
-  vi.hoisted(() => ({
+const {
+  useSession,
+  updateUser,
+  getChorePreferences,
+  saveChorePreferences,
+  saveAssignmentMethod,
+  getCurrentHousehold,
+  leaveHousehold,
+  showToast,
+} = vi.hoisted(() => ({
     useSession: vi.fn(),
     updateUser: vi.fn(),
     getChorePreferences: vi.fn(),
     saveChorePreferences: vi.fn(),
     saveAssignmentMethod: vi.fn(),
     getCurrentHousehold: vi.fn(),
+    leaveHousehold: vi.fn(),
     showToast: vi.fn(),
   }));
 vi.mock("../auth.ts", () => ({ authClient: { useSession, updateUser } }));
 vi.mock("../api/preferences.ts", () => ({ getChorePreferences, saveChorePreferences, saveAssignmentMethod }));
-vi.mock("../api/households.ts", () => ({ getCurrentHousehold }));
+vi.mock("../api/households.ts", () => ({ getCurrentHousehold, leaveHousehold }));
 vi.mock("../components/Toast.tsx", () => ({ useToast: () => showToast }));
 
 const household: Household = {
@@ -36,8 +45,9 @@ const saved = { choreTypes: ["dishes"], weeklyWorkload: "medium" };
 
 function renderProfile(overrides: Partial<Household> = {}) {
   const onHouseholdChange = vi.fn();
-  render(<Profile household={{ ...household, ...overrides }} onHouseholdChange={onHouseholdChange} />);
-  return { onHouseholdChange };
+  const onLeft = vi.fn();
+  render(<Profile household={{ ...household, ...overrides }} onHouseholdChange={onHouseholdChange} onLeft={onLeft} />);
+  return { onHouseholdChange, onLeft };
 }
 
 const section = (name: string) => screen.getByRole("region", { name });
@@ -271,3 +281,74 @@ describe("Preferring chores", { tags: ["SCRUM-61"] }, () => {
   });
 });
 
+describe("Leaving the household", { tags: ["SCRUM-75"] }, () => {
+  const withHousemate: Household = {
+    ...household,
+    members: [
+      ...household.members,
+      { userId: "u-ben", name: "Ben Ito", role: "member", joinedAt: "2026-10-18T00:00:00.000Z", choreTypes: [] },
+    ],
+  };
+  const confirmation = () => screen.getByRole("alertdialog");
+
+  beforeEach(() => {
+    getCurrentHousehold.mockResolvedValue({ ok: true, household: withHousemate });
+  });
+
+  it("AC1: \"Leave household\" on the profile asks to confirm, with Leave and Cancel", async () => {
+    renderProfile(withHousemate);
+
+    await userEvent.click(screen.getByRole("button", { name: "Leave household" }));
+
+    expect(confirmation()).toHaveAccessibleName("Leave Maple St House? Your open chores will become unassigned.");
+    expect(within(confirmation()).getByRole("button", { name: "Leave" })).toBeInTheDocument();
+    expect(within(confirmation()).getByRole("button", { name: "Cancel" })).toHaveFocus();
+  });
+
+  it("AC2: Cancel closes the confirmation and nothing changes", async () => {
+    const { onLeft } = renderProfile(withHousemate);
+    await userEvent.click(screen.getByRole("button", { name: "Leave household" }));
+
+    await userEvent.click(within(confirmation()).getByRole("button", { name: "Cancel" }));
+
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    expect(leaveHousehold).not.toHaveBeenCalled();
+    expect(onLeft).not.toHaveBeenCalled();
+  });
+
+  it("AC3: Leave takes the user out of the household", async () => {
+    leaveHousehold.mockResolvedValue({ ok: true });
+    const { onLeft } = renderProfile(withHousemate);
+    await userEvent.click(screen.getByRole("button", { name: "Leave household" }));
+
+    await userEvent.click(within(confirmation()).getByRole("button", { name: "Leave" }));
+
+    expect(leaveHousehold).toHaveBeenCalledTimes(1);
+    expect(onLeft).toHaveBeenCalledTimes(1);
+  });
+
+  it("AC9: the last member is told leaving deletes the household and its chores", async () => {
+    getCurrentHousehold.mockResolvedValue({ ok: true, household });
+    leaveHousehold.mockResolvedValue({ ok: true });
+    const { onLeft } = renderProfile();
+
+    await userEvent.click(screen.getByRole("button", { name: "Leave household" }));
+
+    expect(confirmation()).toHaveAccessibleName(
+      "You’re the last member of Maple St House. Leaving will delete the household and all of its chores.",
+    );
+    await userEvent.click(within(confirmation()).getByRole("button", { name: "Leave" }));
+    expect(onLeft).toHaveBeenCalledTimes(1);
+  });
+
+  it("AC11: if leaving fails, says \"Something went wrong. Please try again.\" and the user stays", async () => {
+    leaveHousehold.mockResolvedValue({ ok: false, code: "NETWORK_ERROR" });
+    const { onLeft } = renderProfile(withHousemate);
+    await userEvent.click(screen.getByRole("button", { name: "Leave household" }));
+
+    await userEvent.click(within(confirmation()).getByRole("button", { name: "Leave" }));
+
+    expect(within(confirmation()).getByRole("alert")).toHaveTextContent("Something went wrong. Please try again.");
+    expect(onLeft).not.toHaveBeenCalled();
+  });
+});

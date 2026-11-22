@@ -7,6 +7,7 @@
 //   vi.mock("../models/households.js", () => import("../test/fakeModels.js"));
 //   vi.mock("../models/memberships.js", () => import("../test/fakeModels.js"));
 //   vi.mock("../models/chores.js", () => import("../test/fakeModels.js"));
+//   vi.mock("../models/notices.js", () => import("../test/fakeModels.js"));
 //   import { db } from "../test/fakeModels.js";   // to set up and inspect rows
 //   beforeEach(() => db.reset());
 //
@@ -17,6 +18,8 @@ import type { Household } from "../models/households.js";
 import type * as membershipsModel from "../models/memberships.js";
 import type { Membership, MembershipRole } from "../models/memberships.js";
 import type * as choresModel from "../models/chores.js";
+import type * as noticesModel from "../models/notices.js";
+import type { HouseholdNotice } from "../models/notices.js";
 
 /** A Chore row as the database stores it. */
 interface ChoreRow {
@@ -51,6 +54,7 @@ export const db = {
   memberships: [] as Membership[],
   chores: [] as ChoreRow[],
   choreHistory: [] as ChoreHistoryRow[],
+  notices: [] as HouseholdNotice[],
   clock: 0,
   /** Makes the next N household writes fail as if the invite code were taken. */
   codeCollisions: 0,
@@ -59,13 +63,23 @@ export const db = {
     db.memberships = [];
     db.chores = [];
     db.choreHistory = [];
+    db.notices = [];
     db.clock = 0;
     db.codeCollisions = 0;
   },
   now: () => new Date(Date.UTC(2026, 9, 8, 12, 0, db.clock++)),
   addMembership(userId: string, householdId: string, role: MembershipRole): Membership {
     if (db.memberships.some((m) => m.userId === userId)) throw new UniqueConflictError();
-    const row: Membership = { userId, householdId, role, joinedAt: db.now(), choreTypes: [], weeklyWorkload: null };
+    const now = db.now();
+    const row: Membership = {
+      userId,
+      householdId,
+      role,
+      joinedAt: now,
+      choreTypes: [],
+      weeklyWorkload: null,
+      noticesSeenAt: now,
+    };
     db.memberships.push(row);
     return row;
   },
@@ -94,6 +108,47 @@ export const setChorePreferences: typeof membershipsModel.setChorePreferences = 
 
 export const createMembership: typeof membershipsModel.createMembership = async ({ userId, householdId, role }) =>
   db.addMembership(userId, householdId, role);
+
+export const removeMembership: typeof membershipsModel.removeMembership = async (userId) => {
+  const gone = db.memberships.find((m) => m.userId === userId);
+  if (!gone) throw new Error("No Membership found");
+  const { householdId } = gone;
+  db.memberships = db.memberships.filter((m) => m !== gone);
+  if (!db.memberships.some((m) => m.householdId === householdId)) {
+    // onDelete: Cascade takes the chores, their history and the notices with it.
+    const choreIds = new Set(db.chores.filter((c) => c.householdId === householdId).map((c) => c.id));
+    db.households = db.households.filter((h) => h.id !== householdId);
+    db.chores = db.chores.filter((c) => !choreIds.has(c.id));
+    db.choreHistory = db.choreHistory.filter((e) => !choreIds.has(e.choreId));
+    db.notices = db.notices.filter((n) => n.householdId !== householdId);
+    return { householdDeleted: true };
+  }
+  for (const chore of db.chores) {
+    if (chore.householdId === householdId && chore.assigneeId === userId && !chore.completedAt) chore.assigneeId = null;
+  }
+  db.notices.push({
+    id: `notice-${db.notices.length + 1}`,
+    householdId,
+    kind: "member_left",
+    personName: nameOf(userId),
+    createdAt: db.now(),
+  });
+  return { householdDeleted: false };
+};
+
+export const setNoticesSeen: typeof membershipsModel.setNoticesSeen = async (userId, seenAt) => {
+  const row = db.memberships.find((m) => m.userId === userId);
+  if (!row) throw new Error("No Membership found");
+  row.noticesSeenAt = seenAt;
+  return row;
+};
+
+// models/notices.ts
+
+export const findNoticesAfter: typeof noticesModel.findNoticesAfter = async (householdId, after) =>
+  db.notices
+    .filter((n) => n.householdId === householdId && n.createdAt > after)
+    .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
 
 // models/households.ts
 

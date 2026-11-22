@@ -25,6 +25,7 @@ import SignUp from "./screens/SignUp.tsx";
 import SingleChoreHistory from "./screens/SingleChoreHistory.tsx";
 import TabLayout from "./screens/TabLayout.tsx";
 import Button from "./components/Button.tsx";
+import { useHouseholdNotices } from "./useHouseholdNotices.ts";
 
 // Which screen to show comes from two things: whether someone is signed in
 // (Better Auth's session) and whether they belong to a household.
@@ -121,6 +122,25 @@ function SignedIn({ userId }: { userId: string }) {
     };
   }, [attempt]);
 
+  // Back to "Your household": after leaving (SCRUM-75 AC3), or on finding you're no longer in one.
+  const leftHousehold = () => {
+    forgetChoreFilter();
+    setView({ name: "chores" });
+    setScreen("choose");
+    setState({ status: "none" });
+  };
+
+  // SCRUM-75 AC8: "[Name] left the household." for those still in it.
+  useHouseholdNotices({
+    enabled: state.status === "ready",
+    onHouseholdChange: () => {
+      getCurrentHousehold().then((result) => {
+        if (result.ok) setState({ status: "ready", household: result.household });
+      });
+    },
+    onNoHousehold: leftHousehold,
+  });
+
   const logOut = () => {
     forgetChoreFilter();
     forgetInviteCode();
@@ -195,7 +215,11 @@ function SignedIn({ userId }: { userId: string }) {
         break;
       case "profile":
         content = (
-          <Profile household={household} onHouseholdChange={(next) => setState({ status: "ready", household: next })} />
+          <Profile
+            household={household}
+            onHouseholdChange={(next) => setState({ status: "ready", household: next })}
+            onLeft={leftHousehold}
+          />
         );
         break;
       case "chores":

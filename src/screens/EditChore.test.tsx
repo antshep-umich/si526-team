@@ -7,11 +7,12 @@ import type { Household } from "../api/households.ts";
 import type { Chore } from "../chores.ts";
 import EditChore from "./EditChore.tsx";
 
-const { editChore, getCurrentHousehold } = vi.hoisted(() => ({
+const { editChore, listChores, getCurrentHousehold } = vi.hoisted(() => ({
   editChore: vi.fn(),
+  listChores: vi.fn(),
   getCurrentHousehold: vi.fn(),
 }));
-vi.mock("../api/chores.ts", () => ({ editChore }));
+vi.mock("../api/chores.ts", () => ({ editChore, listChores }));
 vi.mock("../api/households.ts", () => ({ getCurrentHousehold }));
 
 const member = (userId: string, name: string) => ({
@@ -57,6 +58,7 @@ beforeEach(() => {
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(new Date(2026, 9, 29, 12)); // Thursday, Oct 29 2026
   getCurrentHousehold.mockResolvedValue({ ok: true, household });
+  listChores.mockResolvedValue({ ok: true, chores: [chore] });
 });
 
 afterEach(() => {
@@ -157,3 +159,18 @@ describe("Chore category", { tags: ["SCRUM-61"] }, () => {
   });
 });
 
+describe("Suggested housemates when editing", { tags: ["SCRUM-64"] }, () => {
+  it("AC1: Edit chore suggests who prefers the chore, not counting the chore being edited", async () => {
+    const house = { ...household, members: [member("u-ana", "Ana Lopez"), { ...member("u-ben", "Ben Ito"), choreTypes: ["trash" as const] }] };
+    getCurrentHousehold.mockResolvedValue({ ok: true, household: house });
+    // Ben's only open chore is this one.
+    renderEditChore({ ...chore, category: "trash" });
+
+    await userEvent.click(screen.getByRole("combobox", { name: "Assigned to" }));
+
+    const suggested = await screen.findByRole("group", { name: "Suggested" });
+    expect(screen.getByRole("option", { name: "Ben Ito · Prefers this chore · 0 open chores" })).toBeInTheDocument();
+    expect(suggested).toContainElement(screen.getByRole("option", { name: /^Ben Ito/ }));
+    expect(screen.getByRole("group", { name: "Everyone else" })).toContainElement(screen.getByRole("option", { name: "You" }));
+  });
+});
