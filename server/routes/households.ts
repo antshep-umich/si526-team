@@ -22,6 +22,9 @@ householdsRouter
   .route("/current/assignment-method")
   .put(requireHousehold, households.assignmentMethod)
   .all(methodNotAllowed);
+householdsRouter.route("/current/membership").delete(requireHousehold, households.leave).all(methodNotAllowed);
+householdsRouter.route("/current/notices").get(requireHousehold, households.notices).all(methodNotAllowed);
+householdsRouter.route("/current/notices/seen").put(requireHousehold, households.noticesSeen).all(methodNotAllowed);
 householdsRouter
   .route("/current/invite-code")
   .post(requireHousehold, households.newInviteCode)

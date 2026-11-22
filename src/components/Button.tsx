@@ -1,7 +1,8 @@
-import type { ButtonHTMLAttributes } from "react";
+import type { ComponentProps } from "react";
 import styles from "./Button.module.css";
 
-type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+// ComponentProps includes `ref` (React 19 passes it as a prop), for focusing a button.
+type ButtonProps = ComponentProps<"button"> & {
   /** Primary for main actions, Outline for secondary (Figma component description). */
   variant?: "primary" | "outline";
   /** Stretch to the container's width, as on full-screen forms. */

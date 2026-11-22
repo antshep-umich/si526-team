@@ -4,7 +4,30 @@ import styles from "./PickerField.module.css";
 import Collapse from "./Collapse.tsx";
 import ThemedIcon from "./ThemedIcon.tsx";
 
-export type PickerOption = { value: string; label: string };
+export type PickerOption = {
+  value: string;
+  /** What the option is, and what the field shows once it's picked. */
+  label: string;
+  /** A second, smaller line in the list only, for example "Prefers this chore · 2 open chores". */
+  detail?: string;
+  /**
+   * A heading the option is listed under, for example "Suggested". Options with the same
+   * group must be next to each other; without groups the list is flat.
+   */
+  group?: string;
+};
+
+/** Runs of options under the same heading, keeping each option's place in the whole list. */
+function groupsOf(options: readonly PickerOption[]) {
+  const groups: { name: string; items: { option: PickerOption; index: number }[] }[] = [];
+  options.forEach((option, index) => {
+    const name = option.group ?? "";
+    const last = groups.at(-1);
+    if (last && last.name === name) last.items.push({ option, index });
+    else groups.push({ name, items: [{ option, index }] });
+  });
+  return groups;
+}
 
 type PickerFieldProps = {
   label: string;
@@ -110,6 +133,25 @@ export default function PickerField({ label, placeholder, options, value, onChan
   }
 
   const describedBy = [error && errorId, hint && hintId].filter(Boolean).join(" ") || undefined;
+  const grouped = options.some((option) => option.group);
+
+  const renderOption = (option: PickerOption, index: number) => (
+    <li
+      key={option.value}
+      id={optionId(index)}
+      role="option"
+      aria-selected={option.value === value}
+      // Both lines, read as one: "Ben Ito · Prefers this chore · 1 open chore".
+      aria-label={option.detail ? `${option.label} · ${option.detail}` : undefined}
+      className={`${styles.option} ${keyboard && index === active ? styles.active : ""}`}
+      // Keep focus on the combobox, so choosing doesn't close the list by blurring it first.
+      onMouseDown={(event) => event.preventDefault()}
+      onClick={() => pick(index)}
+    >
+      {option.label}
+      {option.detail && <span className={styles.detail}>{option.detail}</span>}
+    </li>
+  );
 
   return (
     <div className={fieldStyles.field}>
@@ -137,21 +179,26 @@ export default function PickerField({ label, placeholder, options, value, onChan
           <ThemedIcon name="chevronDown" className={`${styles.chevron} ${open ? styles.up : ""}`} />
         </div>
         <Collapse open={open} className={styles.popup}>
-          <ul ref={listRef} id={listId} role="listbox" aria-labelledby={labelId} className={styles.list}>
-            {options.map((option, index) => (
-              <li
-                key={option.value}
-                id={optionId(index)}
-                role="option"
-                aria-selected={option.value === value}
-                className={`${styles.option} ${keyboard && index === active ? styles.active : ""}`}
-                // Keep focus on the combobox, so choosing doesn't close the list by blurring it first.
-                onMouseDown={(event) => event.preventDefault()}
-                onClick={() => pick(index)}
-              >
-                {option.label}
-              </li>
-            ))}
+          <ul
+            ref={listRef}
+            id={listId}
+            role="listbox"
+            aria-labelledby={labelId}
+            className={`${styles.list} ${grouped ? styles.grouped : ""}`}
+          >
+            {grouped
+              ? // Not in Figma yet (SCRUM-64): a heading over each group of options.
+                groupsOf(options).map((group, g) => (
+                  <li key={group.name} role="presentation">
+                    <span id={`${id}-group-${g}`} className={styles.groupLabel}>
+                      {group.name}
+                    </span>
+                    <ul role="group" aria-labelledby={`${id}-group-${g}`} className={styles.list}>
+                      {group.items.map(({ option, index }) => renderOption(option, index))}
+                    </ul>
+                  </li>
+                ))
+              : options.map((option, index) => renderOption(option, index))}
           </ul>
         </Collapse>
       </div>

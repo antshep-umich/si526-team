@@ -30,3 +30,28 @@ export function setChorePreferences(
 ): Promise<Membership> {
   return getPrisma().membership.update({ where: { userId }, data });
 }
+
+/**
+ * Takes the user out of their household in one write (SCRUM-75): their open chores there
+ * become unassigned, their membership goes, and housemates get a "left" notice. Done chores
+ * keep their name. If nobody is left, the household is deleted with all of its chores.
+ */
+export async function removeMembership(userId: string): Promise<{ householdDeleted: boolean }> {
+  return getPrisma().$transaction(async (tx) => {
+    const gone = await tx.membership.delete({ where: { userId }, include: { user: { select: { name: true } } } });
+    const householdId = gone.householdId;
+    // Counted after the delete, so two last members leaving at once can't leave an empty household.
+    if ((await tx.membership.count({ where: { householdId } })) === 0) {
+      await tx.household.delete({ where: { id: householdId } });
+      return { householdDeleted: true };
+    }
+    await tx.chore.updateMany({ where: { householdId, assigneeId: userId, completedAt: null }, data: { assigneeId: null } });
+    await tx.householdNotice.create({ data: { householdId, kind: "member_left", personName: gone.user.name } });
+    return { householdDeleted: false };
+  });
+}
+
+/** Marks household notices up to `seenAt` as shown to this member (SCRUM-75). */
+export function setNoticesSeen(userId: string, seenAt: Date): Promise<Membership> {
+  return getPrisma().membership.update({ where: { userId }, data: { noticesSeenAt: seenAt } });
+}

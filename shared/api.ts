@@ -46,6 +46,28 @@ export interface HouseholdResponse {
   assignmentMethod: AssignmentMethod | null;
 }
 
+/** SCRUM-75 AC8: news for the household, shown once to each member. */
+export interface HouseholdNotice {
+  id: string;
+  /** "member_left": someone left the household. */
+  kind: "member_left";
+  /** Who it's about, by name at the time. */
+  personName: string;
+  /** ISO 8601 timestamp. */
+  createdAt: string;
+}
+
+/** Body of GET /api/households/current/notices: the ones not seen yet, oldest first. */
+export interface HouseholdNoticesResponse {
+  notices: HouseholdNotice[];
+}
+
+/** Body of PUT /api/households/current/notices/seen. */
+export interface NoticesSeenRequest {
+  /** The newest notice shown (its createdAt). */
+  through: string;
+}
+
 export const HOUSEHOLD_NAME_MAX_LENGTH = 60;
 
 /** Returns the trimmed name, or null if it isn't 1 to 60 characters of text. */

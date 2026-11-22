@@ -5,8 +5,9 @@
   "criteria": [
     {
       "id": "AC1",
-      "text": "User Action: Opens “Assigned to” on the “Add chore” or “Edit chore” screen for a chore that one or more housemates prefer. Expected System Behavior: Those housemates appear at the top of the list under “Suggested,” each labeled “Prefers this chore” with their number of open chores. Suggested housemates are sorted by fewest open chores. All other housemates appear below under “Everyone else.”",
-      "verify": "test"
+      "text": "User Action: Opens “Assigned to” on the “Add chore” or “Edit chore” screen for a chore that one or more housemates prefer. Expected System Behavior: Those housemates appear at the top of the list under “Suggested,” each labeled “Prefers this chore” with their number of open chores. Suggested housemates are sorted by most open chores. All other housemates appear below under “Everyone else.”",
+      "verify": "test",
+      "note": "Jira says “sorted by fewest open chores”; the team chose most open chores first (Anthony, 2026-11-22; README Conflicts row 48). A housemate prefers a chore when its Category is one of their chore types (README Conflicts rows 46 and 51)."
     },
     {
       "id": "AC2",
@@ -15,13 +16,15 @@
     },
     {
       "id": "AC3",
-      "text": "User Action: Opens “Assigned to” before entering a chore name. Expected System Behavior: The list shows all housemates. Suggestions appear once a chore name is entered.",
-      "verify": "test"
+      "text": "User Action: Opens “Assigned to” before picking a category. Expected System Behavior: The list shows all housemates. Suggestions appear once a category is picked.",
+      "verify": "test",
+      "note": "Jira says “before entering a chore name” and “once a chore name is entered”. Suggestions follow the chore’s Category, as preferences are chore types (Anthony, 2026-11-22; README Conflicts row 51)."
     },
     {
       "id": "AC4",
-      "text": "User Action: Changes the chore name after opening “Assigned to.” Expected System Behavior: The suggestions update to match the new name.",
-      "verify": "test"
+      "text": "User Action: Changes the category after opening “Assigned to.” Expected System Behavior: The suggestions update to match the new category.",
+      "verify": "test",
+      "note": "Jira says “Changes the chore name” and “match the new name”: suggestions follow the Category (Anthony, 2026-11-22; README Conflicts row 51)."
     },
     {
       "id": "AC5",

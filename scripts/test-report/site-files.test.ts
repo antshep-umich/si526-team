@@ -68,6 +68,7 @@ describe("updateSiteDir", () => {
     expect(history.main).toHaveLength(1);
     expect(readFileSync(join(site, "reports/main/5-1/index.html"), "utf8")).toBe("<html>report</html>");
     expect(readFileSync(join(site, "index.html"), "utf8")).toContain("<!doctype html>");
+    expect(readFileSync(join(site, "archive.html"), "utf8")).toContain("<h1>JAALS test archive</h1>");
     expect(existsSync(join(site, ".nojekyll"))).toBe(true);
     expect(readdirSync(join(site, "assets/fonts")).sort()).toEqual(["Libron-Regular.woff2", "OFL.txt"]);
   });

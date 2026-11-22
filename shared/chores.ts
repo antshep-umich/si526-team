@@ -19,7 +19,7 @@ export interface ChoreResponse {
   notes: string | null;
   /** "YYYY-MM-DD", a calendar date without a time. */
   dueDate: string;
-  /** null only if the assignee's account was deleted. */
+  /** null when unassigned: the assignee left the household (SCRUM-75) or deleted their account. */
   assignee: ChorePerson | null;
   createdBy: ChorePerson | null;
   /** ISO 8601 timestamp. */
@@ -51,12 +51,18 @@ export interface NewChoreRequest {
 export type EditChoreRequest = NewChoreRequest;
 
 /**
- * Who may edit a chore: the household owner or whoever added it. A stand-in until
- * household managers exist (SCRUM-62), which will make it the manager (Anthony,
- * 2026-11-19; TECH_SPEC section 11). The app hides the pencil; the API checks too.
+ * Who may edit a chore: the household owner or whoever added it, and anyone while it's
+ * unassigned, so a chore left by someone who moved out can be picked up (SCRUM-75 AC4,
+ * Anthony, 2026-11-22). The owner and creator are a stand-in until household managers
+ * exist (SCRUM-62), which will make it the manager (Anthony, 2026-11-19; TECH_SPEC
+ * section 11). The app hides the pencil; the API checks too.
  */
-export function canEditChore(chore: { creatorId: string | null }, user: { userId: string; role: "owner" | "member" }): boolean {
-  return user.role === "owner" || (chore.creatorId !== null && chore.creatorId === user.userId);
+export function canEditChore(
+  chore: { creatorId: string | null; assigneeId: string | null },
+  user: { userId: string; role: "owner" | "member" },
+): boolean {
+  if (chore.assigneeId === null || user.role === "owner") return true;
+  return chore.creatorId !== null && chore.creatorId === user.userId;
 }
 
 /** Returns the trimmed name, or null if it isn't 1 to 60 characters of text. */

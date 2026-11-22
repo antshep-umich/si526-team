@@ -21,7 +21,8 @@
     {
       "id": "AC4",
       "text": "System state: The user has open chores when they leave. Expected System Behavior: Those chores stay on the Chore List marked “Unassigned.” Any housemate can assign an unassigned chore, the same as a first assignment (see SCRUM-6).",
-      "verify": "test"
+      "verify": "test",
+      "note": "Any housemate can assign it with the pencil: while a chore is unassigned, everyone may edit it (Anthony, 2026-11-22; README Conflicts row 53)."
     },
     {
       "id": "AC5",
@@ -31,17 +32,20 @@
     {
       "id": "AC6",
       "text": "System state: The user is the household manager. Expected System Behavior: The role passes on following the SCRUM-62 rules: the next highest nominee is invited, or the household returns to the no-manager state.",
-      "verify": "test"
+      "verify": "test",
+      "note": "Waits on SCRUM-62: there are no household managers or nominees yet. Until then the owner stands in, and an owner who leaves isn't replaced (Anthony, 2026-11-22; README Conflicts row 54)."
     },
     {
       "id": "AC7",
       "text": "System state: The user has voted or been nominated for household manager. Expected System Behavior: Their vote and any votes for them are cleared.",
-      "verify": "test"
+      "verify": "test",
+      "note": "Waits on SCRUM-62: there are no votes or nominations yet."
     },
     {
       "id": "AC8",
       "text": "System state: The user leaves. Expected System Behavior: Remaining housemates are notified: “[Name] left the household.” The user no longer appears in the House tab roster or the “Assigned to” list.",
-      "verify": "test"
+      "verify": "test",
+      "note": "Not designed yet: the notice is a toast, shown once to each housemate the next time they use the app (README Conflicts row 52)."
     },
     {
       "id": "AC9",

@@ -1,5 +1,5 @@
 import type { RequestHandler } from "express";
-import type { HouseholdResponse } from "../../shared/api.js";
+import type { HouseholdNoticesResponse, HouseholdResponse } from "../../shared/api.js";
 import type { ChoreType } from "../../shared/preferences.js";
 import { HttpStatus } from "../../shared/httpStatus.js";
 import { currentMembership } from "../middleware/household.js";
@@ -8,9 +8,11 @@ import {
   createHousehold,
   getHousehold,
   joinHousehold,
+  leaveHousehold,
   regenerateInviteCode,
   type HouseholdWithMembers,
 } from "../services/households.js";
+import { markNoticesSeen, unseenNotices } from "../services/notices.js";
 import { chorePreferencesOf, saveAssignmentMethod, saveChorePreferences } from "../services/preferences.js";
 import { bodyText } from "./body.js";
 
@@ -89,4 +91,25 @@ export const assignmentMethod: RequestHandler = async (req, res) => {
   const membership = currentMembership(res);
   const household = await saveAssignmentMethod(membership, bodyText(req, "assignmentMethod"));
   res.status(HttpStatus.OK).json(toHouseholdResponse(household, membership.userId));
+};
+
+/** DELETE /api/households/current/membership: 204; the user has left the household (SCRUM-75). */
+export const leave: RequestHandler = async (_req, res) => {
+  await leaveHousehold(currentMembership(res));
+  res.status(HttpStatus.NO_CONTENT).end();
+};
+
+/** GET /api/households/current/notices: 200 with the notices the user hasn't seen (SCRUM-75 AC8). */
+export const notices: RequestHandler = async (_req, res) => {
+  const found = await unseenNotices(currentMembership(res));
+  const body: HouseholdNoticesResponse = {
+    notices: found.map((n) => ({ id: n.id, kind: n.kind, personName: n.personName, createdAt: n.createdAt.toISOString() })),
+  };
+  res.status(HttpStatus.OK).json(body);
+};
+
+/** PUT /api/households/current/notices/seen { through }: 204; notices up to then won't come back. */
+export const noticesSeen: RequestHandler = async (req, res) => {
+  await markNoticesSeen(currentMembership(res), req.body?.through);
+  res.status(HttpStatus.NO_CONTENT).end();
 };

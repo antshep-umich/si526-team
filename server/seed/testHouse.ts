@@ -5,16 +5,45 @@ import { getAuth } from "../auth.js";
 import { getPrisma } from "../db.js";
 import { findPasswordAccountByEmail, setPassword } from "../models/accounts.js";
 import { newInviteCode } from "../services/inviteCode.js";
+import type { ChoreType, WeeklyWorkload } from "../../shared/preferences.js";
 
 export const TEST_HOUSE_NAME = "Test_House_Data";
 // Not a secret: these accounts only exist on previews and the dev database.
 export const TEST_PASSWORD = "password2";
 
+type TestAccount = {
+  name: string;
+  email: string;
+  role: "owner" | "member";
+  /** Set chore preferences (SCRUM-72), which Add chore suggests from (SCRUM-61, SCRUM-64). */
+  choreTypes: ChoreType[];
+  weeklyWorkload: WeeklyWorkload;
+};
+
+// Trash is preferred by two people, so Add chore's "Suggested" has someone to sort.
 export const TEST_PEOPLE = {
-  you: { name: "Test_User", email: "Test_User@test.com", role: "owner" },
-  first: { name: "Test_Housemate_1", email: "Test_Housemate_1@test.com", role: "member" },
-  second: { name: "Test_Housemate_2", email: "Test_Housemate_2@test.com", role: "member" },
-} as const;
+  you: {
+    name: "Test_User",
+    email: "Test_User@test.com",
+    role: "owner",
+    choreTypes: ["dishes", "trash", "cooking"],
+    weeklyWorkload: "medium",
+  },
+  first: {
+    name: "Test_Housemate_1",
+    email: "Test_Housemate_1@test.com",
+    role: "member",
+    choreTypes: ["laundry", "trash", "yard"],
+    weeklyWorkload: "light",
+  },
+  second: {
+    name: "Test_Housemate_2",
+    email: "Test_Housemate_2@test.com",
+    role: "member",
+    choreTypes: ["bathroom", "mopping", "vacuuming"],
+    weeklyWorkload: "heavy",
+  },
+} as const satisfies Record<string, TestAccount>;
 
 export type TestPerson = keyof typeof TEST_PEOPLE;
 const PEOPLE = Object.keys(TEST_PEOPLE) as TestPerson[];
@@ -52,7 +81,10 @@ type PlannedEvent = { type: EventType; by: TestPerson; at: When; due?: number };
 type PlannedChore = {
   name: string;
   notes?: string;
-  assignee: TestPerson;
+  /** SCRUM-61; most chores have one. */
+  category?: ChoreType;
+  /** null: unassigned, as when someone leaves the household (SCRUM-75). Never done. */
+  assignee: TestPerson | null;
   createdBy: TestPerson;
   created: When;
   /** Days from today. */
@@ -65,10 +97,10 @@ type PlannedChore = {
 // Every status (to do, overdue, done, late) across this week, last week and before.
 const CHORES: PlannedChore[] = [
   // Test_User's chores: My chore history.
-  { name: "Water the plants", assignee: "you", createdBy: "first", created: [-2, 15], due: 2 },
-  { name: "Take out the trash", notes: "Recycling goes out too.", assignee: "you", createdBy: "you", created: [-4, 15], due: 0 },
-  { name: "Clean the bathroom", notes: "Sink, mirror and floor.", assignee: "you", createdBy: "second", created: [-9, 15], due: -2 },
-  { name: "Vacuum the living room", assignee: "you", createdBy: "you", created: [-10, 15], due: -3, done: [-3, 20] },
+  { name: "Water the plants", category: "yard", assignee: "you", createdBy: "first", created: [-2, 15], due: 2 },
+  { name: "Take out the trash", category: "trash", notes: "Recycling goes out too.", assignee: "you", createdBy: "you", created: [-4, 15], due: 0 },
+  { name: "Clean the bathroom", category: "bathroom", notes: "Sink, mirror and floor.", assignee: "you", createdBy: "second", created: [-9, 15], due: -2 },
+  { name: "Vacuum the living room", category: "vacuuming", assignee: "you", createdBy: "you", created: [-10, 15], due: -3, done: [-3, 20] },
   {
     name: "Wipe down the kitchen counters",
     notes: "Spray, then dry with the blue cloth.",
@@ -86,21 +118,24 @@ const CHORES: PlannedChore[] = [
       { type: "completed", by: "you", at: [-4, 16] },
     ],
   },
-  { name: "Do the dishes", assignee: "you", createdBy: "you", created: [-11, 15], due: -7, done: [-7, 21] },
-  { name: "Mop the kitchen floor", notes: "Use the blue bucket.", assignee: "you", createdBy: "second", created: [-16, 15], due: -10, done: [-8, 17] },
+  { name: "Do the dishes", category: "dishes", assignee: "you", createdBy: "you", created: [-11, 15], due: -7, done: [-7, 21] },
+  { name: "Mop the kitchen floor", category: "mopping", notes: "Use the blue bucket.", assignee: "you", createdBy: "second", created: [-16, 15], due: -10, done: [-8, 17] },
   { name: "Restock toilet paper", assignee: "you", createdBy: "you", created: [-18, 15], due: -13, done: [-14, 19] },
   // The housemates' chores, for Household chore history.
-  { name: "Fold the laundry", assignee: "first", createdBy: "first", created: [-5, 15], due: -1, done: [-1, 18] },
-  { name: "Clean out the fridge", notes: "Toss anything expired.", assignee: "second", createdBy: "you", created: [-3, 15], due: 1 },
-  { name: "Sweep the porch", assignee: "second", createdBy: "second", created: [-7, 15], due: -3, done: [-2, 16] },
+  { name: "Fold the laundry", category: "laundry", assignee: "first", createdBy: "first", created: [-5, 15], due: -1, done: [-1, 18] },
+  { name: "Clean out the fridge", category: "cooking", notes: "Toss anything expired.", assignee: "second", createdBy: "you", created: [-3, 15], due: 1 },
+  { name: "Sweep the porch", category: "yard", assignee: "second", createdBy: "second", created: [-7, 15], due: -3, done: [-2, 16] },
   { name: "Buy dish soap", assignee: "first", createdBy: "first", created: [-1, 15], due: 4 },
   { name: "Change the air filter", assignee: "first", createdBy: "you", created: [-15, 15], due: -9, done: [-9, 20] },
+  // Left by someone who moved out: anyone can pick it up with the pencil (SCRUM-75 AC4).
+  { name: "Scrub the shower", category: "bathroom", assignee: null, createdBy: "second", created: [-3, 16], due: 3 },
 ];
 
 export type SeedChore = {
   name: string;
   notes: string | null;
-  assignee: TestPerson;
+  category: ChoreType | null;
+  assignee: TestPerson | null;
   createdBy: TestPerson;
   dueDate: string;
   createdAt: Date;
@@ -113,16 +148,17 @@ export function testHouseChores(today: string): SeedChore[] {
   return CHORES.map((chore) => {
     const events: PlannedEvent[] = chore.events ?? [
       { type: "created", by: chore.createdBy, at: chore.created },
-      ...(chore.done ? [{ type: "completed" as const, by: chore.assignee, at: chore.done }] : []),
+      ...(chore.done && chore.assignee ? [{ type: "completed" as const, by: chore.assignee, at: chore.done }] : []),
     ];
     return {
       name: chore.name,
       notes: chore.notes ?? null,
+      category: chore.category ?? null,
       assignee: chore.assignee,
       createdBy: chore.createdBy,
       dueDate: shift(today, chore.due),
       createdAt: moment(today, chore.created),
-      completedAt: chore.done ? moment(today, chore.done) : null,
+      completedAt: chore.done && chore.assignee ? moment(today, chore.done) : null,
       events: events.map((event) => ({
         eventType: event.type,
         dueDate: shift(today, event.due ?? chore.due),
@@ -147,8 +183,8 @@ async function ensureAccount(person: TestPerson): Promise<string> {
 }
 
 /**
- * Puts the test household back to its starting state: the three accounts, Test_User as
- * owner, and today's version of the chores and their history. Safe to run again and again.
+ * Puts the test household back to its starting state: the three accounts with their chore
+ * preferences, Test_User as owner, and today's version of the chores and their history. Safe to run again and again.
  */
 export async function seedTestHouse(today = teamToday()): Promise<{ inviteCode: string; chores: number }> {
   const ids = {} as Record<TestPerson, string>;
@@ -157,7 +193,10 @@ export async function seedTestHouse(today = teamToday()): Promise<{ inviteCode: 
 
   return getPrisma().$transaction(
     async (tx) => {
-      const current = await tx.membership.findUnique({ where: { userId: ids.you } });
+      // Test_User's household, or a housemate's if Test_User left it (SCRUM-75), so it's never left behind.
+      const current =
+        (await tx.membership.findUnique({ where: { userId: ids.you } })) ??
+        (await tx.membership.findFirst({ where: { userId: { in: [ids.first, ids.second] } } }));
       let household;
       if (current) {
         // Never touch a household that real people have joined.
@@ -171,28 +210,27 @@ export async function seedTestHouse(today = teamToday()): Promise<{ inviteCode: 
       }
 
       for (const person of PEOPLE) {
-        const { role } = TEST_PEOPLE[person];
-        await tx.membership.upsert({
-          where: { userId: ids[person] },
-          update: { householdId: household.id, role },
-          create: { userId: ids[person], householdId: household.id, role },
-        });
+        const { role, choreTypes, weeklyWorkload } = TEST_PEOPLE[person];
+        const data = { householdId: household.id, role, choreTypes: [...choreTypes], weeklyWorkload, noticesSeenAt: new Date() };
+        await tx.membership.upsert({ where: { userId: ids[person] }, update: data, create: { userId: ids[person], ...data } });
       }
 
-      // Their history goes with them (onDelete: Cascade).
+      // Their history goes with them (onDelete: Cascade). Old notices go too ("Test_User left…").
       await tx.chore.deleteMany({ where: { householdId: household.id } });
+      await tx.householdNotice.deleteMany({ where: { householdId: household.id } });
       for (const chore of chores) {
         await tx.chore.create({
           data: {
             householdId: household.id,
             name: chore.name,
             notes: chore.notes,
-            assigneeId: ids[chore.assignee],
+            category: chore.category,
+            assigneeId: chore.assignee ? ids[chore.assignee] : null,
             createdById: ids[chore.createdBy],
             dueDate: new Date(`${chore.dueDate}T00:00:00Z`),
             createdAt: chore.createdAt,
             completedAt: chore.completedAt,
-            completedById: chore.completedAt ? ids[chore.assignee] : null,
+            completedById: chore.completedAt && chore.assignee ? ids[chore.assignee] : null,
             history: {
               create: chore.events.map((event) => ({
                 eventType: event.eventType,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { escapeHtml, previewUrl, renderSite } from "./render.ts";
+import { DASHBOARD_LIST_LENGTH, escapeHtml, previewUrl, renderArchive, renderSite } from "./render.ts";
 import { MAIN_REPORTS_KEPT, applyRun, emptySite } from "./site.ts";
 import type { RunMeta, RunSummary, SiteData, StoryCoverage } from "./types.ts";
 
@@ -129,7 +129,8 @@ describe("renderSite", () => {
 
   it("marks a main run whose report was deleted as expired", () => {
     const runs = Array.from({ length: MAIN_REPORTS_KEPT + 1 }, (_, i) => run({ runId: `${i}-1` }, at(i)));
-    const history = section(renderSite(build(runs)), "history");
+    // Runs that old are only listed on the archive page.
+    const history = section(renderArchive(build(runs)), "history");
     expect(history).toContain("expired");
     expect(history).not.toContain('href="reports/main/0-1/index.html"');
     expect(history).toContain('href="reports/main/1-1/index.html"');
@@ -179,6 +180,53 @@ describe("the Branches section", () => {
   });
 });
 
+describe("the dashboard's long lists", () => {
+  // Seven runs on main and seven merged pull requests, newest last.
+  const runs = Array.from({ length: 7 }, (_, i) => [
+    run({ kind: "main", runId: `${i + 1}-1`, sha: `main${i}`.padEnd(11, "0") }, at(i * 2)),
+    run(
+      {
+        kind: "merged",
+        branch: `branch-${i}`,
+        runId: `${i + 1}-2`,
+        pr: { number: 100 + i, title: `PR ${i}`, mergeSha: null, mergedAt: at(i * 2 + 1) },
+      },
+      at(i * 2 + 1),
+    ),
+  ]).flat();
+
+  const rowsIn = (html: string) => (html.match(/<tr>/g) ?? []).length - 1; // minus the header row
+
+  it(`shows only the newest ${DASHBOARD_LIST_LENGTH} merged branches and runs on main, with a link to the rest`, () => {
+    const html = renderSite(build(runs));
+    const merged = section(html, "merged");
+    const history = section(html, "history");
+
+    expect(rowsIn(merged)).toBe(DASHBOARD_LIST_LENGTH);
+    expect(merged).toContain("PR 6");
+    expect(merged).not.toContain("PR 1<");
+    expect(merged).toContain('<a href="archive.html#merged">See all 7 merged branches</a>');
+    expect(rowsIn(history)).toBe(DASHBOARD_LIST_LENGTH);
+    expect(history).toContain('<a href="archive.html#history">See all 7 runs on main</a>');
+  });
+
+  it("has no archive link while a list is short", () => {
+    const html = renderSite(build(runs.slice(0, 6)));
+
+    expect(section(html, "merged")).not.toContain("archive.html#merged");
+    expect(section(html, "history")).not.toContain("archive.html#history");
+  });
+
+  it("lists everything on the archive page, with a way back", () => {
+    const html = renderArchive(build(runs));
+
+    expect(rowsIn(section(html, "merged"))).toBe(7);
+    expect(rowsIn(section(html, "history"))).toBe(7);
+    expect(html).toContain('<a href="index.html">Back to the dashboard</a>');
+    expect(html).not.toContain('id="stories"');
+  });
+});
+
 describe("the Stories section", () => {
   type Ac = StoryCoverage["criteria"][number];
   const ac = (id: string, status: Ac["status"], testIds: string[] = []): Ac => ({
@@ -205,6 +253,17 @@ describe("the Stories section", () => {
   const storiesHtml = section(html, "stories");
 
   /** The opening tag of a story's or epic's collapsible block. */
+  it("has Expand all and Collapse all above and below the stories", () => {
+    const controls = storiesHtml.match(/<div class="tree-controls">.*?<\/div>/g) ?? [];
+    expect(controls).toHaveLength(2);
+    for (const c of controls) {
+      expect(c).toContain('<button type="button" data-tree="expand">Expand all</button>');
+      expect(c).toContain('<button type="button" data-tree="collapse">Collapse all</button>');
+    }
+    expect(storiesHtml.indexOf("tree-controls")).toBeLessThan(storiesHtml.indexOf('class="tree"'));
+    expect(storiesHtml.lastIndexOf("tree-controls")).toBeGreaterThan(storiesHtml.lastIndexOf("</details>"));
+  });
+
   const openingTag = (kind: "story" | "epic", key: string, within = storiesHtml) => {
     const match = new RegExp(`<details class="${kind}" data-key="${key}"[^>]*>`).exec(within);
     if (!match) throw new Error(`no ${kind} ${key}`);

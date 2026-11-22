@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { seedTarget, teamToday, testHouseChores, type SeedChore } from "./testHouse.js";
+import { parseChorePreferences, parseChoreType } from "../../shared/preferences.js";
+import { TEST_PEOPLE, seedTarget, teamToday, testHouseChores, type SeedChore } from "./testHouse.js";
 
 describe("test household seed", () => {
   it("writes to a preview's or production's database, or to the dev database when asked", () => {
@@ -46,5 +47,23 @@ describe("test household seed", () => {
       ["reopened", "2026-11-06"],
       ["completed", "2026-11-06"],
     ]);
+  });
+
+  it("gives chores categories and everyone chore preferences, so Add chore has suggestions (SCRUM-61, SCRUM-64)", () => {
+    const chores = testHouseChores("2026-11-12");
+    const categories = chores.map((chore) => chore.category).filter((category) => category !== null);
+
+    expect(categories.length).toBeGreaterThan(chores.length / 2);
+    for (const category of categories) expect(parseChoreType(category)).toBe(category);
+    for (const person of Object.values(TEST_PEOPLE)) {
+      const preferences = { choreTypes: [...person.choreTypes], weeklyWorkload: person.weeklyWorkload };
+      expect(parseChorePreferences(preferences), person.name).not.toBeNull();
+      expect(person.choreTypes.length, person.name).toBeGreaterThan(0);
+    }
+    // Someone prefers the unassigned chore, so picking it up shows a suggestion (SCRUM-75 AC4).
+    const unassigned = chores.filter((chore) => chore.assignee === null);
+    expect(unassigned).toHaveLength(1);
+    expect(unassigned[0]!.completedAt).toBeNull();
+    expect(Object.values(TEST_PEOPLE).some((p) => (p.choreTypes as readonly string[]).includes(unassigned[0]!.category!))).toBe(true);
   });
 });

@@ -7,13 +7,13 @@ import {
   setInviteCode,
   type HouseholdWithMembers,
 } from "../models/households.js";
-import { createMembership, findMembershipByUser, type Membership } from "../models/memberships.js";
+import { createMembership, findMembershipByUser, removeMembership, type Membership } from "../models/memberships.js";
 import { ServiceError } from "./errors.js";
 import { newInviteCode } from "./inviteCode.js";
 
 // Household rules (TECH_SPEC sections 5 and 6): one household per user, the
-// creator is its owner, people join with an invite code, and only the owner can
-// replace the code.
+// creator is its owner, people join with an invite code, only the owner can
+// replace the code, and anyone can leave (SCRUM-75).
 
 export type { HouseholdWithMembers, Membership };
 
@@ -104,4 +104,15 @@ export async function regenerateInviteCode(membership: Membership): Promise<Hous
     }
   }
   throw new Error("Could not generate an unused invite code");
+}
+
+/**
+ * Leaves the household (SCRUM-75). The member's open chores there become unassigned, done
+ * ones keep their name, and housemates are told. The last member's leaving deletes the
+ * household and its chores. An owner who leaves isn't replaced: the household carries on
+ * without one (Anthony, 2026-11-22; TECH_SPEC section 11). They can rejoin with an invite
+ * code, as a new member.
+ */
+export async function leaveHousehold(membership: Membership): Promise<{ householdDeleted: boolean }> {
+  return removeMembership(membership.userId);
 }
