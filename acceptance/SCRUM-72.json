@@ -1,6 +1,7 @@
 {
   "story": "SCRUM-72",
   "title": "User profile page",
+  "epic": { "key": "SCRUM-1", "title": "Chore Tracking" },
   "criteria": [
     {
       "id": "AC1",
