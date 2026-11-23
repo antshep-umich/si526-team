@@ -44,7 +44,7 @@
       "id": "AC8",
       "text": "User Action: Selects a chore. Expected System Behavior: Chore Details opens (see SCRUM-53).",
       "verify": "test",
-      "note": "Chore details is the card's dropdown, as on the Chore List (README Conflicts rows 28 and 57)."
+      "note": "Chore details is the card's dropdown, as on the Chore List (README Conflicts row 28)."
     },
     {
       "id": "AC9",

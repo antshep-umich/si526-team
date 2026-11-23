@@ -174,7 +174,7 @@ describe("Household chore history, monthly view", { tags: ["SCRUM-47"] }, () => 
     expect(await screen.findByRole("heading", { name: "Wash dishes" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Chore details" })).toBeInTheDocument();
     expect(screen.getByText("Hand-wash the knives")).toBeInTheDocument();
-    // Ana is signed in, so the chore's assignee shows as "You" (README Conflicts row 3).
+    // Ana is signed in, so the chore's assignee shows as "You" (SCRUM-7: "You" if it is the user).
     expect(screen.getByText("Assigned to").nextElementSibling).toHaveTextContent("You");
   });
 
