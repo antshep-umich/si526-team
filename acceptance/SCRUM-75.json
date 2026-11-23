@@ -22,7 +22,7 @@
       "id": "AC4",
       "text": "System state: The user has open chores when they leave. Expected System Behavior: Those chores stay on the Chore List marked “Unassigned.” Any housemate can assign an unassigned chore, the same as a first assignment (see SCRUM-6).",
       "verify": "test",
-      "note": "Any housemate can assign it with the pencil: while a chore is unassigned, everyone may edit it (Anthony, 2026-11-22; README Conflicts row 53)."
+      "note": "Any housemate can assign it with the pencil: while a chore is unassigned, everyone may edit it (Anthony, 2026-11-22)."
     },
     {
       "id": "AC5",

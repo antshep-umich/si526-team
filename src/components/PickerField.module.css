@@ -244,6 +244,16 @@
   right: 15.5px;
 }
 
+/* The icon's tap area: the right end of the field, over the browser's own calendar button. */
+.dateIconHit {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 48px;
+  cursor: pointer;
+}
+
 .dateText.datePlaceholder {
   color: var(--color-text-muted);
 }

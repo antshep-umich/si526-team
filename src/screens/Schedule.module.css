@@ -1,0 +1,266 @@
+/*
+ * SCRUM-73 Schedule. Page spacing follows Figma "Home - Chores (All)" (837:1483): 56px top,
+ * 24px sides, 26px between items, cards 10px apart.
+ * Not in Figma yet (placeholders, README Conflicts row 55): the range bar with "Today",
+ * the week strip and the month calendar, from the design system's tokens only. They use the
+ * chore card's 14px corners and border, and the Tab Filter's segment look for "Today".
+ */
+.page {
+  width: 100%;
+  max-width: 402px;
+  margin: 0 auto;
+  padding: 56px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+
+/* Previous / range / next in one card, "Today" beside it. */
+.navRow {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.nav {
+  display: grid;
+  flex: 1;
+  grid-template-columns: 44px 1fr 44px;
+  align-items: center;
+  min-width: 0;
+  padding: 4px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 14px;
+  background: var(--color-surface-card);
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: none;
+  border-radius: 10px;
+  background: none;
+  cursor: pointer;
+}
+
+.step:hover {
+  background: var(--color-progress-track);
+}
+
+.step:focus-visible,
+.today:focus-visible,
+.day:focus-visible {
+  outline: 2px solid var(--color-action-focus-ring);
+  outline-offset: 2px;
+}
+
+.pointBack {
+  transform: rotate(90deg);
+}
+
+.pointForward {
+  transform: rotate(-90deg);
+}
+
+.range {
+  margin: 0;
+  overflow: hidden;
+  font: var(--type-section-title);
+  color: var(--color-text-default);
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.today {
+  padding: 0 16px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 14px;
+  background: var(--color-surface-card);
+  color: var(--color-action-primary);
+  font: var(--type-button);
+  cursor: pointer;
+}
+
+.today:hover {
+  background: var(--color-progress-track);
+}
+
+/* Week strip: seven equal columns in one card. */
+.week,
+.monthDays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.week {
+  padding: 6px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 14px;
+  background: var(--color-surface-card);
+}
+
+/* Month calendar: weekday letters over the same grid of days. */
+.month {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 14px;
+  background: var(--color-surface-card);
+}
+
+.monthHead {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+  font: var(--type-meta);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+/* One day: weekday letter (week only), date, then the count and the overdue dot. */
+.day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 100%;
+  min-height: 44px;
+  padding: 6px 0;
+  border: none;
+  border-radius: 10px;
+  background: none;
+  color: var(--color-text-default);
+  cursor: pointer;
+}
+
+.day:hover {
+  background: var(--color-progress-track);
+}
+
+.weekday {
+  font: var(--type-meta);
+  color: var(--color-text-muted);
+}
+
+.date {
+  font: var(--type-chore-name);
+}
+
+.count {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: 16px;
+  font: var(--type-meta);
+  color: var(--color-text-muted);
+}
+
+/* The month's days are tighter, still 44px tall for a finger, so the day's chores stay in view. */
+.monthDays .day {
+  min-height: 44px;
+  padding: 2px 0;
+  gap: 0;
+}
+
+.monthDays .count {
+  min-height: 14px;
+  line-height: 14px;
+}
+
+/* A day with an overdue chore: the Overdue chip's yellow, outlined so it shows on any fill. */
+.overdueDot {
+  width: 8px;
+  height: 8px;
+  border: 1px solid var(--color-overdue-line);
+  border-radius: 50%;
+  background: var(--color-overdue-fill);
+}
+
+/* Today: ringed in the primary color. */
+.isToday {
+  box-shadow: inset 0 0 0 2px var(--color-action-primary);
+}
+
+.isToday .date {
+  color: var(--color-action-primary);
+}
+
+/* The selected day: filled. */
+.isSelected,
+.isSelected:hover {
+  background: var(--color-action-primary);
+  color: var(--color-action-on-primary);
+}
+
+.isSelected .weekday,
+.isSelected .count,
+.isSelected.isToday .date {
+  color: var(--color-action-on-primary);
+}
+
+.dayChores {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Figma: the day heading over the cards ("Thursday, Nov 19"). */
+.dayHeading {
+  margin: 0;
+  font: var(--type-section-title);
+  color: var(--color-text-default);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Not in Figma yet (placeholders): empty, loading and error messages, as on the Chore List. */
+.message {
+  font: var(--type-body);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.failed {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.toggleError {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font: var(--type-field-label);
+  color: var(--color-error-text);
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .day,
+  .step,
+  .today {
+    transition: background-color 120ms ease;
+  }
+}

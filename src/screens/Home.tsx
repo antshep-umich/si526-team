@@ -1,26 +1,16 @@
-import { useCallback, useEffect, useId, useRef, useState } from "react";
-import { completeChore, listChores, undoChore } from "../api/chores.ts";
+import { useId, useState } from "react";
 import type { Household } from "../api/households.ts";
 import Button from "../components/Button.tsx";
-import ChoreCard, { type ChoreCardPanel } from "../components/ChoreCard.tsx";
 import Collapse from "../components/Collapse.tsx";
 import DoneSection from "../components/DoneSection.tsx";
 import ProgressCard from "../components/ProgressCard.tsx";
 import TabFilter from "../components/TabFilter.tsx";
 import ThemedIcon from "../components/ThemedIcon.tsx";
-import {
-  choreDetails,
-  choreStatus,
-  doneThisWeek,
-  isMine,
-  openChores,
-  weeklyProgress,
-  type Chore,
-} from "../chores.ts";
-import { describeDay, formatDate, localDateOf, startOfWeek, today as localToday } from "../dates.ts";
-import { statusLabel } from "../history.ts";
-import { canEditChore } from "../../shared/chores.ts";
-import { usePolling } from "../usePolling.ts";
+import { CHORE_FILTERS, saveChoreFilter, savedChoreFilter, type ChoreFilter } from "../choreFilter.ts";
+import { doneThisWeek, isMine, openChores, weeklyProgress, type Chore } from "../chores.ts";
+import { startOfWeek, today as localToday } from "../dates.ts";
+import { useChoreList } from "../useChoreList.ts";
+import ChoreItem from "./ChoreItem.tsx";
 import Header from "./Header.tsx";
 import styles from "./Home.module.css";
 
@@ -38,42 +28,6 @@ type HomeProps = {
   onOpenChore: (choreId: string) => void;
 };
 
-type Filter = "all" | "mine";
-const FILTERS = [
-  { id: "all", label: "All" },
-  { id: "mine", label: "Mine" },
-] as const;
-
-// "The filter stays selected until changed or until log out": kept for the browser
-// tab's session and cleared by forgetChoreFilter() when the user logs out.
-const FILTER_KEY = "jaals.choreFilter";
-
-function savedFilter(): Filter {
-  try {
-    return sessionStorage.getItem(FILTER_KEY) === "mine" ? "mine" : "all";
-  } catch {
-    return "all";
-  }
-}
-
-function saveFilter(filter: Filter) {
-  try {
-    sessionStorage.setItem(FILTER_KEY, filter);
-  } catch {
-    // Storage blocked: the filter still works, it just isn't remembered.
-  }
-}
-
-export function forgetChoreFilter() {
-  try {
-    sessionStorage.removeItem(FILTER_KEY);
-  } catch {
-    // Nothing was stored.
-  }
-}
-
-type ListState = { status: "loading" } | { status: "failed" } | { status: "ready"; chores: Chore[] };
-
 export default function Home({
   household,
   userId,
@@ -81,117 +35,29 @@ export default function Home({
   onEditChore,
   onOpenChore,
 }: HomeProps) {
-  const [list, setList] = useState<ListState>({ status: "loading" });
-  const [attempt, setAttempt] = useState(0);
-  const [filter, setFilter] = useState<Filter>(savedFilter);
-  const [doneOpen, setDoneOpen] = useState(false);
-  const [saving, setSaving] = useState<ReadonlySet<string>>(new Set());
-  const [toggleError, setToggleError] = useState<string | null>(null);
-  const doneListId = useId();
   const today = localToday();
-  // Counts ticks and unticks, so a background check that started before one can be dropped.
-  const changes = useRef(0);
-  const savingNow = useRef(0);
+  const { list, retry, toggle, saving, toggleError } = useChoreList(startOfWeek(today));
+  const [filter, setFilter] = useState<ChoreFilter>(savedChoreFilter);
+  const [doneOpen, setDoneOpen] = useState(false);
+  const doneListId = useId();
 
-  useEffect(() => {
-    let cancelled = false;
-    listChores(startOfWeek(localToday())).then((result) => {
-      if (cancelled) return;
-      setList(result.ok ? { status: "ready", chores: result.chores } : { status: "failed" });
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [attempt]);
-
-  // Housemates' changes appear without a refresh. A check that fails, or that started before
-  // a tick or untick (or while one is saving), is dropped so it can't undo what the user did.
-  usePolling(() => {
-    const startedAt = changes.current;
-    listChores(startOfWeek(localToday())).then((result) => {
-      if (!result.ok || changes.current !== startedAt || savingNow.current > 0) return;
-      setList({ status: "ready", chores: result.chores });
-    });
-  }, list.status === "ready");
-
-  const replaceChore = useCallback((chore: Chore) => {
-    setList((current) =>
-      current.status === "ready"
-        ? { status: "ready", chores: current.chores.map((c) => (c.id === chore.id ? chore : c)) }
-        : current,
-    );
-  }, []);
-
-  // Ticks or unticks right away, then saves. If saving fails, the checkbox goes back.
-  async function toggle(chore: Chore) {
-    const undoing = chore.completedAt !== null;
-    changes.current += 1;
-    savingNow.current += 1;
-    setToggleError(null);
-    setSaving((ids) => new Set(ids).add(chore.id));
-    replaceChore(
-      undoing
-        ? { ...chore, completedAt: null, completedBy: null }
-        : { ...chore, completedAt: new Date().toISOString(), completedBy: chore.assignee },
-    );
-
-    const result = await (undoing ? undoChore(chore.id) : completeChore(chore.id));
-    changes.current += 1;
-    savingNow.current -= 1;
-    replaceChore(result.ok ? result.chore : chore);
-    if (!result.ok) setToggleError("Couldn't update this chore. Please try again.");
-    setSaving((ids) => {
-      const next = new Set(ids);
-      next.delete(chore.id);
-      return next;
-    });
-  }
-
-  function changeFilter(next: Filter) {
+  function changeFilter(next: ChoreFilter) {
     setFilter(next);
-    saveFilter(next);
-  }
-
-  const person = (who: { userId: string; name: string } | null) =>
-    !who ? "Someone who left" : who.userId === userId ? "You" : who.name;
-
-  /**
-   * A chore's dropdown (SCRUM-7 AC11 and SCRUM-53; Figma "Schedule", 837:1483): Figma's
-   * "Assigned To:" and "Chore Details:", with the due date, status and "Last done" the
-   * stories ask for. The pencil only for those who may edit it.
-   */
-  function panel(chore: Chore): ChoreCardPanel {
-    const rows: [string, string][] = [
-      ["Assigned To:", chore.assignee ? person(chore.assignee) : "Unassigned"],
-      ["Due date:", formatDate(chore.dueDate, today)],
-      ["Status:", statusLabel(chore, today)],
-    ];
-    if (chore.completedAt) {
-      rows.push(["Last done:", `${describeDay(localDateOf(chore.completedAt), today)} by ${person(chore.completedBy)}`]);
-    }
-    rows.push(["Chore Details:", chore.notes ?? "No description added."]);
-    const editable = canEditChore(
-      { creatorId: chore.createdBy?.userId ?? null, assigneeId: chore.assignee?.userId ?? null },
-      { userId, role: household.role },
-    );
-    return {
-      rows,
-      onEdit: editable ? () => onEditChore(chore) : undefined,
-      onViewHistory: () => onOpenChore(chore.id),
-    };
+    saveChoreFilter(next);
   }
 
   function card(chore: Chore) {
     return (
       <li key={chore.id}>
-        <ChoreCard
-          name={chore.name}
-          details={choreDetails(chore, userId, today)}
-          status={choreStatus(chore, today)}
-          // SCRUM-8: only the assignee can mark it done or undo it.
-          onToggle={isMine(chore, userId) ? () => toggle(chore) : undefined}
+        <ChoreItem
+          chore={chore}
+          household={household}
+          userId={userId}
+          today={today}
+          onToggle={toggle}
           busy={saving.has(chore.id)}
-          panel={panel(chore)}
+          onEditChore={onEditChore}
+          onOpenChore={onOpenChore}
         />
       </li>
     );
@@ -213,13 +79,7 @@ export default function Home({
           <p className={styles.message} role="alert">
             Couldn't load chores.
           </p>
-          <Button
-            variant="outline"
-            onClick={() => {
-              setList({ status: "loading" });
-              setAttempt((n) => n + 1);
-            }}
-          >
+          <Button variant="outline" onClick={retry}>
             Try again
           </Button>
         </div>
@@ -281,7 +141,7 @@ export default function Home({
       <Button fullWidth onClick={onAddChore}>
         Add chore
       </Button>
-      <TabFilter label="Show chores" options={FILTERS} selected={filter} onSelect={changeFilter} />
+      <TabFilter label="Show chores" options={CHORE_FILTERS} selected={filter} onSelect={changeFilter} />
       {body()}
     </main>
   );

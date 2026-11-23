@@ -5,7 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Household } from "../api/households.ts";
 import type { Chore } from "../chores.ts";
 import { POLL_INTERVAL_MS } from "../usePolling.ts";
-import Home, { forgetChoreFilter } from "./Home.tsx";
+import { forgetChoreFilter } from "../choreFilter.ts";
+import Home from "./Home.tsx";
 
 const { listChores, completeChore, undoChore, getChore } = vi.hoisted(() => ({
   listChores: vi.fn(),

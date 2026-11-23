@@ -288,8 +288,10 @@ describe("App when signed in", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "Chores" }));
     expect(await screen.findByRole("radiogroup", { name: "Show chores" })).toBeInTheDocument();
-    // Schedule has no screen yet.
-    expect(screen.getByRole("button", { name: "Schedule" })).toHaveAttribute("aria-disabled", "true");
+
+    await userEvent.click(screen.getByRole("button", { name: "Schedule" }));
+    expect(await screen.findByRole("heading", { level: 1, name: "Schedule" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Schedule" })).toHaveAttribute("aria-current", "page");
   });
 
   it("creates a household, shows Household Created!, then goes Home", async () => {
@@ -572,6 +574,45 @@ describe("App acceptance criteria", () => {
         notes: "Under the table too",
       });
       expect(await screen.findByRole("heading", { level: 1, name: "Maple St House" })).toBeInTheDocument();
+    });
+  });
+
+  describe("The Schedule tab", () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("comes back from Edit chore where it was, under the Schedule tab; the tab itself opens the current week", async () => {
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(new Date(2026, 9, 29, 12)); // Thursday, Oct 29
+      const chore = {
+        id: "c1",
+        name: "Mop kitchen",
+        notes: null,
+        dueDate: "2026-11-04",
+        assignee: { userId: "u-ana", name: "Ana Lopez" },
+        createdBy: { userId: "u-ana", name: "Ana Lopez" },
+        createdAt: "2026-10-29T16:00:00.000Z",
+        completedAt: null,
+        completedBy: null,
+      };
+      listChores.mockResolvedValue({ ok: true, chores: [chore] });
+      await openChoreList();
+      await userEvent.click(screen.getByRole("button", { name: "Schedule" }));
+      await userEvent.click(await screen.findByRole("button", { name: "Next week" }));
+      await userEvent.click(screen.getByRole("button", { name: /^Wednesday, Nov 4/ }));
+
+      await userEvent.click(await screen.findByRole("button", { name: /^Mop kitchen/ }));
+      await userEvent.click(screen.getByRole("button", { name: "Edit Mop kitchen" }));
+      expect(screen.getByRole("heading", { level: 1, name: "Edit chore" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Schedule" })).toHaveAttribute("aria-current", "page");
+      await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+      expect(await screen.findByRole("heading", { level: 2, name: "Wednesday, Nov 4" })).toBeInTheDocument();
+      expect(screen.getByRole("heading", { level: 2, name: "Nov 2 to Nov 8" })).toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole("button", { name: "Schedule" }));
+      expect(await screen.findByRole("heading", { level: 2, name: "Oct 26 to Nov 1" })).toBeInTheDocument();
     });
   });
 

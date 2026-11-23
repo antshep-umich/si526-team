@@ -6,7 +6,8 @@
     {
       "id": "AC1",
       "text": "User Action: Opens the “Schedule” tab. Expected System Behavior: The Schedule page opens on the current week with “Week” selected, today highlighted, and the date range in the header (e.g., “Oct 26 to Nov 1”).",
-      "verify": "test"
+      "verify": "test",
+      "note": "The range sits in a bar under the title, between the previous and next arrows (placeholder; Figma has no range). README Conflicts row 55."
     },
     {
       "id": "AC2",
@@ -31,7 +32,8 @@
     {
       "id": "AC6",
       "text": "User Action: Clicks “Month.” Expected System Behavior: The monthly view opens (see SCRUM-47).",
-      "verify": "test"
+      "verify": "test",
+      "note": "Team decision (Anthony, 2026-11-23): Month is a calendar of the month on the Schedule, with the same counts and Today, not SCRUM-47's monthly history. Jira still points to SCRUM-47. README Conflicts row 55."
     },
     {
       "id": "AC7",
@@ -41,7 +43,8 @@
     {
       "id": "AC8",
       "text": "User Action: Selects a chore. Expected System Behavior: Chore Details opens (see SCRUM-53).",
-      "verify": "test"
+      "verify": "test",
+      "note": "Chore details is the card's dropdown, as on the Chore List (README Conflicts row 28)."
     },
     {
       "id": "AC9",

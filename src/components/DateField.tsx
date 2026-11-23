@@ -27,11 +27,14 @@ export default function DateField({ label, placeholder, value, onChange, min, er
   const input = useRef<HTMLInputElement>(null);
 
   function openPicker() {
+    const field = input.current;
+    if (!field) return;
     try {
-      input.current?.showPicker?.();
+      if (field.showPicker) return field.showPicker();
     } catch {
-      // Some browsers only allow it from certain gestures; the input still opens on tap.
+      // Some browsers only allow it from certain gestures.
     }
+    field.focus(); // Older phones without showPicker open their picker on focus.
   }
 
   return (
@@ -55,7 +58,11 @@ export default function DateField({ label, placeholder, value, onChange, min, er
         <span className={`${styles.dateText} ${value ? "" : styles.datePlaceholder}`} aria-hidden="true">
           {value ? formatDate(value, today()) : placeholder}
         </span>
-        <ThemedIcon name="calendar" className={styles.dateIcon} />
+        {/* The icon takes its own taps: under it, Firefox's hidden calendar button would open the
+            picker and our showPicker() close it again, so tapping the icon did nothing. */}
+        <span className={styles.dateIconHit} onClick={openPicker} aria-hidden="true">
+          <ThemedIcon name="calendar" className={styles.dateIcon} />
+        </span>
       </div>
       {error && (
         <p id={errorId} className={fieldStyles.error}>

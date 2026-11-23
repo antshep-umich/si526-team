@@ -177,6 +177,19 @@ describe("DateField", () => {
 
     expect(screen.getByLabelText("Due date")).toHaveAccessibleDescription("Choose a due date.");
   });
+
+  it("opens the calendar from its icon as well as from the field, once per tap", () => {
+    const showPicker = vi.fn();
+    HTMLInputElement.prototype.showPicker = showPicker;
+    const { container } = render(<DateField label="Due date" placeholder="Pick a date" value="" onChange={() => {}} />);
+
+    // The icon is decorative (aria-hidden), so it has no role to find it by.
+    fireEvent.click(container.querySelector(".dateIconHit")!);
+    expect(showPicker).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByLabelText("Due date"));
+    expect(showPicker).toHaveBeenCalledTimes(2);
+    delete (HTMLInputElement.prototype as Partial<HTMLInputElement>).showPicker;
+  });
 });
 
 describe("TextArea", () => {
