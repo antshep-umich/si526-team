@@ -3,7 +3,9 @@ import { useEffect, useState } from "react";
 import type { HouseholdMember } from "../shared/api.ts";
 import { getCurrentHousehold, type Household } from "./api/households.ts";
 import { authClient } from "./auth.ts";
+import { forgetChoreFilter } from "./choreFilter.ts";
 import type { Chore } from "./chores.ts";
+import type { TabId } from "./components/TabBar.tsx";
 import { ToastProvider, useToast } from "./components/Toast.tsx";
 import { forgetInviteCode, pendingInviteCode } from "./inviteLink.ts";
 import AddChore from "./screens/AddChore.tsx";
@@ -12,7 +14,9 @@ import ChooseHousehold from "./screens/ChooseHousehold.tsx";
 import CreateHousehold from "./screens/CreateHousehold.tsx";
 import EditChore from "./screens/EditChore.tsx";
 import ForgotPassword from "./screens/ForgotPassword.tsx";
-import Home, { forgetChoreFilter } from "./screens/Home.tsx";
+import { today as localToday } from "./dates.ts";
+import { startingSpot, type ScheduleSpot } from "./schedule.ts";
+import Home from "./screens/Home.tsx";
 import House from "./screens/House.tsx";
 import HouseholdCreated from "./screens/HouseholdCreated.tsx";
 import HouseholdChoreHistory from "./screens/HouseholdChoreHistory.tsx";
@@ -21,6 +25,7 @@ import Profile from "./screens/Profile.tsx";
 import JoinHousehold from "./screens/JoinHousehold.tsx";
 import LogIn from "./screens/LogIn.tsx";
 import Screen, { Actions, FormError, Loading } from "./screens/Screen.tsx";
+import Schedule from "./screens/Schedule.tsx";
 import SignUp from "./screens/SignUp.tsx";
 import SingleChoreHistory from "./screens/SingleChoreHistory.tsx";
 import TabLayout from "./screens/TabLayout.tsx";
@@ -84,15 +89,19 @@ type HouseholdState =
   | { status: "failed" }
   | { status: "ready"; household: Household };
 
-/** The screens inside a household: the House tab's two, and the Chores tab's others (profile is under Chores until it has a tab). */
+/**
+ * The screens inside a household: the Schedule, the House tab's two, and the Chores tab's
+ * others (profile is under Chores until it has a tab). Edit chore and a chore's history
+ * open from the Chore List or the Schedule, and stay under the tab they came from.
+ */
+type ChoreTab = "chores" | "schedule";
 type View =
-  | { name: "chores" }
+  | { name: TabId } // each tab's first screen
   | { name: "add-chore" }
   | { name: "my-history" }
   | { name: "household-history" }
-  | { name: "edit-chore"; chore: Chore }
-  | { name: "chore"; choreId: string }
-  | { name: "house" }
+  | { name: "edit-chore"; chore: Chore; from: ChoreTab }
+  | { name: "chore"; choreId: string; from: ChoreTab }
   | { name: "housemate"; member: HouseholdMember }
   | { name: "profile" };
 
@@ -101,6 +110,8 @@ function SignedIn({ userId }: { userId: string }) {
   // An invite link (/join/CODE) opens Join with its code filled in (src/inviteLink.ts).
   const [screen, setScreen] = useState<"choose" | "create" | "join">(() => (pendingInviteCode() ? "join" : "choose"));
   const [view, setView] = useState<View>({ name: "chores" });
+  // Where the Schedule is (Week or Month, the selected day), kept while its chores are open.
+  const [scheduleSpot, setScheduleSpot] = useState<ScheduleSpot>(() => startingSpot(localToday()));
   const [justCreated, setJustCreated] = useState<Household | null>(null);
   const [attempt, setAttempt] = useState(0);
   const showToast = useToast();
@@ -188,6 +199,11 @@ function SignedIn({ userId }: { userId: string }) {
   if (state.status === "ready") {
     const household = state.household;
     const showChores = () => setView({ name: "chores" });
+    const backTo = (from: ChoreTab) => () => setView({ name: from });
+    const openChoreFrom = (from: ChoreTab) => ({
+      onEditChore: (chore: Chore) => setView({ name: "edit-chore", chore, from }),
+      onOpenChore: (choreId: string) => setView({ name: "chore", choreId, from }),
+    });
     let content;
     switch (view.name) {
       case "add-chore":
@@ -201,11 +217,28 @@ function SignedIn({ userId }: { userId: string }) {
         break;
       case "edit-chore":
         content = (
-          <EditChore household={household} userId={userId} chore={view.chore} onSaved={showChores} onCancel={showChores} />
+          <EditChore
+            household={household}
+            userId={userId}
+            chore={view.chore}
+            onSaved={backTo(view.from)}
+            onCancel={backTo(view.from)}
+          />
         );
         break;
       case "chore":
         content = <SingleChoreHistory choreId={view.choreId} userId={userId} />;
+        break;
+      case "schedule":
+        content = (
+          <Schedule
+            household={household}
+            userId={userId}
+            spot={scheduleSpot}
+            onSpotChange={setScheduleSpot}
+            {...openChoreFrom("schedule")}
+          />
+        );
         break;
       case "house":
         content = <House userId={userId} onOpenHousemate={(member) => setView({ name: "housemate", member })} />;
@@ -228,8 +261,7 @@ function SignedIn({ userId }: { userId: string }) {
             household={household}
             userId={userId}
             onAddChore={() => setView({ name: "add-chore" })}
-            onEditChore={(chore) => setView({ name: "edit-chore", chore })}
-            onOpenChore={(choreId) => setView({ name: "chore", choreId })}
+            {...openChoreFrom("chores")}
           />
         );
         break;
@@ -240,11 +272,21 @@ function SignedIn({ userId }: { userId: string }) {
       onProfile: () => setView({ name: "profile" }),
       onLogOut: logOut,
     };
-    const tab = view.name === "house" || view.name === "housemate" ? "house" : "chores";
+    const tab: TabId =
+      view.name === "house" || view.name === "housemate"
+        ? "house"
+        : view.name === "schedule" || ((view.name === "edit-chore" || view.name === "chore") && view.from === "schedule")
+          ? "schedule"
+          : "chores";
+    // Each tab opens its first screen; the Schedule, its current week with today selected.
+    const selectTab = (next: TabId) => {
+      if (next === "schedule") setScheduleSpot(startingSpot(localToday()));
+      setView({ name: next });
+    };
     return (
       <TabLayout
         selected={tab}
-        onSelect={(next) => setView(next === "house" ? { name: "house" } : { name: "chores" })}
+        onSelect={selectTab}
         menu={menu}
         screen={view}
       >
